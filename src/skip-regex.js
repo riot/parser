@@ -21,8 +21,13 @@ const beforeReWords = [
   'yield'
 ]
 
-// The string to test can't include line-endings
-const RE_REGEX = /^\/(?=[^*>/])[^[/\\]*(?:\\.|(?:\[(?:\\.|[^\]\\]*)*\])[^[\\/]*)*?\/(?=[gimuy]+|[^/\*]|$)/
+// Pre-testing the keywords can speedup the search about 30%
+const wordsLastChar = beforeReWords.reduce((s, w) => s + w.slice(-1), '')
+
+// The regexes can't include line-endings
+const RE_REGEX = /^\/(?=[^*>/])[^[/\\]*(?:(?:\\.|\[(?:\\.|[^\]\\]*)*\])[^[\\/]*)*?\/[gimuy]*/
+
+// Valid characters for JavaScript identifiers
 const RE_VARCHAR = /[$\w]/
 
 // Searches the position of the previous non-blank character inside `code`,
@@ -80,16 +85,15 @@ export default function skipRegex(code, start) {
         start = next
       }
 
-    } else if (/[a-z]/.test(c)) {
+    } else if (~wordsLastChar.indexOf(c)) {
       // keyword?
-      ++pos
-      for (let i = 0; i < beforeReWords.length; i++) {
-        const kw = beforeReWords[i]
-        const nn = pos - kw.length
-        if (nn >= 0 && code.slice(nn, pos) === kw && !RE_VARCHAR.test(code[nn - 1])) {
-          start = next
-          break
-        }
+      let k = pos - 1
+
+      while (k >= 0 && RE_VARCHAR.test(code[k])) {
+        --k
+      }
+      if (~beforeReWords.indexOf(code.slice(k, pos + 1))) {
+        start = next
       }
     }
   }
