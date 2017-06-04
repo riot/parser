@@ -125,7 +125,7 @@ describe('HTML Builder 2', function () {
 
   it('test 1', function () {
     const source  = fs.readFileSync('fixtures/loop-svg-nodes.tag', 'utf8').trim()
-    const parser  = parser()
+    const parse   = parser().parse
     const builder = htmlBuilder({ compact: false })
     const expected = [
       '<loop-svg-nodes>',
@@ -143,7 +143,7 @@ describe('HTML Builder 2', function () {
       '</loop-svg-nodes>'
     ].join('\n')
 
-    const result = builder.build(parser.parse(source))
+    const result = builder.build(parse(source))
     expect(result).toBe(expected)
   })
 

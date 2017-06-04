@@ -1,6 +1,6 @@
 /**
  * Mini-parser for expressions.
- * This main pourpose of this module is to find the end of an expression
+ * The main pourpose of this module is to find the end of an expression
  * and return its text without the enclosing brackets.
  * Does not works with comments, but supports ES6 template strings.
  * @module exprExtractor
@@ -17,8 +17,8 @@ import skipRegex from './skip-regex'
 
 // Matches double quoted JS strings taking care about nested quotes
 // and EOLs (escaped eols are Ok).
-const S_DQ_STR = /"[^"\n\r\\]*(?:\\(?:\r\n?|[\S\s])[^"\n\r\\]*)*"/.source
-const S_STRING = `${S_DQ_STR}|${S_DQ_STR.replace(/"/g, "'")}`
+const S_SQ_STR = /'[^'\n\r\\]*(?:\\(?:\r\n?|[\S\s])[^'\n\r\\]*)*'/.source
+const S_STRING = `${S_SQ_STR}|${S_SQ_STR.replace(/'/g, '"')}`
 
 
 /**
@@ -28,7 +28,7 @@ const S_STRING = `${S_DQ_STR}|${S_DQ_STR.replace(/"/g, "'")}`
  */
 function ExprExtractor(options) {
   this._bp   = options.brackets             // brackets pair
-  this._re   = RegExp(`${S_STRING}|${this._reChar(this._bp[1])}`, 'g')
+  this._re   = new RegExp(`${S_STRING}|${this._reChar(this._bp[1])}`, 'g')
   this.parse = this.parse.bind(this)
 }
 

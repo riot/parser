@@ -3,19 +3,14 @@
 const beforeReChars = '[{(,;:?=|&!^~>%*/'
 
 // keyword that can preceed a regex (`in` is handled as special case)
+// Makes no sense to include delete, instanceof, extends, new, throw.
 const beforeReWords = [
   'case',
   'default',
-  //'delete',
   'do',
   'else',
-  //'extends',
   'in',
-  'instanceof',
-  //'new',
-  'prefix',
   'return',
-  //'throw',
   'typeof',
   'void',
   'yield'
@@ -27,8 +22,8 @@ const wordsLastChar = beforeReWords.reduce((s, w) => s + w.slice(-1), '')
 // The regexes can't include line-endings
 const RE_REGEX = /^\/(?=[^*>/])[^[/\\]*(?:(?:\\.|\[(?:\\.|[^\]\\]*)*\])[^[\\/]*)*?\/[gimuy]*/
 
-// Valid characters for JavaScript identifiers
-const RE_VARCHAR = /[$\w]/
+// Valid characters for JavaScript identifiers and literal numbers
+const RE_VN_CHAR = /[$\w]/
 
 // Searches the position of the previous non-blank character inside `code`,
 // starting with `pos - 1`.
@@ -53,7 +48,7 @@ export default function skipRegex(code, start) {
   const match = re.exec(code)[0].match(RE_REGEX)
 
   if (match) {
-    const next = pos + match[0].length  // result is not from `re.exec`
+    const next = pos + match[0].length  // result comes from `match()`
 
     pos = prev(code, pos)
     const c = code[pos]
@@ -64,6 +59,7 @@ export default function skipRegex(code, start) {
     }
 
     // from here, `pos` is >= 0 and `c` is code[pos]
+    // altough match[0] looks like a regex, we need to double-check this
     if (c === '.') {
       // can be `...` or something silly like 5./2
       if (code[pos - 1] === '.') {
@@ -71,28 +67,20 @@ export default function skipRegex(code, start) {
       }
 
     } else if (c === '+' || c === '-') {
-      // tricky case, with a sigle + or -  operator, the slash always starts
-      // a regex, but with the unary ++ (or --), we need found
-      //   identifierOrLiteral_number operator+operator RegExp
-      // Example (assume a=1, x=1, i=1):
-      // `++/x/i.lastIndex` --- `/x/` a regex
-      // `a++/x/i` = 1 --- here `/x/` is not a regex
-      // `a-++/x/i.lastIndex` = 0 -- `/x/` is a regex
-      // `++/x/i` generates a ReferenceError
-      if (code[--pos] !== c ||              // single operator, always regex
-          (pos = prev(code, pos)) < 0 ||    // no previous token, always regex
-          !RE_VARCHAR.test(code[pos])) {    // previous token can't be a JS var or number
-        start = next
+      // tricky case
+      if (code[--pos] !== c ||              // if have a single operator or
+          (pos = prev(code, pos)) < 0 ||    // ...have `++` and no previous token or
+          !RE_VN_CHAR.test(code[pos])) {    // ...the token is not a JS var/number
+        start = next                        // ...this is a regex
       }
 
     } else if (~wordsLastChar.indexOf(c)) {
       // keyword?
-      let k = pos - 1
+      const end = pos + 1
 
-      while (k >= 0 && RE_VARCHAR.test(code[k])) {
-        --k
-      }
-      if (~beforeReWords.indexOf(code.slice(k, pos + 1))) {
+      // get the preceding keyword, if this is in out list we have a regex
+      while (--pos >= 0 && RE_VN_CHAR.test(code[pos]));
+      if (~beforeReWords.indexOf(code.slice(pos + 1, end))) {
         start = next
       }
     }

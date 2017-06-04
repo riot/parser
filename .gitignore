@@ -55,5 +55,3 @@ coverage
 lib-cov
 make.js
 .grunt
-
-/dist
