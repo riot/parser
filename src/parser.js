@@ -63,22 +63,24 @@ assign(TagParser.prototype, {
     EXPR:     $_T.EXPR          // DOCUMENT_POSITION_IMPLEMENTATION_SPECIFIC (riot)
   },
 
-  /*
-    It creates a raw output of pseudo-nodes with one of three different types,
-    all of them having a start/end information.
-    (`end` points to the character following the node).
-
-    TAG     -- has `name` (ex. "div" or "/div"), `selfclose`, and `attributes`.
-    TEXT    -- can have an `expr` property in addition to start/end.
-    COMMENT -- has no props other than start/end.
-
-    `TAG.attributes` is an array of objects with `name`, `value` and `expressions` props.
-
-    `expressions` is an array of objects with start/end properties, relative to the
-    whole buffer.
-  */
+  /**
+   * It creates a raw output of pseudo-nodes with one of three different types,
+   * all of them having a start/end information.
+   * (`end` points to the character following the node).
+   *
+   * TAG     -- has `name` (ex. "div" or "/div"), `selfclose`, and `attributes`.
+   * TEXT    -- can have an `expr` property in addition to start/end.
+   * COMMENT -- has no props other than start/end.
+   *
+   * `TAG.attributes` is an array of objects with `name`, `value` and `expressions` props.
+   *
+   * `expressions` is an array of objects with start/end properties, relative to the
+   * whole buffer.
+   *
+   * @param   {string} data - html markup
+   * @returns {object} Result, contains data, output
+   */
   _parse(data) {
-    const me = this
 
     // Creating the state in the closure and passing it as a parameter is more
     // efficient and allows to use the same parser instance asynchronously.
@@ -99,23 +101,19 @@ assign(TagParser.prototype, {
     while (state.pos < length && state.count) {
 
       if (type === $_T.TEXT) {
-        type = me.parseText(state, data)
+        type = this.text(state, data)
 
       } else if (type === $_T.TAG) {
-        type = me.parseTag(state, data)
+        type = this.tag(state, data)
 
       } else if (type === $_T.ATTR) {
-        type = me.parseAttr(state, data)
+        type = this.attr(state, data)
 
       }
     }
 
-    if (state.count < 0) {
-      me._err(state, data, 'Root tag not found.')
-    }
-
-    if (state.count || type !== $_T.TEXT) {
-      me._err(state, data, 'Unexpected end of file')
+    if (state.count) {
+      this._err(state, data, ~state.count ? 'Unexpected end of file.' : 'Root tag not found.')
     }
 
     return { data, output: state.output }
@@ -131,8 +129,7 @@ assign(TagParser.prototype, {
    * @param   {string} message  - Error message
    */
   error(state, loc, message) {
-    message = `[${loc.line},${loc.col}]: ${message}`
-    throw new Error(message)
+    throw new Error(`[${loc.line},${loc.col}]: ${message}`)
   },
 
   /**
@@ -223,6 +220,7 @@ assign(TagParser.prototype, {
     let q = state.last
 
     state.pos = end
+
     if (q && q.type === $_T.TEXT) {
       q.end = end
     } else {
@@ -234,7 +232,9 @@ assign(TagParser.prototype, {
       q.expressions = q.expressions ? q.expressions.concat(expr) : expr
     }
 
-    if (rep) q.replace = rep
+    if (rep) {
+      q.replace = rep
+    }
   },
 
   /**
@@ -249,9 +249,9 @@ assign(TagParser.prototype, {
    */
   pushTag(state, type, name, start, end) {
     const root = state.root
+    const last = state.last = this.newNode(type, name, start, end)
 
     state.pos = end
-    state.output.push(state.last = this.newNode(type, name, start, end))
 
     if (root) {
       if (name === root.name) {
@@ -261,10 +261,12 @@ assign(TagParser.prototype, {
       }
     } else {
       // start with root (keep ref to output)
-      state.output.splice(0, state.output.length - 1)
-      state.root = { name: state.last.name, close: `/${name}` }
+      state.root  = { name: last.name, close: `/${name}` }
       state.count = 1
+      state.output.length  = 0
     }
+
+    state.output.push(last)
   },
 
   /**
@@ -278,11 +280,8 @@ assign(TagParser.prototype, {
 
     //assert(q && q.type === Mode.TAG, 'no previous tag for the attr!')
     state.pos = q.end = attr.end
-    if (q.attributes) {
-      q.attributes.push(attr)
-    } else {
-      q.attributes = [attr]
-    }
+
+    ;(q.attributes || (q.attributes = [])).push(attr)
   },
 
   /**
@@ -293,16 +292,15 @@ assign(TagParser.prototype, {
    * @param   {string} data  - Buffer to parse
    * @returns {number} New parser mode
    */
-  parseTag(state, data) {
+  tag(state, data) {
     const pos   = state.pos                 // pos of the char following '<'
     const start = pos - 1                   // pos of '<'
     const str   = data.substr(pos, 2)       // first two chars following '<'
 
     if (str[0] === '!') {                   // doctype, cdata, or comment
-      return this.parseComment(state, data, start)
-    }
+      this.comment(state, data, start)
 
-    if (TAG_2C.test(str)) {                 // ^\/?[a-zA-Z]
+    } else if (TAG_2C.test(str)) {          // ^\/?[a-zA-Z]
       const re = TAG_NAME                   // (\/?(?:>|[^\s>/]+)\s*(>)?) g
       re.lastIndex = pos
       const match = re.exec(data)
@@ -313,7 +311,7 @@ assign(TagParser.prototype, {
       // script/style block is parsed as another tag to extract attributes
       if (name === 'script' || name === 'style') {
         state.scryle = name         // used by parseText
-        state.hack = hack && RegExp(`<${state.closeName}\\s*>`, 'i')
+        state.hack = hack && RegExp(`<${state.root.close}\\s*>`, 'i')
       }
 
       this.pushTag(state, $_T.TAG, name, start, end)
@@ -337,9 +335,8 @@ assign(TagParser.prototype, {
    * @param   {object} state - Parser state
    * @param   {string} data  - Buffer to parse
    * @param   {number} start - Position of the '<!' sequence
-   * @returns {number} New parser mode (always TEXT).
    */
-  parseComment(state, data, start) {
+  comment(state, data, start) {
     const pos = start + 2                   // skip '<!'
     const str = data.substr(pos, 2) === '--' ? '-->' : '>'
     const end = data.indexOf(str, pos)
@@ -349,8 +346,6 @@ assign(TagParser.prototype, {
     }
 
     this.pushComment(state, start, end + str.length)
-
-    return $_T.TEXT
   },
 
   /**
@@ -361,7 +356,7 @@ assign(TagParser.prototype, {
    * @param   {string} data  - Buffer to parse
    * @returns {number} New parser mode.
    */
-  parseAttr(state, data) {
+  attr(state, data) {
     const tag = state.last                  // the last (current) tag in the output
     const _CH = /\S/g                       // matches the first non-space char
 
@@ -379,6 +374,7 @@ assign(TagParser.prototype, {
       if (tag.selfclose && state.root.name === tag.name) {
         state.count--                       // "pop" root tag
       }
+
       return $_T.TEXT
 
     } else if (match[0] === '/') {          // self closing tag?
@@ -434,15 +430,9 @@ assign(TagParser.prototype, {
     const expr = []
     let mm, tmp
 
+    // The only capture in re (closing quote or character) ends the loop
     re.lastIndex = start
-    while (1) {                             // eslint-disable-line
-      mm = re.exec(data)
-      if (!mm) {
-        this._err(state, data, 'Unfinished attribute', start)
-      }
-      if (mm[1]) {
-        break                               // the attribute ends
-      }
+    while ((mm = re.exec(data)) && !mm[1]) {
       tmp = this.extractExpr(data, mm.index)
       if (tmp) {
         if (typeof tmp == 'string') {
@@ -454,11 +444,17 @@ assign(TagParser.prototype, {
       }
     }
 
+    if (!mm) {
+      this._err(state, data, 'Unfinished attribute', start)
+    }
+
     // adjust the bounds of the value and save its content
     const end = mm.index
+
     attr.value = data.slice(start, end)
     attr.valueStart = start
     attr.end = quote ? end + 1 : end
+
     if (expr.length) {
       attr.expressions = expr
     }
@@ -472,7 +468,7 @@ assign(TagParser.prototype, {
    * @param   {string} data  - Buffer to parse
    * @returns {number} New parser mode.
    */
-  parseText(state, data) {
+  text(state, data) {
     const me = this
     const pos = state.pos                  // start of the text
 
@@ -487,6 +483,7 @@ assign(TagParser.prototype, {
       }
       const start = match.index
       const end   = state.hack ? start : re.lastIndex
+
       state.hack = state.scryle = 0         // reset the script/style flag now
 
       // write the tag content, if any
@@ -499,18 +496,19 @@ assign(TagParser.prototype, {
 
     } else if (data[pos] === '<') {
       state.pos++
+
       return $_T.TAG
 
     } else {
       const re = me._b0re('<')
-
-      re.lastIndex = pos
-      let mm = re.exec(data)
+      let mm
       let expr
       let rep
 
-      while (mm && mm[0] !== '<') {
+      re.lastIndex = pos
+      while ((mm = re.exec(data)) && mm[0] !== '<') {
         const tmp = me.extractExpr(data, mm.index)
+
         if (tmp) {
           if (typeof tmp == 'string') {
             rep = tmp
@@ -519,7 +517,6 @@ assign(TagParser.prototype, {
             re.lastIndex = tmp.end
           }
         }
-        mm = re.exec(data)
       }
 
       // if no '<' found, all remaining is text

@@ -10,11 +10,24 @@ process.chdir(__dirname)
   console.log('------------')
 
   const parse   = parser().parse
-  const builder = require('./builders/tree-builder')()
+  const builder = require('./builders/tree-builder2')()
   const source  = fs.readFileSync('fixtures/box.tag', 'utf8').trim()
   const result  = builder.build(parse(source))
 
-  console.log(result)
+  console.dir(result, { depth: 10, color: true })
+  console.log()
+})()
+
+;(function () {
+  console.log('Tree Builder (svg)')
+  console.log('------------------')
+
+  const parse   = parser().parse
+  const builder = require('./builders/tree-builder2')()
+  const source  = fs.readFileSync('fixtures/loop-svg-nodes.tag', 'utf8').trim()
+  const result  = builder.build(parse(source))
+
+  console.dir(result, { depth: 10, color: true })
   console.log()
 })()
 

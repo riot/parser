@@ -6,10 +6,16 @@
       <h2>Escaped \{0}</h2>
       <p>Body: {box.body}</p>
       <pre>
-        Do not trim this
+        Do not trim <span>this</span>
       </pre>
     </div>
   </div>
+  <p/>
+  <style type="less">
+    pre {
+      span: { font-weight: bolder }
+    }
+  </style>
   </>
   this.box = {
       title: "Good morning!",

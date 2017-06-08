@@ -27,6 +27,9 @@ const RE_PRE = /^\/?(?:pre|script|style|textarea)$/
 const $_BP_LEFT  = '{%'
 const $_BP_RIGHT = '%}'
 
+const toCamelCase = (string) => String(string).replace(/-+([\w])/g, (_, c) => c.toUpperCase())
+
+
 // Class htmlBuilder ======================================
 
 function RiotBuilder(options) {
@@ -64,7 +67,7 @@ Object.assign(RiotBuilder.prototype, {
     const nodes = input.output
     const data = input.data
     this.reset()
-    this.riotTag = this.getRiotTag(input.root)
+    this.riotTag = this.getRiotTag(nodes[0])
 
     for (let pos = 0; pos < nodes.length; pos++) {
       const node = nodes[pos]
@@ -131,8 +134,9 @@ Object.assign(RiotBuilder.prototype, {
 
     if (node.attributes) {
       node.attributes.forEach(a => {
+        const aname = toCamelCase(a.name)
         const value = this.parseNode(a, a.value, a.valueStart)
-        allTag.push(value ? `${a.name}="${value}"` : a.name)
+        allTag.push(value ? `${aname}="${value}"` : aname)
       })
     }
 

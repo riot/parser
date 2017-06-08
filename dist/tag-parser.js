@@ -258,7 +258,7 @@ assign(TagParser.prototype, {
   },
 
   _parse: function _parse(data) {
-    var me = this;
+    var this$1 = this;
 
     var state = {
       pos: 0,
@@ -273,31 +273,26 @@ assign(TagParser.prototype, {
     while (state.pos < length && state.count) {
 
       if (type === 3) {
-        type = me.parseText(state, data);
+        type = this$1.text(state, data);
 
       } else if (type === 1) {
-        type = me.parseTag(state, data);
+        type = this$1.tag(state, data);
 
       } else if (type === 2) {
-        type = me.parseAttr(state, data);
+        type = this$1.attr(state, data);
 
       }
     }
 
-    if (state.count < 0) {
-      me._err(state, data, 'Root tag not found.');
-    }
-
-    if (state.count || type !== 3) {
-      me._err(state, data, 'Unexpected end of file');
+    if (state.count) {
+      this._err(state, data, ~state.count ? 'Unexpected end of file.' : 'Root tag not found.');
     }
 
     return { data: data, output: state.output }
   },
 
   error: function error(state, loc, message) {
-    message = "[" + (loc.line) + "," + (loc.col) + "]: " + message;
-    throw new Error(message)
+    throw new Error(("[" + (loc.line) + "," + (loc.col) + "]: " + message))
   },
 
   _err: function _err(state, data, msg, pos) {
@@ -345,6 +340,7 @@ assign(TagParser.prototype, {
     var q = state.last;
 
     state.pos = end;
+
     if (q && q.type === 3) {
       q.end = end;
     } else {
@@ -356,14 +352,16 @@ assign(TagParser.prototype, {
       q.expressions = q.expressions ? q.expressions.concat(expr) : expr;
     }
 
-    if (rep) { q.replace = rep; }
+    if (rep) {
+      q.replace = rep;
+    }
   },
 
   pushTag: function pushTag(state, type, name, start, end) {
     var root = state.root;
+    var last = state.last = this.newNode(type, name, start, end);
 
     state.pos = end;
-    state.output.push(state.last = this.newNode(type, name, start, end));
 
     if (root) {
       if (name === root.name) {
@@ -373,33 +371,31 @@ assign(TagParser.prototype, {
       }
     } else {
 
-      state.output.splice(0, state.output.length - 1);
-      state.root = { name: state.last.name, close: ("/" + name) };
+      state.root  = { name: last.name, close: ("/" + name) };
       state.count = 1;
+      state.output.length  = 0;
     }
+
+    state.output.push(last);
   },
 
   pushAttr: function pushAttr(state, attr) {
     var q = state.last;
 
-    state.pos = q.end = attr.end;
-    if (q.attributes) {
-      q.attributes.push(attr);
-    } else {
-      q.attributes = [attr];
-    }
+    state.pos = q.end = attr.end
+
+    ;(q.attributes || (q.attributes = [])).push(attr);
   },
 
-  parseTag: function parseTag(state, data) {
+  tag: function tag(state, data) {
     var pos   = state.pos;
     var start = pos - 1;
     var str   = data.substr(pos, 2);
 
     if (str[0] === '!') {
-      return this.parseComment(state, data, start)
-    }
+      this.comment(state, data, start);
 
-    if (TAG_2C.test(str)) {
+    } else if (TAG_2C.test(str)) {
       var re = TAG_NAME;
       re.lastIndex = pos;
       var match = re.exec(data);
@@ -409,7 +405,7 @@ assign(TagParser.prototype, {
 
       if (name === 'script' || name === 'style') {
         state.scryle = name;
-        state.hack = hack && RegExp(("<" + (state.closeName) + "\\s*>"), 'i');
+        state.hack = hack && RegExp(("<" + (state.root.close) + "\\s*>"), 'i');
       }
 
       this.pushTag(state, 1, name, start, end);
@@ -425,7 +421,7 @@ assign(TagParser.prototype, {
     return 3
   },
 
-  parseComment: function parseComment(state, data, start) {
+  comment: function comment(state, data, start) {
     var pos = start + 2;
     var str = data.substr(pos, 2) === '--' ? '-->' : '>';
     var end = data.indexOf(str, pos);
@@ -435,11 +431,9 @@ assign(TagParser.prototype, {
     }
 
     this.pushComment(state, start, end + str.length);
-
-    return 3
   },
 
-  parseAttr: function parseAttr(state, data) {
+  attr: function attr(state, data) {
     var tag = state.last;
     var _CH = /\S/g;
 
@@ -455,6 +449,7 @@ assign(TagParser.prototype, {
       if (tag.selfclose && state.root.name === tag.name) {
         state.count--;
       }
+
       return 3
 
     } else if (match[0] === '/') {
@@ -496,14 +491,7 @@ assign(TagParser.prototype, {
     var mm, tmp;
 
     re.lastIndex = start;
-    while (1) {
-      mm = re.exec(data);
-      if (!mm) {
-        this$1._err(state, data, 'Unfinished attribute', start);
-      }
-      if (mm[1]) {
-        break
-      }
+    while ((mm = re.exec(data)) && !mm[1]) {
       tmp = this$1.extractExpr(data, mm.index);
       if (tmp) {
         if (typeof tmp == 'string') {
@@ -515,16 +503,22 @@ assign(TagParser.prototype, {
       }
     }
 
+    if (!mm) {
+      this._err(state, data, 'Unfinished attribute', start);
+    }
+
     var end = mm.index;
+
     attr.value = data.slice(start, end);
     attr.valueStart = start;
     attr.end = quote ? end + 1 : end;
+
     if (expr.length) {
       attr.expressions = expr;
     }
   },
 
-  parseText: function parseText(state, data) {
+  text: function text(state, data) {
     var me = this;
     var pos = state.pos;
 
@@ -539,6 +533,7 @@ assign(TagParser.prototype, {
       }
       var start = match.index;
       var end   = state.hack ? start : re.lastIndex;
+
       state.hack = state.scryle = 0;
 
       if (start > pos) {
@@ -549,18 +544,19 @@ assign(TagParser.prototype, {
 
     } else if (data[pos] === '<') {
       state.pos++;
+
       return 1
 
     } else {
       var re$1 = me._b0re('<');
-
-      re$1.lastIndex = pos;
-      var mm = re$1.exec(data);
+      var mm;
       var expr;
       var rep;
 
-      while (mm && mm[0] !== '<') {
+      re$1.lastIndex = pos;
+      while ((mm = re$1.exec(data)) && mm[0] !== '<') {
         var tmp = me.extractExpr(data, mm.index);
+
         if (tmp) {
           if (typeof tmp == 'string') {
             rep = tmp;
@@ -569,7 +565,6 @@ assign(TagParser.prototype, {
             re$1.lastIndex = tmp.end;
           }
         }
-        mm = re$1.exec(data);
       }
 
       var end$1 = mm ? mm.index : data.length;

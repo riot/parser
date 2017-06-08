@@ -50,7 +50,7 @@ describe('Expressions', function () {
   const theTests = require('./texpr')
   const titles = Object.keys(theTests)
 
-  const _TDEBUG = 0//'text inside tag, like-regex sequence in expression'
+  const _TDEBUG = 0
 
   for (let i = 0; i < titles.length; i++) {
     const title = titles[i]
@@ -116,21 +116,14 @@ describe('HTML Builder', function () {
     if (_TDEBUG && title === _TDEBUG) break
   }
 
-})
-
-
-describe('HTML Builder 2', function () {
-
-  const htmlBuilder = require('./builders/html-builder')
-
-  it('test 1', function () {
+  it('SVG Test', function () {
     const source  = fs.readFileSync('fixtures/loop-svg-nodes.tag', 'utf8').trim()
     const parse   = parser().parse
     const builder = htmlBuilder({ compact: false })
     const expected = [
       '<loop-svg-nodes>',
       '  <svg>',
-      '    <circle each="{ points }" riot-cx="{ x * 10 + 5 }" riot-cy="{ y * 10 + 5 }" r="2" fill="black"></circle>',
+      '    <circle each="{ points }" riot-cx="{ x * 10 + 5 }" riot-cy="{ y * 10 + 5 }" r="2" fill="black"/>',
       '  </svg>',
       '  <p>Description</p>',
       '  <loop-svg-nodes></loop-svg-nodes>',

@@ -87,6 +87,8 @@ Object.assign(HtmlBuilder.prototype, {
   openTag(node) {
     const name   = node.name
     const allTag = [name]
+    const isVoid = VOID_TAGS.test(name)
+    const slash  = isVoid && ~VOID_TAGS.svgTags.indexOf(name) ? '/' : ''
 
     if (node.attributes) {
       node.attributes.forEach(a => {
@@ -95,9 +97,11 @@ Object.assign(HtmlBuilder.prototype, {
       })
     }
 
-    this._output.push(`<${allTag.join(' ')}>`)
+    this._output.push(`<${allTag.join(' ')}${slash}>`)
 
-    if (VOID_TAGS.test(name)) return
+    if (isVoid) {
+      return
+    }
 
     if (node.selfclose) {
       this._output.push(`</${name}>`)

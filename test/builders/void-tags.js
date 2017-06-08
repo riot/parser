@@ -5,4 +5,40 @@
  * @see   {@link http://www.w3.org/TR/html-markup/syntax.html#syntax-elements}
  * @see   {@link http://www.w3.org/TR/html5/syntax.html#void-elements}
  */
-module.exports = /^\/?(?:area|base|br|col|embed|frame|hr|img|input|keygen|link|meta|param|source|track|wbr)$/i
+
+// basefont, bgsound, command, frame, isindex, nextid, nobr are not
+// html5 elements
+const htmlTags = [
+  'area',
+  'base',
+  'br',
+  'col',
+  'embed',
+  'hr',
+  'img',
+  'input',
+  'keygen',
+  'link',
+  'menuitem',
+  'meta',
+  'param',
+  'source',
+  'track',
+  'wbr'
+]
+
+const svgTags = [
+  'circle',
+  'ellipse',
+  'line',
+  'path',
+  'polygon',
+  'polyline',
+  'rect',
+  'stop',
+  'use'
+]
+
+module.exports = new RegExp(`^\/?(?:${htmlTags.join('|')}|${svgTags.join('|')})$`, 'i')
+module.exports.htmlTags = htmlTags
+module.exports.svgTags  = svgTags
