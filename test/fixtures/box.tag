@@ -11,15 +11,19 @@
     </div>
   </div>
   <p/>
+
   <style type="less">
     pre {
       span: { font-weight: bolder }
     }
   </style>
-  </>
+
+  <script>
   this.box = {
       title: "Good morning!",
       image: "http://trinixy.ru/pics5/20130614/podb_07.jpg",
       body: "It is when SO!"
   }
+  </script>
+
 </content>

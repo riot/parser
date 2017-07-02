@@ -1,33 +1,38 @@
 'use strict'
 
 const compareObject = require('./utils/compare-objects')
+const echoBuilder = require('./builders/echo-builder')
 const parser = require('../')
 const expect = require('expect')
 const fs = require('fs')
 
 process.chdir(__dirname)
 
-describe('The Parser', function () {
+function getOpts(test) {
+  return Object.assign({ brackets: ['{', '}'] }, test && test.options)
+}
 
+
+describe('The Parser', function () {
   const theTests = require('./tparser')
   const titles = Object.keys(theTests)
 
-  const _TDEBUG = 0//'empty tags with comment inside parsed as attributes'
+  const _TDEBUG = 0
 
   for (let i = 0; i < titles.length; i++) {
     const title = titles[i]
 
     it(title, function () {
-      const test  = theTests[title]
-      const parse = parser(test.options).parse
+      const test = theTests[title]
 
       if (_TDEBUG && title === _TDEBUG) debugger
+      const _p = parser(getOpts(test), echoBuilder)
 
       if (test.throws) {
-        expect(function () { parse(test.data) }).toThrow(test.throws)
+        expect(function () { _p.parse(test.data) }).toThrow(test.throws)
 
       } else {
-        let result = parse(test.data)
+        let result = _p.parse(test.data)
         let expected
         if (compareObject(result.output, test.expected)) {
           result = expected = 1
@@ -56,26 +61,73 @@ describe('Expressions', function () {
     const title = titles[i]
 
     it(title, function () {
-      const test  = theTests[title]
-      const parse = parser(test.options).parse
+      const test = theTests[title]
+      const _p = parser(getOpts(test), echoBuilder)
 
       if (_TDEBUG && title === _TDEBUG) debugger
 
-      let result = parse(test.data)
-
       if (test.throws) {
-        expect(result.error).toMatch(test.throws)
+        expect(function () { _p.parse(test.data) }).toThrow(test.throws)
 
       } else {
-        let expected = 1
+        let result = _p.parse(test.data)
+        let expected
         if (compareObject(result.output, test.expected)) {
-          result = 1
+          result = expected = 1
         } else {
           result   = JSON.stringify(result.output)
           expected = JSON.stringify(test.expected)
         }
         expect(result).toBe(expected)
       }
+    })
+
+    if (_TDEBUG && title === _TDEBUG) break
+  }
+
+})
+
+
+describe('Tree Builder', function () {
+  const path = require('path')
+
+  function cat(dir, name) {
+    return fs.readFileSync(path.join('.', dir, name), 'utf8')
+  }
+
+  const titles = fs.readdirSync('./fixtures')
+  const _p = parser(getOpts())
+
+  const _TDEBUG = ''
+  const _TOSAVE = []
+
+  for (let i = 0; i < titles.length; i++) {
+    const title = titles[i]
+    const ext = path.extname(title)
+    if (ext !== '.tag') {
+      continue
+    }
+    const name = path.basename(title, ext)
+
+    if (name === _TDEBUG) debugger
+
+    it(title, function () {
+      const src = cat('fixtures', title)
+      const res = _p.parse(src)
+
+      expect(res).toBeAn(Object)
+      expect(res.output).toBeAn(Object)
+
+      const tree = res.output
+
+      const json = JSON.stringify(tree, null, '  ')
+
+      if (_TOSAVE[0] === '*' || ~_TOSAVE.indexOf(name)) {
+        fs.writeFile(path.join('.', 'expected', name + '_out.json'), json, function (err) {
+          if (err) throw err
+        })
+      }
+      expect(json.trim()).toEqual(cat('expected', name + '.json').trim())
     })
 
     if (_TDEBUG && title === _TDEBUG) break
@@ -96,19 +148,19 @@ describe('HTML Builder', function () {
     const title = titles[i]
 
     it(title, function () {
-      const test    = theTests[title]
-      const parse   = parser(test.options).parse
+      const test = theTests[title]
+      const _p = parser(getOpts(test), echoBuilder)
       const builder = htmlBuilder(test.builderOptions)
 
       if (_TDEBUG && title === _TDEBUG) debugger
 
       if (test.throws) {
         expect(function () {
-          builder.build(parse(test.data))
+          builder.build(_p.parse(test.data))
         }).toThrow(test.throws)
 
       } else {
-        const result = builder.build(parse(test.data))
+        const result = builder.build(_p.parse(test.data))
         expect(result).toBe(test.expected)
       }
     })
@@ -117,8 +169,8 @@ describe('HTML Builder', function () {
   }
 
   it('SVG Test', function () {
-    const source  = fs.readFileSync('fixtures/loop-svg-nodes.tag', 'utf8').trim()
-    const parse   = parser().parse
+    const source = fs.readFileSync('fixtures/loop-svg-nodes.tag', 'utf8').trim()
+    const _p = parser(getOpts(), echoBuilder)
     const builder = htmlBuilder({ compact: false })
     const expected = [
       '<loop-svg-nodes>',
@@ -136,7 +188,7 @@ describe('HTML Builder', function () {
       '</loop-svg-nodes>'
     ].join('\n')
 
-    const result = builder.build(parse(source))
+    const result = builder.build(_p.parse(source))
     expect(result).toBe(expected)
   })
 

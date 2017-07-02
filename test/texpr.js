@@ -1,6 +1,5 @@
 
-const fn = require('../')
-const _T = fn().nodeTypes
+const _T = require('../nodeTypes')
 
 module.exports = {
 
@@ -9,7 +8,7 @@ module.exports = {
     expected: [
       { type: _T.TAG, name: 'p', start: 0, end: 3 },
       {
-        type: _T.TEXT, start: 3, end: 8, expressions: [
+        type: _T.TEXT, text: '{ 0 }', start: 3, end: 8, expr: [
           { text: ' 0 ', start: 3, end: 8 }
         ]
       },
@@ -22,7 +21,7 @@ module.exports = {
     expected: [
       { type: _T.TAG, name: 'p', start: 0, end: 3 },
       {
-        type: _T.TEXT, start: 3, end: 9, expressions: [
+        type: _T.TEXT, text: '{\n\t0\n}', start: 3, end: 9, expr: [
           { text: '\n\t0\n', start: 3, end: 9 }
         ]
       },
@@ -35,7 +34,7 @@ module.exports = {
     expected: [
       { type: _T.TAG, name: 'p', start: 0, end: 3 },
       {
-        type: _T.TEXT, start: 3, end: 12, expressions: [
+        type: _T.TEXT, text: '{\n0\n+\n1 }', start: 3, end: 12, expr: [
           { text: '\n0\n+\n1 ', start: 3, end: 12 }
         ]
       },
@@ -48,7 +47,7 @@ module.exports = {
     expected: [
       { type: _T.TAG, name: 'p', start: 0, end: 3 },
       {
-        type: _T.TEXT, start: 3, end: 14, expressions: [
+        type: _T.TEXT, text: 'foo {"<a>"}', start: 3, end: 14, expr: [
           { text: '"<a>"', start: 7, end: 14 }
         ]
       },
@@ -61,7 +60,7 @@ module.exports = {
     expected: [
       { type: _T.TAG, name: 'p', start: 0, end: 3 },
       {
-        type: _T.TEXT, start: 3, end: 16, expressions: [
+        type: _T.TEXT, text: 'foo "{"<a>"}"', start: 3, end: 16, expr: [
           { text: '"<a>"', start: 8, end: 15 }
         ]
       },
@@ -74,7 +73,7 @@ module.exports = {
     expected: [
       { type: _T.TAG, name: 'p', start: 0, end: 3 },
       {
-        type: _T.TEXT, start: 3, end: 16, expressions: [
+        type: _T.TEXT, text: "foo '{'<a>'}'", start: 3, end: 16, expr: [
           { text: "'<a>'", start: 8, end: 15 }
         ]
       },
@@ -86,7 +85,7 @@ module.exports = {
     data: '<div>foo & { 0 }</div>',
     expected: [
       { type: _T.TAG, name: 'div', start: 0, end: 5 },
-      { type: _T.TEXT, start: 5, end: 16, expressions: [
+      { type: _T.TEXT, text: 'foo & { 0 }', start: 5, end: 16, expr: [
           { text: ' 0 ', start: 11, end: 16 }
       ] },
       { type: _T.TAG, name: '/div', start: 16, end: 22 }
@@ -97,7 +96,7 @@ module.exports = {
     data: '<div>foo & { "{" }</div>',
     expected: [
       { type: _T.TAG, name: 'div', start: 0, end: 5 },
-      { type: _T.TEXT, start: 5, end: 18, expressions: [
+      { type: _T.TEXT, text: 'foo & { "{" }', start: 5, end: 18, expr: [
         { text: ' "{" ', start: 11, end: 18 }
       ] },
       { type: _T.TAG, name: '/div', start: 18, end: 24 }
@@ -108,7 +107,7 @@ module.exports = {
     data: "<div>foo & { s === \"{\" ? '' : '}' }</div>",
     expected: [
       { type: _T.TAG, name: 'div', start: 0, end: 5 },
-      { type: _T.TEXT, start: 5, end: 35, expressions: [
+      { type: _T.TEXT, text: "foo & { s === \"{\" ? '' : '}' }", start: 5, end: 35, expr: [
         { text: " s === \"{\" ? '' : '}' ", start: 11, end: 35 }
       ] },
       { type: _T.TAG, name: '/div', start: 35, end: 41 }
@@ -119,7 +118,7 @@ module.exports = {
     data: '<a>{ s: /}/ }</a>',
     expected: [
       { type: _T.TAG, name: 'a', start: 0, end: 3 },
-      { type: _T.TEXT, start: 3, end: 13, expressions: [
+      { type: _T.TEXT, text: '{ s: /}/ }', start: 3, end: 13, expr: [
         { text: ' s: /}/ ', start: 3, end: 13 }
       ] },
       { type: _T.TAG, name: '/a', start: 13, end: 17 }
@@ -130,7 +129,7 @@ module.exports = {
     data: '<a>{ a++ /5}{0/ -1 }</a>',
     expected: [
       { type: _T.TAG, name: 'a', start: 0, end: 3 },
-      { type: _T.TEXT, start: 3, end: 20, expressions: [
+      { type: _T.TEXT, text: '{ a++ /5}{0/ -1 }', start: 3, end: 20, expr: [
         { text: ' a++ /5', start: 3, end: 12 },
         { text: '0/ -1 ', start: 12, end: 20 }
       ] },
@@ -142,7 +141,7 @@ module.exports = {
     data: '<a>{ a-++/}/i.lastIndex }</a>',
     expected: [
       { type: _T.TAG, name: 'a', start: 0, end: 3 },
-      { type: _T.TEXT, start: 3, end: 25, expressions: [
+      { type: _T.TEXT, text: '{ a-++/}/i.lastIndex }', start: 3, end: 25, expr: [
         { text: ' a-++/}/i.lastIndex ', start: 3, end: 25 }
       ] },
       { type: _T.TAG, name: '/a', start: 25, end: 29 }
@@ -153,7 +152,7 @@ module.exports = {
     data: '<a> { a + /<g></g> b } </a>',
     expected: [
       { type: _T.TAG, name: 'a', start: 0, end: 3 },
-      { type: _T.TEXT, start: 3, end: 23, expressions: [
+      { type: _T.TEXT, text: ' { a + /<g></g> b } ', start: 3, end: 23, expr: [
         { text: ' a + /<g></g> b ', start: 4, end: 22 }
       ] },
       { type: _T.TAG, name: '/a', start: 23, end: 27 }
@@ -164,7 +163,7 @@ module.exports = {
     data: '<a>{ a: 1, "b": fn(a,b) }</a>',
     expected: [
       { type: _T.TAG, name: 'a', start: 0, end: 3 },
-      { type: _T.TEXT, start: 3, end: 25, expressions: [
+      { type: _T.TEXT, text: '{ a: 1, "b": fn(a,b) }', start: 3, end: 25, expr: [
         { text: ' a: 1, "b": fn(a,b) ', start: 3, end: 25 }
       ] },
       { type: _T.TAG, name: '/a', start: 25, end: 29 }
@@ -175,8 +174,8 @@ module.exports = {
     data: '<a foo="{e}"/>',
     expected: [
       {
-        type: _T.TAG, name: 'a', start: 0, end: 14, selfclose: true, attributes: [
-          { name: 'foo', value: '{e}', start: 3, end: 12, valueStart: 8, expressions: [
+        type: _T.TAG, name: 'a', start: 0, end: 14, selfclose: true, attr: [
+          { name: 'foo', value: '{e}', start: 3, end: 12, valueStart: 8, expr: [
             { text: 'e', start: 8, end: 11 }
           ] }
         ]
@@ -188,8 +187,8 @@ module.exports = {
     data: '<a foo={ e }/>',
     expected: [
       {
-        type: _T.TAG, name: 'a', start: 0, end: 14, selfclose: true, attributes: [
-          { name: 'foo', value: '{ e }', start: 3, end: 12, valueStart: 7, expressions: [
+        type: _T.TAG, name: 'a', start: 0, end: 14, selfclose: true, attr: [
+          { name: 'foo', value: '{ e }', start: 3, end: 12, valueStart: 7, expr: [
             { text: ' e ', start: 7, end: 12 }
           ] }
         ]
@@ -201,8 +200,8 @@ module.exports = {
     data: '<div foo= "{ s: "}", c: \'{\', d: /}/ }"/>',
     expected: [
       {
-        type: _T.TAG, name: 'div', start: 0, end: 40, selfclose: true, attributes: [
-          { name: 'foo', value: '{ s: "}", c: \'{\', d: /}/ }', start: 5, end: 38, valueStart: 11, expressions: [
+        type: _T.TAG, name: 'div', start: 0, end: 40, selfclose: true, attr: [
+          { name: 'foo', value: '{ s: "}", c: \'{\', d: /}/ }', start: 5, end: 38, valueStart: 11, expr: [
             { text: ' s: "}", c: \'{\', d: /}/ ', start: 11, end: 37 }
           ] }
         ]
@@ -214,8 +213,8 @@ module.exports = {
     data: '<a foo="{\'e\'}"/>',
     expected: [
       {
-        type: _T.TAG, name: 'a', start: 0, end: 16, selfclose: true, attributes: [
-          { name: 'foo', value: "{'e'}", start: 3, end: 14, valueStart: 8, expressions: [
+        type: _T.TAG, name: 'a', start: 0, end: 16, selfclose: true, attr: [
+          { name: 'foo', value: "{'e'}", start: 3, end: 14, valueStart: 8, expr: [
             { text: "'e'", start: 8, end: 13 }
           ] }
         ]
@@ -227,8 +226,8 @@ module.exports = {
     data: "<a foo='{'e'}'/>",
     expected: [
       {
-        type: _T.TAG, name: 'a', start: 0, end: 16, selfclose: true, attributes: [
-          { name: 'foo', value: "{'e'}", start: 3, end: 14, valueStart: 8, expressions: [
+        type: _T.TAG, name: 'a', start: 0, end: 16, selfclose: true, attr: [
+          { name: 'foo', value: "{'e'}", start: 3, end: 14, valueStart: 8, expr: [
             { text: "'e'", start: 8, end: 13 }
           ] }
         ]
@@ -240,8 +239,8 @@ module.exports = {
     data: '<a foo=\'{"e"}\'/>',
     expected: [
       {
-        type: _T.TAG, name: 'a', start: 0, end: 16, selfclose: true, attributes: [
-          { name: 'foo', value: '{"e"}', start: 3, end: 14, valueStart: 8, expressions: [
+        type: _T.TAG, name: 'a', start: 0, end: 16, selfclose: true, attr: [
+          { name: 'foo', value: '{"e"}', start: 3, end: 14, valueStart: 8, expr: [
             { text: '"e"', start: 8, end: 13 }
           ] }
         ]
@@ -253,8 +252,8 @@ module.exports = {
     data: '<a foo="{"e"}"/>',
     expected: [
       {
-        type: _T.TAG, name: 'a', start: 0, end: 16, selfclose: true, attributes: [
-          { name: 'foo', value: '{"e"}', start: 3, end: 14, valueStart: 8, expressions: [
+        type: _T.TAG, name: 'a', start: 0, end: 16, selfclose: true, attr: [
+          { name: 'foo', value: '{"e"}', start: 3, end: 14, valueStart: 8, expr: [
             { text: '"e"', start: 8, end: 13 }
           ] }
         ]
@@ -266,9 +265,9 @@ module.exports = {
     data: '<a data-templ={\n"<div>\\\n\t<a></a>\\\n</div>"\n}/>',
     expected: [
       {
-        type: _T.TAG, name: 'a', start: 0, end: 45, selfclose: true, attributes: [
+        type: _T.TAG, name: 'a', start: 0, end: 45, selfclose: true, attr: [
           { name: 'data-templ', value: '{\n"<div>\\\n\t<a></a>\\\n</div>"\n}', start: 3, end: 43, valueStart: 14,
-            expressions: [{ text: '\n"<div>\\\n\t<a></a>\\\n</div>"\n', start: 14, end: 43 }]
+            expr: [{ text: '\n"<div>\\\n\t<a></a>\\\n</div>"\n', start: 14, end: 43 }]
           }
         ]
       }
@@ -279,47 +278,49 @@ module.exports = {
     data: '<a>data-templ={\n"<div>\\\n\t<a></a>\\\n</div>"\n}</a>',
     expected: [
       { type: _T.TAG, name: 'a', start: 0, end: 3 },
-      { type: _T.TEXT, start: 3, end: 43,
-        expressions: [{ text: '\n"<div>\\\n\t<a></a>\\\n</div>"\n', start: 14, end: 43 }]
+      { type: _T.TEXT, text: 'data-templ={\n"<div>\\\n\t<a></a>\\\n</div>"\n}', start: 3, end: 43,
+        expr: [{ text: '\n"<div>\\\n\t<a></a>\\\n</div>"\n', start: 14, end: 43 }]
       },
       { type: _T.TAG, name: '/a', start: 43, end: 47 }
     ]
   },
 
-  'escaped left bracket generates a `replace` property w/bracket as value': {
+  'escaped left bracket generates a `unescape` property w/char to unescape': {
     data: '<a foo="\\{{e}"/>',
     expected: [
       {
-        type: _T.TAG, name: 'a', start: 0, end: 16, selfclose: true, attributes: [
+        type: _T.TAG, name: 'a', start: 0, end: 16, selfclose: true, attr: [
           {
-            name: 'foo', value: '\\{{e}', start: 3, end: 14, valueStart: 8, replace: '{',
-            expressions: [
+            name: 'foo', value: '\\{{e}', start: 3, end: 14, valueStart: 8,
+            expr: [
               { text: 'e', start: 10, end: 13 }
-            ]
+            ],
+            unescape: '{'
           }
         ]
       }
     ]
   },
 
-  'escaped left bracket generates a `replace` property w/bracket as value #2': {
+  'escaped left bracket generates a `unescape` property w/char to unescape #2': {
     data: '<a foo="\\{\\{}"/>',
     expected: [
       {
-        type: _T.TAG, name: 'a', start: 0, end: 16, selfclose: true, attributes: [
+        type: _T.TAG, name: 'a', start: 0, end: 16, selfclose: true, attr: [
           {
-            name: 'foo', value: '\\{\\{}', start: 3, end: 14, valueStart: 8, replace: '{'
+            name: 'foo', value: '\\{\\{}', start: 3, end: 14, valueStart: 8,
+            unescape: '{'
           }
         ]
       }
     ]
   },
 
-  'escaped left bracket generates a `replace` property w/bracket as value #3': {
+  'escaped left bracket generates a `unescape` property w/char to unescape #3': {
     data: '<a>foo="\\{\\{}"</a>',
     expected: [
       { type: _T.TAG, name: 'a', start: 0, end: 3 },
-      { type: _T.TEXT, start: 3, end: 14, replace: '{' },
+      { type: _T.TEXT, text: 'foo="\\{\\{}"', start: 3, end: 14, unescape: '{' },
       { type: _T.TAG, name: '/a', start: 14, end: 18 }
     ]
   },
@@ -333,7 +334,7 @@ module.exports = {
     data: '<div>foo & { `bar${baz}` }</div>',
     expected: [
       { type: _T.TAG, name: 'div', start: 0, end: 5 },
-      { type: _T.TEXT, start: 5, end: 26, expressions: [
+      { type: _T.TEXT, text: 'foo & { `bar${baz}` }', start: 5, end: 26, expr: [
         { text: ' `bar${baz}` ', start: 11, end: 26 }
       ] },
       { type: _T.TAG, name: '/div', start: 26, end: 32 }
@@ -344,7 +345,7 @@ module.exports = {
     data: '<div>foo & { `bar${`}`}` }</div>',
     expected: [
       { type: _T.TAG, name: 'div', start: 0, end: 5 },
-      { type: _T.TEXT, start: 5, end: 26, expressions: [
+      { type: _T.TEXT, text: 'foo & { `bar${`}`}` }', start: 5, end: 26, expr: [
         { text: ' `bar${`}`}` ', start: 11, end: 26 }
       ] },
       { type: _T.TAG, name: '/div', start: 26, end: 32 }
@@ -355,7 +356,7 @@ module.exports = {
     data: '<div>foo & { `bar${ a?"<a>":\'}\' }` }</div>',
     expected: [
       { type: _T.TAG, name: 'div', start: 0, end: 5 },
-      { type: _T.TEXT, start: 5, end: 36, expressions: [
+      { type: _T.TEXT, text: 'foo & { `bar${ a?"<a>":\'}\' }` }', start: 5, end: 36, expr: [
         { text: ' `bar${ a?"<a>":\'}\' }` ', start: 11, end: 36 }
       ] },
       { type: _T.TAG, name: '/div', start: 36, end: 42 }
@@ -366,7 +367,7 @@ module.exports = {
     data: '<div>foo & { `\nbar${\n\t`}`}\n` }</div>',
     expected: [
       { type: _T.TAG, name: 'div', start: 0, end: 5 },
-      { type: _T.TEXT, start: 5, end: 30, expressions: [
+      { type: _T.TEXT, text: 'foo & { `\nbar${\n\t`}`}\n` }', start: 5, end: 30, expr: [
         { text: ' `\nbar${\n\t`}`}\n` ', start: 11, end: 30 }
       ] },
       { type: _T.TAG, name: '/div', start: 30, end: 36 }
@@ -377,7 +378,7 @@ module.exports = {
     data: '<div>foo & {\n`\nbar\n${\t`}`}`\n }</div>',
     expected: [
       { type: _T.TAG, name: 'div', start: 0, end: 5 },
-      { type: _T.TEXT, start: 5, end: 30, expressions: [
+      { type: _T.TEXT, text: 'foo & {\n`\nbar\n${\t`}`}`\n }', start: 5, end: 30, expr: [
         { text: '\n`\nbar\n${\t`}`}`\n ', start: 11, end: 30 }
       ] },
       { type: _T.TAG, name: '/div', start: 30, end: 36 }
@@ -388,7 +389,7 @@ module.exports = {
     data: '<div>foo & { `bar${``}` }</div>',
     expected: [
       { type: _T.TAG, name: 'div', start: 0, end: 5 },
-      { type: _T.TEXT, start: 5, end: 25, expressions: [
+      { type: _T.TEXT, text: 'foo & { `bar${``}` }', start: 5, end: 25, expr: [
         { text: ' `bar${``}` ', start: 11, end: 25 }
       ] },
       { type: _T.TAG, name: '/div', start: 25, end: 31 }
@@ -399,7 +400,7 @@ module.exports = {
     data: '<div>foo & "{ `bar${ "a" + `b${""}` }` }"</div>',
     expected: [
       { type: _T.TAG, name: 'div', start: 0, end: 5 },
-      { type: _T.TEXT, start: 5, end: 41, expressions: [
+      { type: _T.TEXT, text: 'foo & "{ `bar${ "a" + `b${""}` }` }"', start: 5, end: 41, expr: [
         { text: ' `bar${ "a" + `b${""}` }` ', start: 12, end: 40 }
       ] },
       { type: _T.TAG, name: '/div', start: 41, end: 47 }
@@ -410,7 +411,7 @@ module.exports = {
     data: '<div>foo & "{ `"bar${ "a" + `b${""}` }"` }"</div>',
     expected: [
       { type: _T.TAG, name: 'div', start: 0, end: 5 },
-      { type: _T.TEXT, start: 5, end: 43, expressions: [
+      { type: _T.TEXT, text: 'foo & "{ `"bar${ "a" + `b${""}` }"` }"', start: 5, end: 43, expr: [
         { text: ' `"bar${ "a" + `b${""}` }"` ', start: 12, end: 42 }
       ] },
       { type: _T.TAG, name: '/div', start: 43, end: 49 }
@@ -421,7 +422,7 @@ module.exports = {
     data: '<div>foo & { `bar${ "a" + `b${a + "}"}` }` }</div>',
     expected: [
       { type: _T.TAG, name: 'div', start: 0, end: 5 },
-      { type: _T.TEXT, start: 5, end: 44, expressions: [
+      { type: _T.TEXT, text: 'foo & { `bar${ "a" + `b${a + "}"}` }` }', start: 5, end: 44, expr: [
         { text: ' `bar${ "a" + `b${a + "}"}` }` ', start: 11, end: 44 }
       ] },
       { type: _T.TAG, name: '/div', start: 44, end: 50 }
@@ -437,7 +438,7 @@ module.exports = {
     data: '<a>[1+2]</a>',
     expected: [
       { type: _T.TAG, name: 'a', start: 0, end: 3 },
-      { type: _T.TEXT, start: 3, end: 8, expressions: [
+      { type: _T.TEXT, text: '[1+2]', start: 3, end: 8, expr: [
         { text: '1+2', start: 3, end: 8 }
       ] },
       { type: _T.TAG, name: '/a', start: 8, end: 12 }
@@ -449,7 +450,7 @@ module.exports = {
     data: '<a>[a[1]]</a>',
     expected: [
       { type: _T.TAG, name: 'a', start: 0, end: 3 },
-      { type: _T.TEXT, start: 3, end: 9, expressions: [
+      { type: _T.TEXT, text: '[a[1]]', start: 3, end: 9, expr: [
         { text: 'a[1]', start: 3, end: 9 }
       ] },
       { type: _T.TAG, name: '/a', start: 9, end: 13 }
@@ -461,7 +462,7 @@ module.exports = {
     data: '<a>[[a[1]]]</a>',
     expected: [
       { type: _T.TAG, name: 'a', start: 0, end: 3 },
-      { type: _T.TEXT, start: 3, end: 11, expressions: [
+      { type: _T.TEXT, text: '[[a[1]]]', start: 3, end: 11, expr: [
         { text: 'a[1]', start: 3, end: 11 }
       ] },
       { type: _T.TAG, name: '/a', start: 11, end: 15 }
@@ -473,7 +474,7 @@ module.exports = {
     data: '<a>\\[[1+2]</a>',
     expected: [
       { type: _T.TAG, name: 'a', start: 0, end: 3 },
-      { type: _T.TEXT, start: 3, end: 10, replace: '[', expressions: [
+      { type: _T.TEXT, text: '\\[[1+2]', start: 3, end: 10, unescape: '[', expr: [
         { text: '1+2', start: 5, end: 10 }
       ] },
       { type: _T.TAG, name: '/a', start: 10, end: 14 }
@@ -485,7 +486,7 @@ module.exports = {
     data: '<a>(a(1))</a>',
     expected: [
       { type: _T.TAG, name: 'a', start: 0, end: 3 },
-      { type: _T.TEXT, start: 3, end: 9, expressions: [
+      { type: _T.TEXT, text: '(a(1))', start: 3, end: 9, expr: [
         { text: 'a(1)', start: 3, end: 9 }
       ] },
       { type: _T.TAG, name: '/a', start: 9, end: 13 }
@@ -497,7 +498,7 @@ module.exports = {
     data: '<a>\\((1+2)</a>',
     expected: [
       { type: _T.TAG, name: 'a', start: 0, end: 3 },
-      { type: _T.TEXT, start: 3, end: 10, replace: '(', expressions: [
+      { type: _T.TEXT, text: '\\((1+2)', start: 3, end: 10, unescape: '(', expr: [
         { text: '1+2', start: 5, end: 10 }
       ] },
       { type: _T.TAG, name: '/a', start: 10, end: 14 }
@@ -509,7 +510,7 @@ module.exports = {
     data: '<a>([a([1])])</a>',
     expected: [
       { type: _T.TAG, name: 'a', start: 0, end: 3 },
-      { type: _T.TEXT, start: 3, end: 13, expressions: [
+      { type: _T.TEXT, text: '([a([1])])', start: 3, end: 13, expr: [
         { text: 'a([1])', start: 3, end: 13 }
       ] },
       { type: _T.TAG, name: '/a', start: 13, end: 17 }
@@ -521,7 +522,7 @@ module.exports = {
     data: '<a>{{{}}</a>',
     expected: [
       { type: _T.TAG, name: 'a', start: 0, end: 3 },
-      { type: _T.TEXT, start: 3, end: 8, expressions: [
+      { type: _T.TEXT, text: '{{{}}', start: 3, end: 8, expr: [
         { text: '{}', start: 3, end: 8 }
       ] },
       { type: _T.TAG, name: '/a', start: 8, end: 12 }
@@ -533,7 +534,7 @@ module.exports = {
     data: '<a>{{}}}</a>',
     expected: [
       { type: _T.TAG, name: 'a', start: 0, end: 3 },
-      { type: _T.TEXT, start: 3, end: 8, expressions: [
+      { type: _T.TEXT, text: '{{}}}', start: 3, end: 8, expr: [
         { text: '{}', start: 3, end: 8 }
       ] },
       { type: _T.TAG, name: '/a', start: 8, end: 12 }
@@ -545,7 +546,7 @@ module.exports = {
     data: '<a>${`a${0}`}</a>',
     expected: [
       { type: _T.TAG, name: 'a', start: 0, end: 3 },
-      { type: _T.TEXT, start: 3, end: 13, expressions: [
+      { type: _T.TEXT, text: '${`a${0}`}', start: 3, end: 13, expr: [
         { text: '`a${0}`', start: 3, end: 13 }
       ] },
       { type: _T.TAG, name: '/a', start: 13, end: 17 }
@@ -556,9 +557,9 @@ module.exports = {
     options: { brackets: ['${', '}'] },
     data: '<a b="${ `a${0}` }" />',
     expected: [
-      { type: _T.TAG, name: 'a', start: 0, end: 22, attributes: [
+      { type: _T.TAG, name: 'a', start: 0, end: 22, attr: [
         { name: 'b', value: '${ `a${0}` }', start: 3, end: 19, valueStart: 6,
-          expressions: [
+          expr: [
             { text: ' `a${0}` ', start: 6, end: 18 }
           ]
         }
@@ -570,9 +571,9 @@ module.exports = {
     options: { brackets: ['${', '}'] },
     data: '<a b=${ `a${0}` } />',
     expected: [
-      { type: _T.TAG, name: 'a', start: 0, end: 20, attributes: [
+      { type: _T.TAG, name: 'a', start: 0, end: 20, attr: [
         { name: 'b', value: '${ `a${0}` }', start: 3, end: 17, valueStart: 5,
-          expressions: [
+          expr: [
             { text: ' `a${0}` ', start: 5, end: 17 }
           ]
         }
@@ -589,15 +590,15 @@ module.exports = {
         name: 'a',
         start: 0,
         end: 19,
-        attributes: [
+        attr: [
           {
             name: 'b',
             value: '\\${${{}}}',
             start: 3,
             end: 16,
-            replace: '${',
+            unescape: '${',
             valueStart: 6,
-            expressions: [
+            expr: [
               { text: '{}', start: 9, end: 14 }
             ]
           }

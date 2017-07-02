@@ -1,3 +1,4 @@
+lib/*
 dist/*
 test/*
 !test/index.js

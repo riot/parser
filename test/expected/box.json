@@ -1,0 +1,266 @@
+{
+  "html": {
+    "type": 1,
+    "name": "content",
+    "start": 0,
+    "end": 559,
+    "attr": [
+      {
+        "name": "class",
+        "value": "container",
+        "start": 9,
+        "end": 26,
+        "valueStart": 16,
+        "parts": [
+          "container"
+        ]
+      }
+    ],
+    "children": [
+      {
+        "type": 1,
+        "name": "div",
+        "start": 30,
+        "end": 291,
+        "attr": [
+          {
+            "name": "class",
+            "value": "box",
+            "start": 35,
+            "end": 46,
+            "valueStart": 42,
+            "parts": [
+              "box"
+            ]
+          },
+          {
+            "name": "align",
+            "value": "center",
+            "start": 47,
+            "end": 61,
+            "valueStart": 54,
+            "parts": [
+              "center"
+            ]
+          }
+        ],
+        "children": [
+          {
+            "type": 1,
+            "name": "h1",
+            "start": 67,
+            "end": 87,
+            "children": [
+              {
+                "type": 3,
+                "text": "{box.title}",
+                "start": 71,
+                "end": 82,
+                "expr": [
+                  {
+                    "text": "box.title",
+                    "start": 71,
+                    "end": 82
+                  }
+                ],
+                "parts": [
+                  "",
+                  "box.title"
+                ]
+              }
+            ]
+          },
+          {
+            "type": 1,
+            "name": "img",
+            "start": 92,
+            "end": 127,
+            "attr": [
+              {
+                "name": "src",
+                "value": "{box.image}",
+                "start": 97,
+                "end": 112,
+                "expr": [
+                  {
+                    "text": "box.image",
+                    "start": 101,
+                    "end": 112
+                  }
+                ],
+                "valueStart": 101,
+                "parts": [
+                  "",
+                  "box.image"
+                ]
+              },
+              {
+                "name": "width",
+                "value": "480",
+                "start": 113,
+                "end": 124,
+                "valueStart": 120,
+                "parts": [
+                  "480"
+                ]
+              }
+            ],
+            "selfclose": true,
+            "void": true
+          },
+          {
+            "type": 1,
+            "name": "div",
+            "start": 132,
+            "end": 282,
+            "attr": [
+              {
+                "name": "class",
+                "value": "body",
+                "start": 137,
+                "end": 149,
+                "valueStart": 144,
+                "parts": [
+                  "body"
+                ]
+              }
+            ],
+            "children": [
+              {
+                "type": 1,
+                "name": "h2",
+                "start": 157,
+                "end": 178,
+                "children": [
+                  {
+                    "type": 3,
+                    "text": "Escaped \\{0}",
+                    "start": 161,
+                    "end": 173,
+                    "unescape": "{",
+                    "parts": [
+                      "Escaped {0}"
+                    ]
+                  }
+                ]
+              },
+              {
+                "type": 1,
+                "name": "p",
+                "start": 185,
+                "end": 208,
+                "children": [
+                  {
+                    "type": 3,
+                    "text": "Body: {box.body}",
+                    "start": 188,
+                    "end": 204,
+                    "expr": [
+                      {
+                        "text": "box.body",
+                        "start": 194,
+                        "end": 204
+                      }
+                    ],
+                    "parts": [
+                      "Body: ",
+                      "box.body"
+                    ]
+                  }
+                ]
+              },
+              {
+                "type": 1,
+                "name": "pre",
+                "start": 215,
+                "end": 271,
+                "raw": true,
+                "children": [
+                  {
+                    "type": 3,
+                    "text": "\n        Do not trim ",
+                    "start": 220,
+                    "end": 241,
+                    "parts": [
+                      "\\n        Do not trim "
+                    ]
+                  },
+                  {
+                    "type": 1,
+                    "name": "span",
+                    "start": 241,
+                    "end": 258,
+                    "raw": true,
+                    "children": [
+                      {
+                        "type": 3,
+                        "text": "this",
+                        "start": 247,
+                        "end": 251,
+                        "parts": [
+                          "this"
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "type": 3,
+                    "text": "\n      ",
+                    "start": 258,
+                    "end": 265,
+                    "parts": [
+                      "\\n      "
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "type": 1,
+        "name": "p",
+        "start": 294,
+        "end": 298,
+        "selfclose": true
+      }
+    ]
+  },
+  "css": {
+    "type": 1,
+    "name": "style",
+    "start": 302,
+    "end": 384,
+    "attr": [
+      {
+        "name": "type",
+        "value": "less",
+        "start": 309,
+        "end": 320,
+        "valueStart": 315,
+        "parts": [
+          "less"
+        ]
+      }
+    ],
+    "text": {
+      "type": 3,
+      "text": "\n    pre {\n      span: { font-weight: bolder }\n    }\n  ",
+      "start": 321,
+      "end": 376
+    }
+  },
+  "js": {
+    "type": 1,
+    "name": "script",
+    "start": 388,
+    "end": 547,
+    "text": {
+      "type": 3,
+      "text": "\n  this.box = {\n      title: \"Good morning!\",\n      image: \"http://trinixy.ru/pics5/20130614/podb_07.jpg\",\n      body: \"It is when SO!\"\n  }\n  ",
+      "start": 396,
+      "end": 538
+    }
+  }
+}

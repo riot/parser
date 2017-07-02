@@ -2,9 +2,34 @@
 
 Minimal, loose html parser for Riot tags
 
+### Install
+
+```bash
+npm i riot-tag-parser --save
+```
+
+The package has two modules:
+
+```js
+// The default export is a factory for the TagParser class.
+// Use as: tagParser(options).parse(code, startPosition)
+const tagParser = require('riot-tag-parser')
+
+// The enum NodeTypes (a plain JS object) that contains the values of the
+// type property of the nodes emited by tagParser (and more).
+const nodeTypes = require('riot-tag-parser/nodeTypes')
+```
+
+For ES6 modules there's not default export:
+
+```js
+import { tagParser } from 'riot-tag-parser'
+import { nodeTypes } from 'riot-tag-parser'
+```
+
 This parser is a low-level tool that builds a simple array of objects with information about the given html fragment, readed secuencially. It is designed to parse one single tag and not entire html pages, the tag closing the root element ends the parsing.
 
-There 3 main node types:
+There are 3 main node types:
 
 * Tags - HTMLElements, including SCRIPT and STYLE elements.
 * Comments - Ignored by default.
@@ -24,6 +49,8 @@ The value returned by the parser is an object like this:
 ```
 
 The first element of `output` is the opening tag of the root element.
+
+The parsing stops when the closing tag of the root is found, so the last node have the ending position.
 
 ### Commands
 

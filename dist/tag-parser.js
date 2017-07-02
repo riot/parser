@@ -1,584 +1,588 @@
 'use strict';
 
-if (typeof Object.assign != 'function') {
-  Object.defineProperty(Object, 'assign', {
-    configurable: true,
-    writable: true,
-    value: function (dest) {
-      if (dest == null) {
-        throw new TypeError('Cannot convert dest to object')
-      }
-      var arg = arguments;
+var escapeStr = function (str) { return str.replace(/(?=[-[\](){^*+?.$|\\])/g, '\\'); };
 
-      dest = Object(dest);
-      for (var ix = 1; ix < arg.length; ix++) {
-        var src = arg[ix];
-        if (src != null) {
-          var k, key, keys = Object.keys(Object(src));
-          for (k = 0; k < keys.length; k++) {
-            key = keys[k];
-            dest[key] = src[key];
-          }
+const skipES6TL = require('./skip-es6-tl');
+
+const skipRegex = require('skip-regex');
+
+var exprExtr = (function (_skipES6TL, _skipRegex, _escapeStr) {
+    var $_ES6_BQ = '`';
+    var S_SQ_STR = /'[^'\n\r\\]*(?:\\(?:\r\n?|[\S\s])[^'\n\r\\]*)*'/.source;
+    var S_STRING = S_SQ_STR + "|" + S_SQ_STR.replace(/'/g, '"');
+    var reBr = {};
+    function _regex(b) {
+        var re = reBr[b];
+        if (!re) {
+            var s = _escapeStr(b);
+            if (b.length > 1) {
+                s = s + '|[';
+            }
+            else {
+                s = /[\{}[\]()]/.test(b) ? '[' : "[" + s;
+            }
+            reBr[b] = re = new RegExp(S_STRING + "|" + s + "`/\\{}[\\]()]", 'g');
         }
-      }
-      return dest
+        return re;
     }
-  });
-}
-
-var assign = Object.assign;
-
-var beforeReChars = '[{(,;:?=|&!^~>%*/';
-
-var beforeReWords = [
-  'case',
-  'default',
-  'do',
-  'else',
-  'in',
-  'return',
-  'typeof',
-  'void',
-  'yield'
-];
-
-var wordsLastChar = beforeReWords.reduce(function (s, w) { return s + w.slice(-1); }, '');
-
-var RE_REGEX = /^\/(?=[^*>/])[^[/\\]*(?:(?:\\.|\[(?:\\.|[^\]\\]*)*\])[^[\\/]*)*?\/[gimuy]*/;
-
-var RE_VN_CHAR = /[$\w]/;
-
-function prev(code, pos) {
-  while (--pos >= 0 && /\s/.test(code[pos])){  }
-  return pos
-}
-
-function skipRegex(code, start) {
-
-  var re = /.*/g;
-  var pos = re.lastIndex = start - 1;
-  var match = re.exec(code)[0].match(RE_REGEX);
-
-  if (match) {
-    var next = pos + match[0].length;
-
-    pos = prev(code, pos);
-    var c = code[pos];
-
-    if (pos < 0 || ~beforeReChars.indexOf(c)) {
-      return next
-    }
-
-    if (c === '.') {
-
-      if (code[pos - 1] === '.') {
-        start = next;
-      }
-
-    } else if (c === '+' || c === '-') {
-
-      if (code[--pos] !== c ||
-          (pos = prev(code, pos)) < 0 ||
-          !RE_VN_CHAR.test(code[pos])) {
-        start = next;
-      }
-
-    } else if (~wordsLastChar.indexOf(c)) {
-
-      var end = pos + 1;
-
-      while (--pos >= 0 && RE_VN_CHAR.test(code[pos])){  }
-      if (~beforeReWords.indexOf(code.slice(pos + 1, end))) {
-        start = next;
-      }
-    }
-  }
-
-  return start
-}
-
-var S_SQ_STR = /'[^'\n\r\\]*(?:\\(?:\r\n?|[\S\s])[^'\n\r\\]*)*'/.source;
-var S_STRING = S_SQ_STR + "|" + (S_SQ_STR.replace(/'/g, '"'));
-
-function ExprExtractor(options) {
-  this._bp   = options.brackets;
-  this._re   = new RegExp((S_STRING + "|" + (this._reChar(this._bp[1]))), 'g');
-  this.parse = this.parse.bind(this);
-}
-
-ExprExtractor.prototype = {
-
-  parse: function parse(code, start) {
-    var this$1 = this;
-
-    var bp = this._bp;
-    var re = this._re;
-
-    if (code[start - 1] === '\\') {
-      return bp[0]
-    }
-
-    var closingStr = bp[1];
-    var offset = start + bp[0].length;
-    var stack = [];
-
-    var match, ch;
-
-    re.lastIndex = offset;
-
-    while ((match = re.exec(code))) {
-      var end = re.lastIndex;
-      var str = match[0];
-
-      if (str === closingStr) {
-        if (!stack.length) {
-          return {
-            text: code.slice(offset, match.index),
-            start: start,
-            end: end
-          }
+    return function (code, start, bp) {
+        var openingBraces = bp[0];
+        var closingBraces = bp[1];
+        var offset = start + openingBraces.length;
+        var stack = [];
+        var re = _regex(closingBraces);
+        re.lastIndex = offset;
+        var idx;
+        var end;
+        var str;
+        var match;
+        while ((match = re.exec(code))) {
+            idx = match.index;
+            end = re.lastIndex;
+            str = match[0];
+            if (str === closingBraces && !stack.length) {
+                return {
+                    text: code.slice(offset, idx),
+                    start: start,
+                    end: end,
+                };
+            }
+            str = str[0];
+            switch (str) {
+                case '[':
+                case '(':
+                case '{':
+                    stack.push(str === '[' ? ']' : str === '(' ? ')' : '}');
+                    break;
+                case ')':
+                case ']':
+                case '}':
+                    if (str !== stack.pop()) {
+                        throw new Error("Unexpected character '" + str + "'");
+                    }
+                    if (str === '}' && stack[stack.length - 1] === $_ES6_BQ) {
+                        str = stack.pop();
+                    }
+                    end = idx + 1;
+                    break;
+                case '/':
+                    end = _skipRegex(code, idx);
+                    break;
+            }
+            if (str === $_ES6_BQ) {
+                re.lastIndex = _skipES6TL(code, end, stack);
+            }
+            else {
+                re.lastIndex = end;
+            }
         }
-        if (/[\])}]/.test(str[0])) {
-          str = str[0];
-          re.lastIndex = match.index + 1;
+        if (stack.length) {
+            throw new Error('Unclosed expression.');
         }
-      }
-
-      switch (str) {
-        case '[':
-        case '(':
-        case '{':
-          stack.push(str === '[' ? ']' : str === '(' ? ')' : '}');
-          break
-
-        case ')':
-        case ']':
-        case '}':
-          ch = stack.pop();
-          if (ch !== str) { throw new Error(("Expected '" + ch + "' but got '" + str + "'")) }
-          break
-
-        case '`':
-          re.lastIndex = this$1.skipES6str(code, end, stack);
-          break
-
-        case '/':
-          re.lastIndex = this$1.skipRegex(code, end);
-          break
-
-        default:
-
-          if (stack[stack.length - 1] === 1) {
-            re.lastIndex = match.index + 1;
-          }
-          break
-      }
-    }
-
-    return null
-  },
-
-  skipRegex: skipRegex,
-
-  skipES6str: function skipES6str(code, start, stack) {
-
-    if (stack.length && stack[stack.length - 1] === 1) {
-      stack.pop();
-      return start
-    }
-
-    var re = /[`$\\]/g;
-
-    re.lastIndex = start;
-    while (re.exec(code)) {
-      var end = re.lastIndex;
-      var c = code[end - 1];
-
-      if (c === '`') {
-        return end
-      }
-      if (c === '$' && code[end] === '{') {
-        stack.push(1, '}');
-        return end + 1
-      }
-
-    }
-
-    throw new Error('Unclosed ES6 template')
-  },
-
-  _reChar: function _reChar(c) {
-    var s;
-    if (c.length === 1) {
-      if (/[\{}[\]()]/.test(c)) { c = ''; }
-      else if (c === '-') { c = "\\" + c; }
-      s = '[`' + c + '/\\{}[\\]()]';
-    } else {
-      s = c.replace(/(?=[[^()\-*+?.$|])/g, '\\') + '|[`/\\{}[\\]()]';
-    }
-    return s
-  }
-};
-
-function extractExpr(options) {
-  return new ExprExtractor(options).parse
-}
-
-var TAG_2C = /^(?:\/[a-zA-Z>]|[a-zA-Z][^\s>/]?)/;
-
-var TAG_NAME = /\/(>)|(\/?[^\s>/]+)\s*(>)?/g;
-
-var ATTR_START = /(\S[^>/=\s]*)(?:\s*=\s*([^>/])?)?/g;
-
-var RE_SCRYLE = {
-  script: /<\/script\s*>/gi,
-  style: /<\/style\s*>/gi,
-};
-
-function TagParser(options) {
-
-  this.options = assign({
-    comments: false,
-    brackets: ['{', '}']
-  }, options);
-
-  this.extractExpr = extractExpr(this.options);
-  this.parse = this._parse.bind(this);
-  this._re = {};
-}
-
-assign(TagParser.prototype, {
-
-  nodeTypes: {
-    TAG:      1,
-    ATTR:     2,
-    TEXT:     3,
-    COMMENT:  8,
-    EXPR:     32
-  },
-
-  _parse: function _parse(data) {
-    var this$1 = this;
-
-    var state = {
-      pos: 0,
-      last: null,
-      count: -1,
-      output: []
+        return null;
     };
+})(skipES6TL, skipRegex, escapeStr);
 
-    var length = data.length;
-    var type = 3;
-
-    while (state.pos < length && state.count) {
-
-      if (type === 3) {
-        type = this$1.text(state, data);
-
-      } else if (type === 1) {
-        type = this$1.tag(state, data);
-
-      } else if (type === 2) {
-        type = this$1.attr(state, data);
-
-      }
+var formatError = function (data, message, pos) {
+    if (!pos) {
+        pos = data.length;
     }
-
-    if (state.count) {
-      this._err(state, data, ~state.count ? 'Unexpected end of file.' : 'Root tag not found.');
-    }
-
-    return { data: data, output: state.output }
-  },
-
-  error: function error(state, loc, message) {
-    throw new Error(("[" + (loc.line) + "," + (loc.col) + "]: " + message))
-  },
-
-  _err: function _err(state, data, msg, pos) {
-    if (pos == null) { pos = state.pos; }
-
     var line = (data.slice(0, pos).match(/\r\n?|\n/g) || '').length + 1;
-
     var col = 0;
     while (--pos >= 0 && !/[\r\n]/.test(data[pos])) {
-      ++col;
+        ++col;
     }
+    return "[" + line + "," + col + "]: " + message;
+};
 
-    state.data = data;
-    this.error(state, { line: line, col: col }, msg);
-  },
+var MSG = {
+    rootTagNotFound: 'Root tag not found.',
+    unexpectedEndOfFile: 'Unexpected end of file.',
+    unclosedComment: 'Unclosed comment.',
+    unclosedNamedBlock: 'Unclosed "%1" block.',
+    duplicatedNamedTag: 'Duplicate tag "<%1>".',
+    expectedAndInsteadSaw: 'Expected "</%1>" and instead saw "<%2>".',
+};
 
-  _b0re: function _b0re(str) {
-    var re = this._re[str];
-    if (!re) {
-      var b0 = this.options.brackets[0].replace(/(?=[[^()\-*+?.$|])/g, '\\');
-      this._re[str] = re = new RegExp((str + "|" + b0), 'g');
+var TAG_2C = /^(?:\/[a-zA-Z]|[a-zA-Z][^\s>/]?)/;
+var TAG_NAME = /(\/?[^\s>/]+)\s*(>)?/g;
+var ATTR_START = /(\S[^>/=\s]*)(?:\s*=\s*([^>/])?)?/g;
+var RE_SCRYLE = {
+    script: /<\/script\s*>/gi,
+    style: /<\/style\s*>/gi,
+};
+var TagParser = (function () {
+    function TagParser(builderFactory, options) {
+        this.opts = options;
+        this.bf = builderFactory;
+        this.bp = options.brackets;
+        this.cm = options.comments === true;
+        this.re = {};
     }
-    return re
-  },
-
-  newNode: function newNode(type, name, start, end) {
-    var node = { type: type, start: start, end: end };
-
-    if (name) {
-      node.name = name;
-    }
-
-    return node
-  },
-
-  pushComment: function pushComment(state, start, end) {
-    state.last = null;
-    state.pos  = end;
-    if (this.options.comments) {
-      state.output.push(this.newNode(8, null, start, end));
-    }
-  },
-
-  pushText: function pushText(state, start, end, expr, rep) {
-    var q = state.last;
-
-    state.pos = end;
-
-    if (q && q.type === 3) {
-      q.end = end;
-    } else {
-      state.last = q = this.newNode(3, null, start, end);
-      state.output.push(q);
-    }
-
-    if (expr && expr.length) {
-      q.expressions = q.expressions ? q.expressions.concat(expr) : expr;
-    }
-
-    if (rep) {
-      q.replace = rep;
-    }
-  },
-
-  pushTag: function pushTag(state, type, name, start, end) {
-    var root = state.root;
-    var last = state.last = this.newNode(type, name, start, end);
-
-    state.pos = end;
-
-    if (root) {
-      if (name === root.name) {
-        state.count++;
-      } else if (name === root.close) {
-        state.count--;
-      }
-    } else {
-
-      state.root  = { name: last.name, close: ("/" + name) };
-      state.count = 1;
-      state.output.length  = 0;
-    }
-
-    state.output.push(last);
-  },
-
-  pushAttr: function pushAttr(state, attr) {
-    var q = state.last;
-
-    state.pos = q.end = attr.end
-
-    ;(q.attributes || (q.attributes = [])).push(attr);
-  },
-
-  tag: function tag(state, data) {
-    var pos   = state.pos;
-    var start = pos - 1;
-    var str   = data.substr(pos, 2);
-
-    if (str[0] === '!') {
-      this.comment(state, data, start);
-
-    } else if (TAG_2C.test(str)) {
-      var re = TAG_NAME;
-      re.lastIndex = pos;
-      var match = re.exec(data);
-      var end   = re.lastIndex;
-      var hack  = match[1];
-      var name  = hack ? 'script' : match[2].toLowerCase();
-
-      if (name === 'script' || name === 'style') {
-        state.scryle = name;
-        state.hack = hack && RegExp(("<" + (state.root.close) + "\\s*>"), 'i');
-      }
-
-      this.pushTag(state, 1, name, start, end);
-
-      if (!hack && match[3] !== '>') {
-        return 2
-      }
-
-    } else {
-      this.pushText(state, start, pos);
-    }
-
-    return 3
-  },
-
-  comment: function comment(state, data, start) {
-    var pos = start + 2;
-    var str = data.substr(pos, 2) === '--' ? '-->' : '>';
-    var end = data.indexOf(str, pos);
-
-    if (end < 0) {
-      this._err(state, data, 'Unclosed comment', start);
-    }
-
-    this.pushComment(state, start, end + str.length);
-  },
-
-  attr: function attr(state, data) {
-    var tag = state.last;
-    var _CH = /\S/g;
-
-    _CH.lastIndex = state.pos;
-    var match = _CH.exec(data);
-
-    if (!match) {
-      state.pos = data.length;
-
-    } else if (match[0] === '>') {
-
-      state.pos = tag.end = _CH.lastIndex;
-      if (tag.selfclose && state.root.name === tag.name) {
-        state.count--;
-      }
-
-      return 3
-
-    } else if (match[0] === '/') {
-      state.pos = _CH.lastIndex;
-      tag.selfclose = true;
-
-    } else {
-      delete tag.selfclose;
-
-      var re    = ATTR_START;
-      var start = re.lastIndex = match.index;
-      match       = re.exec(data);
-      var end   = re.lastIndex;
-      var value = match[2] || '';
-
-      var attr  = { name: match[1].toLowerCase(), value: value, start: start, end: end };
-
-      if (value) {
-
-        this.parseValue(state, data, attr, value, end);
-      }
-
-      this.pushAttr(state, attr);
-    }
-
-    return 2
-  },
-
-  parseValue: function parseValue(state, data, attr, quote, start) {
-    var this$1 = this;
-
-    if (quote !== '"' && quote !== "'") {
-      quote = '';
-      start--;
-    }
-
-    var re = this._b0re(("(" + (quote || '[>/\\s]') + ")"));
-    var expr = [];
-    var mm, tmp;
-
-    re.lastIndex = start;
-    while ((mm = re.exec(data)) && !mm[1]) {
-      tmp = this$1.extractExpr(data, mm.index);
-      if (tmp) {
-        if (typeof tmp == 'string') {
-          attr.replace = tmp;
-        } else {
-          expr.push(tmp);
-          re.lastIndex = tmp.end;
+    TagParser.prototype.parse = function (data, pos) {
+        var me = this;
+        var builder = me.bf(data, me.opts);
+        var state = {
+            pos: pos | 0,
+            last: null,
+            count: -1,
+            scryle: null,
+            builder: builder,
+            data: data,
+        };
+        var length = data.length;
+        var type = 3;
+        while (state.pos < length && state.count) {
+            if (type === 3           ) {
+                type = me.text(state, data);
+            }
+            else if (type === 1          ) {
+                type = me.tag(state, data);
+            }
+            else if (type === 2           ) {
+                type = me.attr(state, data);
+            }
         }
-      }
-    }
-
-    if (!mm) {
-      this._err(state, data, 'Unfinished attribute', start);
-    }
-
-    var end = mm.index;
-
-    attr.value = data.slice(start, end);
-    attr.valueStart = start;
-    attr.end = quote ? end + 1 : end;
-
-    if (expr.length) {
-      attr.expressions = expr;
-    }
-  },
-
-  text: function text(state, data) {
-    var me = this;
-    var pos = state.pos;
-
-    if (state.scryle) {
-      var name = state.scryle;
-      var re   = state.hack || RE_SCRYLE[name];
-
-      re.lastIndex = pos;
-      var match = re.exec(data);
-      if (!match) {
-        me._err(state, data, ("Unclosed \"" + name + "\" block"), pos - 1);
-      }
-      var start = match.index;
-      var end   = state.hack ? start : re.lastIndex;
-
-      state.hack = state.scryle = 0;
-
-      if (start > pos) {
-        me.pushText(state, pos, start);
-      }
-
-      me.pushTag(state, 1, ("/" + name), start, end);
-
-    } else if (data[pos] === '<') {
-      state.pos++;
-
-      return 1
-
-    } else {
-      var re$1 = me._b0re('<');
-      var mm;
-      var expr;
-      var rep;
-
-      re$1.lastIndex = pos;
-      while ((mm = re$1.exec(data)) && mm[0] !== '<') {
-        var tmp = me.extractExpr(data, mm.index);
-
-        if (tmp) {
-          if (typeof tmp == 'string') {
-            rep = tmp;
-          } else {
-            (expr || (expr = [])).push(tmp);
-            re$1.lastIndex = tmp.end;
-          }
+        me.flush(state);
+        if (state.count) {
+            me.err(data, state.count > 0
+                ? MSG.unexpectedEndOfFile : MSG.rootTagNotFound, state.pos);
         }
-      }
+        return { data: data, output: builder.get() };
+    };
+    TagParser.prototype.err = function (data, msg, pos) {
+        var message = formatError(data, msg, pos);
+        throw new Error(message);
+    };
+    TagParser.prototype.flush = function (state) {
+        var last = state.last;
+        state.last = null;
+        if (last && state.root) {
+            state.builder.push(last);
+        }
+    };
+    TagParser.prototype.pushCmnt = function (state, start, end) {
+        this.flush(state);
+        state.pos = end;
+        if (this.cm === true) {
+            state.last = { type: 8              , start: start, end: end };
+        }
+    };
+    TagParser.prototype.pushText = function (state, start, end, expr, rep) {
+        var text = state.data.slice(start, end);
+        var q = state.last;
+        state.pos = end;
+        if (q && q.type === 3           ) {
+            q.text += text;
+            q.end = end;
+        }
+        else {
+            this.flush(state);
+            state.last = q = { type: 3           , text: text, start: start, end: end };
+        }
+        if (expr) {
+            q.expr = (q.expr || []).concat(expr);
+        }
+        if (rep) {
+            q.unescape = rep;
+        }
+    };
+    TagParser.prototype.pushTag = function (state, name, start, end) {
+        var root = state.root;
+        var last = { type: 1          , name: name, start: start, end: end };
+        state.pos = end;
+        if (root) {
+            if (name === root.name) {
+                state.count++;
+            }
+            else if (name === root.close) {
+                state.count--;
+            }
+            this.flush(state);
+        }
+        else {
+            state.root = { name: last.name, close: "/" + name };
+            state.count = 1;
+        }
+        state.last = last;
+    };
+    TagParser.prototype.tag = function (state, data) {
+        var pos = state.pos;
+        var start = pos - 1;
+        var str = data.substr(pos, 2);
+        if (str[0] === '!') {
+            this.cmnt(state, data, start);
+        }
+        else if (TAG_2C.test(str)) {
+            var re = TAG_NAME;
+            re.lastIndex = pos;
+            var match = re.exec(data);
+            var end = re.lastIndex;
+            var name_1 = match[1].toLowerCase();
+            if (name_1 === 'script' || name_1 === 'style') {
+                state.scryle = name_1;
+            }
+            this.pushTag(state, name_1, start, end);
+            if (!match[2]) {
+                return 2           ;
+            }
+        }
+        else {
+            this.pushText(state, start, pos);
+        }
+        return 3           ;
+    };
+    TagParser.prototype.cmnt = function (state, data, start) {
+        var pos = start + 2;
+        var str = data.substr(pos, 2) === '--' ? '-->' : '>';
+        var end = data.indexOf(str, pos);
+        if (end < 0) {
+            this.err(data, MSG.unclosedComment, start);
+        }
+        this.pushCmnt(state, start, end + str.length);
+    };
+    TagParser.prototype.attr = function (state, data) {
+        var tag = state.last;
+        var _CH = /\S/g;
+        _CH.lastIndex = state.pos;
+        var ch = _CH.exec(data);
+        if (!ch) {
+            state.pos = data.length;
+        }
+        else if (ch[0] === '>') {
+            state.pos = tag.end = _CH.lastIndex;
+            if (tag.selfclose) {
+                state.scryle = null;
+                if (state.root && state.root.name === tag.name) {
+                    state.count--;
+                }
+            }
+            return 3           ;
+        }
+        else if (ch[0] === '/') {
+            state.pos = _CH.lastIndex;
+            tag.selfclose = true;
+        }
+        else {
+            delete tag.selfclose;
+            this.setAttr(state, data, ch.index, tag);
+        }
+        return 2           ;
+    };
+    TagParser.prototype.setAttr = function (state, data, pos, tag) {
+        var re = ATTR_START;
+        var start = re.lastIndex = pos;
+        var match = re.exec(data);
+        if (!match) {
+            return;
+        }
+        var end = re.lastIndex;
+        var quote = match[2];
+        var attr = { name: match[1].toLowerCase(), value: '', start: start, end: end };
+        if (quote) {
+            var valueStart = end;
+            if (quote !== '"' && quote !== "'") {
+                quote = '';
+                valueStart--;
+            }
+            end = this.expr(state, data, attr, quote || '[>/\\s]', valueStart);
+            attr.value = data.slice(valueStart, end);
+            attr.valueStart = valueStart;
+            attr.end = quote ? ++end : end;
+        }
+        state.pos = tag.end = end;
+        (tag.attr || (tag.attr = [])).push(attr);
+    };
+    TagParser.prototype.text = function (state, data) {
+        var me = this;
+        var pos = state.pos;
+        if (state.scryle) {
+            var name_2 = state.scryle;
+            var re = RE_SCRYLE[name_2];
+            re.lastIndex = pos;
+            var match = re.exec(data);
+            if (!match) {
+                me.err(data, MSG.unclosedNamedBlock.replace('%1', name_2), pos - 1);
+            }
+            var start = match.index;
+            var end = re.lastIndex;
+            state.scryle = null;
+            if (start > pos) {
+                me.pushText(state, pos, start);
+            }
+            me.pushTag(state, "/" + name_2, start, end);
+        }
+        else if (data[pos] === '<') {
+            state.pos++;
+            return 1          ;
+        }
+        else {
+            var info = {};
+            var end = this.expr(state, data, info, '<', pos);
+            me.pushText(state, pos, end, info.expr, info.unescape);
+        }
+        return 3           ;
+    };
+    TagParser.prototype.expr = function (state, data, node, endingChars, pos) {
+        var me = this;
+        var expr = [];
+        var re = me.b0re(endingChars);
+        var match;
+        re.lastIndex = pos;
+        while ((match = re.exec(data)) && !match[1]) {
+            pos = match.index;
+            if (data[pos - 1] === '\\') {
+                node.unescape = match[0];
+            }
+            else {
+                var tmpExpr = exprExtr(data, pos, me.bp);
+                if (tmpExpr) {
+                    expr.push(tmpExpr);
+                    re.lastIndex = tmpExpr.end;
+                }
+            }
+        }
+        if (!match) {
+            me.err(data, MSG.unexpectedEndOfFile, pos);
+        }
+        if (expr.length) {
+            node.expr = expr;
+        }
+        return match.index;
+    };
+    TagParser.prototype.b0re = function (str) {
+        var re = this.re[str];
+        if (!re) {
+            var b0 = escapeStr(this.bp[0]);
+            this.re[str] = re = new RegExp("(" + str + ")|" + b0, 'g');
+        }
+        return re;
+    };
+    return TagParser;
+}());
 
-      var end$1 = mm ? mm.index : data.length;
-      me.pushText(state, pos, end$1, expr, rep);
+var voidTags = {
+    html: [
+        'area',
+        'base',
+        'br',
+        'col',
+        'embed',
+        'hr',
+        'img',
+        'input',
+        'keygen',
+        'link',
+        'menuitem',
+        'meta',
+        'param',
+        'source',
+        'track',
+        'wbr',
+    ],
+    svg: [
+        'circle',
+        'ellipse',
+        'line',
+        'path',
+        'polygon',
+        'polyline',
+        'rect',
+        'stop',
+        'use',
+    ],
+};
+
+var RAW_TAGS = /^\/?(?:pre|textarea)$/;
+var TreeBuilder = (function () {
+    function TreeBuilder(data, options) {
+        var root = {
+            type: 1          ,
+            name: '',
+            start: 0,
+            end: 0,
+            children: [],
+        };
+        this.compact = options.compact !== false;
+        this.prefixes = '^?=';
+        this.state = {
+            last: root,
+            stack: [],
+            scryle: null,
+            root: root,
+            style: null,
+            script: null,
+            data: data,
+        };
     }
+    TreeBuilder.prototype.get = function () {
+        var state = this.state;
+        return {
+            html: state.root.children[0],
+            css: state.style,
+            js: state.script,
+        };
+    };
+    TreeBuilder.prototype.push = function (node) {
+        var state = this.state;
+        if (node.type === 3           ) {
+            this.pushText(state, node);
+        }
+        else if (node.type === 1          ) {
+            var name_1 = node.name;
+            if (name_1[0] === '/') {
+                this.closeTag(state, node, name_1);
+            }
+            else {
+                this.openTag(state, node);
+            }
+        }
+    };
+    TreeBuilder.prototype.err = function (msg, pos) {
+        var message = formatError(this.state.data, msg, pos);
+        throw new Error(message);
+    };
+    TreeBuilder.prototype.closeTag = function (state, node, name) {
+        var last = state.scryle || state.last;
+        var expected = last.name;
+        if (expected !== name.slice(1)) {
+            var msg = MSG.expectedAndInsteadSaw.replace('%1', expected).replace('%2', name);
+            this.err(msg, last.start);
+        }
+        last.end = node.end;
+        if (state.scryle) {
+            state.scryle = null;
+        }
+        else {
+            if (!state.stack[0]) {
+                this.err('Stack is empty.', last.start);
+            }
+            state.last = state.stack.pop();
+        }
+    };
+    TreeBuilder.prototype.openTag = function (state, node) {
+        var name = node.name;
+        var atrrs = node.attr;
+        if (name === 'style' ||
+            name === 'script' && !this.deferred(node, atrrs)) {
+            if (state[name]) {
+                this.err(MSG.duplicatedNamedTag.replace('%1', name), node.start);
+            }
+            state[name] = node;
+            if (!node.selfclose) {
+                state.scryle = state[name];
+            }
+        }
+        else {
+            var lastTag = state.last;
+            var newNode = node;
+            lastTag.children.push(newNode);
+            if (lastTag.raw || RAW_TAGS.test(name)) {
+                newNode.raw = true;
+            }
+            var voids = void 0;
+            if (lastTag.ns || name === 'svg') {
+                newNode.ns = 'svg';
+                voids = voidTags.svg;
+            }
+            else {
+                voids = voidTags.html;
+            }
+            if (~voids.indexOf(name)) {
+                newNode.void = true;
+            }
+            else if (!node.selfclose) {
+                state.stack.push(lastTag);
+                newNode.children = [];
+                state.last = newNode;
+            }
+        }
+        if (atrrs) {
+            this.attrs(atrrs);
+        }
+    };
+    TreeBuilder.prototype.deferred = function (node, attributes) {
+        if (attributes) {
+            for (var i = 0; i < attributes.length; i++) {
+                if (attributes[i].name === 'defer') {
+                    attributes.splice(i, 1);
+                    return true;
+                }
+            }
+        }
+        return false;
+    };
+    TreeBuilder.prototype.attrs = function (attributes) {
+        for (var i = 0; i < attributes.length; i++) {
+            var attr = attributes[i];
+            if (attr.value) {
+                this.split(attr, attr.value, attr.valueStart, true);
+            }
+        }
+    };
+    TreeBuilder.prototype.pushText = function (state, node) {
+        var text = node.text;
+        var empty = !/\S/.test(text);
+        var scryle = state.scryle;
+        if (!scryle) {
+            var parent_1 = state.last;
+            var pack = this.compact && !parent_1.raw;
+            if (pack && empty) {
+                return;
+            }
+            this.split(node, text, node.start, pack);
+            parent_1.children.push(node);
+        }
+        else if (!empty) {
+            scryle.text = node;
+        }
+    };
+    TreeBuilder.prototype.split = function (node, source, start, pack) {
+        var expressions = node.expr;
+        var parts = [];
+        if (expressions) {
+            var pos = 0;
+            for (var i = 0; i < expressions.length; i++) {
+                var expr = expressions[i];
+                var text = source.slice(pos, expr.start - start);
+                var code = expr.text;
+                if (~this.prefixes.indexOf(code[0])) {
+                    expr.prefix = code[0];
+                    code = code.substr(1);
+                }
+                parts.push(this._tt(node, text, pack), code.replace(/\\/g, '\\\\').trim().replace(/\r/g, '\\r').replace(/\n/g, '\\n'));
+                pos = expr.end - start;
+            }
+            if ((pos += start) < node.end) {
+                parts.push(this._tt(node, source.slice(pos), pack));
+            }
+        }
+        else {
+            parts[0] = this._tt(node, source, pack);
+        }
+        node.parts = parts;
+    };
+    TreeBuilder.prototype._tt = function (node, text, pack) {
+        var rep = node.unescape;
+        if (rep) {
+            var idx = 0;
+            rep = "\\" + rep;
+            while (~(idx = text.indexOf(rep, idx))) {
+                text = text.substr(0, idx) + text.substr(idx + 1);
+                idx++;
+            }
+        }
+        text = text.replace(/\\/g, '\\\\');
+        return pack ? text.replace(/\s+/, ' ') : text.replace(/\r/g, '\\r').replace(/\n/g, '\\n');
+    };
+    return TreeBuilder;
+}());
+function treeBuilder(data, options) {
+    return new TreeBuilder(data, options || {});
+}
 
-    return 3
-  }
-
-});
-
-function tagParser(options) {
-  return new TagParser(options)
+function tagParser(options, tbf) {
+    return new TagParser(tbf || treeBuilder, options);
 }
 
 module.exports = tagParser;
-//# sourceMappingURL=tag-parser.js.map

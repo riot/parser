@@ -1,0 +1,48 @@
+{
+  "html": {
+    "type": 1,
+    "name": "es6-nested-regex",
+    "start": 0,
+    "end": 290,
+    "children": [
+      {
+        "type": 1,
+        "name": "h1",
+        "start": 21,
+        "end": 41,
+        "children": [
+          {
+            "type": 3,
+            "text": "{ message }",
+            "start": 25,
+            "end": 36,
+            "expr": [
+              {
+                "text": " message ",
+                "start": 25,
+                "end": 36
+              }
+            ],
+            "parts": [
+              "",
+              "message"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "css": null,
+  "js": {
+    "type": 1,
+    "name": "script",
+    "start": 45,
+    "end": 270,
+    "text": {
+      "type": 3,
+      "text": "\n    const x = 1\n\n    this.message = `\n      regex: ${\n        /x}`/.source\n      }`\n\n    this.foobar = `\n    foobar() {\n      return ${\n        foo( 5 /x/.1 )  // not regex\n      }\n    }\n`\n\n  foo(bar) {}\n\n  ",
+      "start": 53,
+      "end": 261
+    }
+  }
+}

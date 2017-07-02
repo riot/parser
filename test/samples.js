@@ -1,7 +1,10 @@
 'use strict'
 
-const parser = require('../')
+const tagParser = require('../')
 const fs = require('fs')
+const opts = {
+  brackets: ['{', '}']
+}
 
 process.chdir(__dirname)
 
@@ -9,36 +12,24 @@ process.chdir(__dirname)
   console.log('Tree Builder')
   console.log('------------')
 
-  const parse   = parser().parse
-  const builder = require('./builders/tree-builder2')()
+  const parser  = tagParser(opts)
   const source  = fs.readFileSync('fixtures/box.tag', 'utf8').trim()
-  const result  = builder.build(parse(source))
+  const result  = parser.parse(source).output
 
-  console.dir(result, { depth: 10, color: true })
+  console.dir(result, { depth: 12, colors: true })
   console.log()
 })()
 
 ;(function () {
+  console.log('------------------')
   console.log('Tree Builder (svg)')
   console.log('------------------')
 
-  const parse   = parser().parse
-  const builder = require('./builders/tree-builder2')()
+  const parser  = tagParser(opts)
   const source  = fs.readFileSync('fixtures/loop-svg-nodes.tag', 'utf8').trim()
-  const result  = builder.build(parse(source))
+  debugger
+  const result  = parser.parse(source).output
 
-  console.dir(result, { depth: 10, color: true })
+  console.dir(result, { depth: 12, colors: true })
   console.log()
-})()
-
-;(function () {
-  console.log('Riot Builder')
-  console.log('------------')
-
-  const parse   = parser().parse
-  const builder = require('./builders/riot-builder')({ compact: true })
-  const source  = fs.readFileSync('fixtures/box.tag', 'utf8').trim()
-  const result  = builder.build(parse(source))
-
-  console.log(result)
 })()

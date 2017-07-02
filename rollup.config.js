@@ -1,18 +1,45 @@
+/*
+  This config will output this files:
 
-import jscc    from 'rollup-plugin-jscc'
-import buble   from 'rollup-plugin-buble'
+  ./dist/tag-parser.js  -> Factory for TagParser (the default export)
+  ./dist/skip-es6-tl    -> skipES6TL function
+  ./dist/skip-regex     -> skipRegex function
+  ./nodeTypes           -> the NodeTypes enum
+
+*/
+import alias   from 'rollup-plugin-alias'
 import cleanup from 'rollup-plugin-cleanup'
-import types   from './src/node-types'
 
-export default {
-  entry: 'src/parser.js',
-  plugins: [
-    jscc({ values: { _T: types } }),
-    buble({ firefox: 45, ie: 10, node: 4 }),
-    cleanup({ maxEmptyLines: 1 })
-  ],
-  targets: [
-    { dest: 'dist/tag-parser.js', format: 'cjs' },
-    { dest: 'dist/tag-parser.es.js', format: 'es' }
-  ]
-}
+export default [
+  {
+    entry: 'lib/node-types.js',
+    dest: './nodeTypes.js',
+    format: 'cjs'
+  },
+  {
+    entry: 'lib/skip-es6-tl.js',
+    dest: './dist/skip-es6-tl.js',
+    format: 'cjs',
+    plugins: [
+      cleanup()
+    ]
+  },
+  {
+    entry: 'lib/tag-parser.js',
+    dest: 'dist/tag-parser.js',
+    format: 'cjs',
+    interop: false,
+    plugins: [
+      alias({
+        resolve: ['.js'],
+        './skip-es6-tl': './../src/proxys/skip-es6-tl.js',
+        './skip-regex': './../src/proxys/skip-regex.js'
+      }),
+      cleanup()
+    ],
+    globals: {
+      'skip-es6-tl': 'skipES6TL',
+      'skip-regex': 'skipRegex'
+    }
+  }
+]

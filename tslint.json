@@ -1,0 +1,29 @@
+/* See: https://github.com/palantir/tslint/blob/master/src/configs/recommended.ts */
+{
+    "defaultSeverity": "error",
+    "extends": [
+        "tslint:recommended"
+    ],
+    "jsRules": {
+    },
+    "rules": {
+        "arrow-parens": [true, "ban-single-arg-parens"],
+        "callable-types": false,
+        "comment-format": [false],
+        "curly": false,
+        "interface-name": [false],
+        "no-bitwise": false,
+        "no-conditional-assignment": false,
+        "no-consecutive-blank-lines": [2],
+        "no-reference": false,
+        "no-unused-variable": true,
+        "object-literal-sort-keys": false,
+        "only-arrow-functions": [false],
+        "prefer-for-of": false,
+        "quotemark": ["single", "avoid-escape"],
+        "semicolon": [true, "never"],
+        "space-before-function-paren": [true, {"anonymous": "always", "named": "never", "asyncArrow": "always"}],
+        "variable-name": ["allow-leading-underscore"]
+    },
+    "rulesDirectory": []
+}

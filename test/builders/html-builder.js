@@ -4,7 +4,7 @@
  */
 
 const VOID_TAGS = require('./void-tags')
-const T = require('../../')().nodeTypes
+const T = require('./node-types')
 
 // Do not touch text content inside this tags
 const R_PRE = /^\/?(?:pre|textarea|script|style)$/
@@ -90,8 +90,8 @@ Object.assign(HtmlBuilder.prototype, {
     const isVoid = VOID_TAGS.test(name)
     const slash  = isVoid && ~VOID_TAGS.svgTags.indexOf(name) ? '/' : ''
 
-    if (node.attributes) {
-      node.attributes.forEach(a => {
+    if (node.attr) {
+      node.attr.forEach(a => {
         const s = a.name
         allTag.push(a.value ? `${s}="${a.value.replace(/"/g, '&quot;')}"` : s)
       })

@@ -19,7 +19,7 @@
  * @class RiotBuilder
  */
 const VOID_TAGS = require('./void-tags')
-const T = require('../../')().nodeTypes
+const T = require('./node-types')
 
 // Do not touch text content inside this tags
 const RE_PRE = /^\/?(?:pre|script|style|textarea)$/
@@ -176,37 +176,42 @@ Object.assign(RiotBuilder.prototype, {
     return ekey
   },
 
-  _re: {},
+  unescape(s, c) {
+    const rep = '\\' + c
+    let ix = 0
+    while (~(ix = s.indexOf(rep, ix))) {
+      s = s.substr(0, ix) + s.substr(ix + 1)
+      ix++
+    }
+    return s
+  },
 
   parseNode(node, code, start) {
-    const exprList = node.expressions
-    const repChar = node.replace
-    const re = repChar
-      ? this._re[repChar] || (this._re[repChar] = RegExp(`\\\\${repChar}`, 'g'))
-      : 0
+    const exprList = node.expr
+    const unch = node.unescape
 
     if (exprList) {
       // emit { parts, start, end, type }
       const parts = []
       let end = 0
+
       for (let i = 0; i < exprList.length; i++) {
         const expr = exprList[i]
         const pos = end
         end = expr.start - start
-        let text = code.slice(pos, end)
-        if (re) {
-          text = text.replace(re, repChar)
-        }
-        parts.push(text, expr.text)
+        const text = code.slice(pos, end)
+        parts.push(unch ? this.unescape(text) : text, expr.text)
         end = expr.end - start
       }
+
       if ((end += start) < node.end) {
         const text = code.slice(end)
-        parts.push(re ? text.replace(re, repChar) : text)
+        parts.push(unch ? this.unescape(text) : text)
       }
       code = `${$_BP_LEFT}${this.pushExpr({ type: node.type, parts, start, end, expr: exprList })}${$_BP_RIGHT}`
-    } else if (re) {
-      code = code.replace(re, repChar)
+
+    } else if (unch) {
+      code = this.unescape(code, unch)
     }
 
     return code
