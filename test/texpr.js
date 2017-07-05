@@ -170,6 +170,17 @@ module.exports = {
     ]
   },
 
+  'text with expression inside textarea': {
+    data: '<textarea>Foo {a}\n</textarea>',
+    expected: [
+      { type: _T.TAG, name: 'textarea', start: 0, end: 10 },
+      { type: _T.TEXT, text: 'Foo {a}\n', start: 10, end: 18, expr: [
+        { text: 'a', start: 14, end: 17 }
+      ] },
+      { type: _T.TAG, name: '/textarea', start: 18, end: 29 }
+    ]
+  },
+
   'attr: simple expression': {
     data: '<a foo="{e}"/>',
     expected: [

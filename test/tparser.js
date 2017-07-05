@@ -370,6 +370,15 @@ module.exports = {
     ]
   },
 
+  'textarea content is simple text': {
+    data: '<textarea><div></div></textarea>',
+    expected: [
+      { type: _T.TAG, name: 'textarea', start: 0, end: 10 },
+      { type: _T.TEXT, text: '<div></div>', start: 10, end: 21 },
+      { type: _T.TAG, name: '/textarea', start: 21, end: 32 }
+    ]
+  },
+
   'quotes inside attribute value #1': {
     data: '<div xxx=\'a"b\'/>',
     expected: [

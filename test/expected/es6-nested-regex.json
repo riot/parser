@@ -4,13 +4,13 @@
     "name": "es6-nested-regex",
     "start": 0,
     "end": 290,
-    "children": [
+    "nodes": [
       {
         "type": 1,
         "name": "h1",
         "start": 21,
         "end": 41,
-        "children": [
+        "nodes": [
           {
             "type": 3,
             "text": "{ message }",

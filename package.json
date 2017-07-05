@@ -1,6 +1,6 @@
 {
   "name": "riot-tag-parser",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "The parser for Riot tags",
   "main": "./dist/tag-parser.js",
   "module": "./lib/index.js",
@@ -56,6 +56,6 @@
     "typescript": "^2.4.1"
   },
   "dependencies": {
-    "skip-regex": "^0.2.0"
+    "skip-regex": "^0.3.0"
   }
 }

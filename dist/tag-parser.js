@@ -110,6 +110,7 @@ var ATTR_START = /(\S[^>/=\s]*)(?:\s*=\s*([^>/])?)?/g;
 var RE_SCRYLE = {
     script: /<\/script\s*>/gi,
     style: /<\/style\s*>/gi,
+    textarea: /<\/textarea\s*>/gi,
 };
 var TagParser = (function () {
     function TagParser(builderFactory, options) {
@@ -219,7 +220,7 @@ var TagParser = (function () {
             var match = re.exec(data);
             var end = re.lastIndex;
             var name_1 = match[1].toLowerCase();
-            if (name_1 === 'script' || name_1 === 'style') {
+            if (name_1 in RE_SCRYLE) {
                 state.scryle = name_1;
             }
             this.pushTag(state, name_1, start, end);
@@ -308,7 +309,12 @@ var TagParser = (function () {
             var end = re.lastIndex;
             state.scryle = null;
             if (start > pos) {
-                me.pushText(state, pos, start);
+                if (name_2 === 'textarea') {
+                    this.expr(state, data, null, match[0], pos);
+                }
+                else {
+                    me.pushText(state, pos, start);
+                }
             }
             me.pushTag(state, "/" + name_2, start, end);
         }
@@ -317,27 +323,27 @@ var TagParser = (function () {
             return 1          ;
         }
         else {
-            var info = {};
-            var end = this.expr(state, data, info, '<', pos);
-            me.pushText(state, pos, end, info.expr, info.unescape);
+            this.expr(state, data, null, '<', pos);
         }
         return 3           ;
     };
     TagParser.prototype.expr = function (state, data, node, endingChars, pos) {
         var me = this;
-        var expr = [];
+        var start = pos;
+        var expr;
+        var unescape = '';
         var re = me.b0re(endingChars);
         var match;
         re.lastIndex = pos;
         while ((match = re.exec(data)) && !match[1]) {
             pos = match.index;
             if (data[pos - 1] === '\\') {
-                node.unescape = match[0];
+                unescape = match[0];
             }
             else {
                 var tmpExpr = exprExtr(data, pos, me.bp);
                 if (tmpExpr) {
-                    expr.push(tmpExpr);
+                    (expr || (expr = [])).push(tmpExpr);
                     re.lastIndex = tmpExpr.end;
                 }
             }
@@ -345,10 +351,19 @@ var TagParser = (function () {
         if (!match) {
             me.err(data, MSG.unexpectedEndOfFile, pos);
         }
-        if (expr.length) {
-            node.expr = expr;
+        var end = match.index;
+        if (node) {
+            if (unescape) {
+                node.unescape = unescape;
+            }
+            if (expr) {
+                node.expr = expr;
+            }
         }
-        return match.index;
+        else {
+            me.pushText(state, start, end, expr, unescape);
+        }
+        return end;
     };
     TagParser.prototype.b0re = function (str) {
         var re = this.re[str];
@@ -393,6 +408,7 @@ var voidTags = {
     ],
 };
 
+var SVG_NS = 'http://www.w3.org/2000/svg';
 var RAW_TAGS = /^\/?(?:pre|textarea)$/;
 var TreeBuilder = (function () {
     function TreeBuilder(data, options) {
@@ -401,7 +417,7 @@ var TreeBuilder = (function () {
             name: '',
             start: 0,
             end: 0,
-            children: [],
+            nodes: [],
         };
         this.compact = options.compact !== false;
         this.prefixes = '^?=';
@@ -418,7 +434,7 @@ var TreeBuilder = (function () {
     TreeBuilder.prototype.get = function () {
         var state = this.state;
         return {
-            html: state.root.children[0],
+            html: state.root.nodes[0],
             css: state.style,
             js: state.script,
         };
@@ -476,13 +492,13 @@ var TreeBuilder = (function () {
         else {
             var lastTag = state.last;
             var newNode = node;
-            lastTag.children.push(newNode);
+            lastTag.nodes.push(newNode);
             if (lastTag.raw || RAW_TAGS.test(name)) {
                 newNode.raw = true;
             }
             var voids = void 0;
             if (lastTag.ns || name === 'svg') {
-                newNode.ns = 'svg';
+                newNode.ns = SVG_NS;
                 voids = voidTags.svg;
             }
             else {
@@ -493,7 +509,7 @@ var TreeBuilder = (function () {
             }
             else if (!node.selfclose) {
                 state.stack.push(lastTag);
-                newNode.children = [];
+                newNode.nodes = [];
                 state.last = newNode;
             }
         }
@@ -531,7 +547,7 @@ var TreeBuilder = (function () {
                 return;
             }
             this.split(node, text, node.start, pack);
-            parent_1.children.push(node);
+            parent_1.nodes.push(node);
         }
         else if (!empty) {
             scryle.text = node;

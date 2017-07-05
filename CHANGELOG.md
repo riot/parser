@@ -1,5 +1,10 @@
 # Changes for riot-parser
 
+### v0.0.4
+- Included TEXTAREA as special tag that can contain only raw text and expressions.
+- For SVG tags, now the `ns` property is the full URI http://www.w3.org/2000/svg.
+- The `children` property of TAGs is renamed to `nodes`.
+
 ### v0.0.3
 - The default builder is integrated in this module and injected in the parser.
 - Only two versions, node CommonJS (transpiled to ES5) and ES6 modules (untranspiled).

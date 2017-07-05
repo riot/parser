@@ -21,7 +21,7 @@ interface ParseState {
   pos: number
   last: ParsedNode | null
   count: number
-  scryle: 'script' | 'style' | null
+  scryle: string | null
   builder: ITreeBuilder,
   data: string,
   root?: RawRoot
@@ -64,6 +64,7 @@ const ATTR_START = /(\S[^>/=\s]*)(?:\s*=\s*([^>/])?)?/g
 const RE_SCRYLE: Hash<RegExp> = {
   script: /<\/script\s*>/gi,
   style: /<\/style\s*>/gi,
+  textarea: /<\/textarea\s*>/gi,
 }
 
 
@@ -305,14 +306,14 @@ class TagParser implements ITagParser {
       const name  = match[1].toLowerCase()  // $1: tag name including any '/'
 
       // script/style block is parsed as another tag to extract attributes
-      if (name === 'script' || name === 'style') {
-        state.scryle = name         // used by parseText
+      if (name in RE_SCRYLE) {
+        state.scryle = name                 // used by parseText
       }
 
       this.pushTag(state, name, start, end)
 
       // only '>' can ends the tag here, the '/' is handled in parseAttr
-      if (!match[2]) {              // $2: non self-closing brace w/o attr
+      if (!match[2]) {                      // $2: non self-closing brace w/o attr
         return NodeTypes.ATTR
       }
 
@@ -466,14 +467,18 @@ class TagParser implements ITagParser {
       if (!match) {
         me.err(data, MSG.unclosedNamedBlock.replace('%1', name), pos - 1)
       }
-      const start = (match as RegExpExecArray).index
+      const start = match!.index
       const end   = re.lastIndex
 
       state.scryle = null             // reset the script/style flag now
 
       // write the tag content, if any
       if (start > pos) {
-        me.pushText(state, pos, start)
+        if (name === 'textarea') {
+          this.expr(state, data, null, match![0], pos)
+        } else {
+          me.pushText(state, pos, start)
+        }
       }
 
       // now the closing tag, either </script> or </style>
@@ -485,10 +490,7 @@ class TagParser implements ITagParser {
       return NodeTypes.TAG
 
     } else {
-      const info: HasExpr = {}
-      const end = this.expr(state, data, info, '<', pos)
-
-      me.pushText(state, pos, end, info.expr, info.unescape)
+      this.expr(state, data, null, '<', pos)
     }
 
     return NodeTypes.TEXT
@@ -507,10 +509,13 @@ class TagParser implements ITagParser {
    * @returns {number} Ending position
    * @private
    */
-  private expr(state: ParseState, data: string, node: HasExpr, endingChars: string, pos: number) {
+  private expr(state: ParseState, data: string, node: HasExpr | null, endingChars: string, pos: number) {
     const me = this
+    const start = pos
 
-    const expr: RawExpr[] = []
+    let expr: RawExpr[] | undefined
+    let unescape = ''
+
     const re = me.b0re(endingChars)
     let match
     re.lastIndex = pos
@@ -522,12 +527,12 @@ class TagParser implements ITagParser {
       pos = match.index
 
       if (data[pos - 1] === '\\') {
-        node.unescape = match[0]                // it is an escaped opening brace
+        unescape = match[0]                // it is an escaped opening brace
 
       } else {
         const tmpExpr = exprExtr(data, pos, me.bp)
         if (tmpExpr) {
-          expr.push(tmpExpr)
+          (expr || (expr = [])).push(tmpExpr)
           re.lastIndex = tmpExpr.end
         }
       }
@@ -538,12 +543,20 @@ class TagParser implements ITagParser {
       me.err(data, MSG.unexpectedEndOfFile, pos)
     }
 
-    // adjust the bounds of the value and save its content
-    if (expr.length) {
-      node.expr = expr
+    const end = match.index
+
+    if (node) {
+      if (unescape) {
+        node.unescape = unescape
+      }
+      if (expr) {
+        node.expr = expr
+      }
+    } else {
+      me.pushText(state, start, end, expr, unescape)
     }
 
-    return match.index
+    return end
   }
 
   /**

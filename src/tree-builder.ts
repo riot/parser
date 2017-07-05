@@ -16,12 +16,14 @@
  * - Create an array `parts` for text nodes and attributes
  *
  * Throws on unclosed tags or closing tags without start tag.
- * Selfclosing and void tags has no children[] property.
+ * Selfclosing and void tags has no nodes[] property.
  */
 
 import formatError from './format-error'
 import MSG from './messages'
 import voidTags from './void-tags'
+
+const SVG_NS = 'http://www.w3.org/2000/svg'
 
 // Do not touch text content inside this tags
 const RAW_TAGS = /^\/?(?:pre|textarea)$/
@@ -32,7 +34,7 @@ interface IHaveParts extends HasExpr {
 }
 
 interface NonVoidTag extends NodeTag {
-  children: RiotNode[]
+  nodes: RiotNode[]
 }
 
 interface IState {
@@ -63,7 +65,7 @@ class TreeBuilder implements ITreeBuilder {
       name: '',
       start: 0,
       end: 0,
-      children: [],
+      nodes: [],
     }
 
     this.compact = options.compact !== false
@@ -85,9 +87,9 @@ class TreeBuilder implements ITreeBuilder {
 
     const state = this.state
 
-    // The real root tag is in state.root.children[0]
+    // The real root tag is in state.root.nodes[0]
     return {
-      html: state.root.children[0],
+      html: state.root.nodes[0],
       css: state.style,
       js: state.script,
     }
@@ -178,12 +180,12 @@ class TreeBuilder implements ITreeBuilder {
     } else {
       // state.last holds the last tag pushed in the stack and this are
       // non-void, non-empty tags, so we are sure the `lastTag` here
-      // have a `children` property.
+      // have a `nodes` property.
       const lastTag = state.last
       const newNode = node as NodeTag
 
-      // lastTah have a children property
-      lastTag.children.push(newNode)
+      // lastTag have a nodes property
+      lastTag.nodes.push(newNode)
 
       if (lastTag.raw || RAW_TAGS.test(name)) {
         newNode.raw = true
@@ -191,7 +193,7 @@ class TreeBuilder implements ITreeBuilder {
 
       let voids
       if (lastTag.ns || name === 'svg') {
-        newNode.ns = 'svg'
+        newNode.ns = SVG_NS
         voids = voidTags.svg
       } else {
         voids = voidTags.html
@@ -202,7 +204,7 @@ class TreeBuilder implements ITreeBuilder {
 
       } else if (!node.selfclose) {
         state.stack.push(lastTag)
-        newNode.children = []
+        newNode.nodes = []
         state.last = newNode as NonVoidTag
       }
     }
@@ -244,7 +246,7 @@ class TreeBuilder implements ITreeBuilder {
     const scryle  = state.scryle
 
     if (!scryle) {
-      // state.last always have a children property
+      // state.last always have a nodes property
       const parent = state.last
       const pack = this.compact && !parent.raw
 
@@ -252,7 +254,7 @@ class TreeBuilder implements ITreeBuilder {
         return
       }
       this.split(node, text, node.start, pack)
-      parent.children!.push(node)
+      parent.nodes!.push(node)
 
     } else if (!empty) {
       scryle.text = node

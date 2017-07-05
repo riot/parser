@@ -97,7 +97,7 @@ interface ITagParser {
 declare type RiotNode = NodeTag | NodeText | NodeScryle
 
 interface NodeTag extends RawTag {
-  children?: RiotNode[]
+  nodes?: RiotNode[]
   void?: boolean
   raw?: boolean
   ns?: string

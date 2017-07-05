@@ -16,7 +16,7 @@
         ]
       }
     ],
-    "children": [
+    "nodes": [
       {
         "type": 1,
         "name": "div",
@@ -44,13 +44,13 @@
             ]
           }
         ],
-        "children": [
+        "nodes": [
           {
             "type": 1,
             "name": "h1",
             "start": 67,
             "end": 87,
-            "children": [
+            "nodes": [
               {
                 "type": 3,
                 "text": "{box.title}",
@@ -125,13 +125,13 @@
                 ]
               }
             ],
-            "children": [
+            "nodes": [
               {
                 "type": 1,
                 "name": "h2",
                 "start": 157,
                 "end": 178,
-                "children": [
+                "nodes": [
                   {
                     "type": 3,
                     "text": "Escaped \\{0}",
@@ -149,7 +149,7 @@
                 "name": "p",
                 "start": 185,
                 "end": 208,
-                "children": [
+                "nodes": [
                   {
                     "type": 3,
                     "text": "Body: {box.body}",
@@ -175,7 +175,7 @@
                 "start": 215,
                 "end": 271,
                 "raw": true,
-                "children": [
+                "nodes": [
                   {
                     "type": 3,
                     "text": "\n        Do not trim ",
@@ -191,7 +191,7 @@
                     "start": 241,
                     "end": 258,
                     "raw": true,
-                    "children": [
+                    "nodes": [
                       {
                         "type": 3,
                         "text": "this",
