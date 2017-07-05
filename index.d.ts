@@ -1,2 +1,3 @@
-declare const tagParser: (factory: TreeBuilderFactory, options: ParserOptions) => ITagParser;
+/// <reference path="./types.d.ts"/>
+declare const tagParser: (options: ParserOptions, factory?: TreeBuilderFactory) => ITagParser;
 export { tagParser }

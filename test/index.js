@@ -98,7 +98,7 @@ describe('Tree Builder', function () {
   const titles = fs.readdirSync('./fixtures')
   const _p = parser(getOpts())
 
-  const _TDEBUG = ''
+  const _TDEBUG = 0
   const _TOSAVE = []
 
   for (let i = 0; i < titles.length; i++) {
@@ -109,10 +109,11 @@ describe('Tree Builder', function () {
     }
     const name = path.basename(title, ext)
 
-    if (name === _TDEBUG) debugger
 
     it(title, function () {
       const src = cat('fixtures', title)
+
+      if (name === _TDEBUG) debugger
       const res = _p.parse(src)
 
       expect(res).toBeAn(Object)

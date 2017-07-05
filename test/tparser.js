@@ -1070,21 +1070,21 @@ module.exports = {
     ]
   },
 
-  'attribute names must be lowercased': {
+  'preserves the case of attribute': {
     data: '<div dAta-xX="Yyy"/>',
     expected: [
       { type: _T.TAG, name: 'div', start: 0, end: 20, selfclose: true, attr: [
-        { name: 'data-xx', value: 'Yyy', start: 5, end: 18, valueStart: 14 }
+        { name: 'dAta-xX', value: 'Yyy', start: 5, end: 18, valueStart: 14 }
       ] }
     ]
   },
 
-  'attribute names must be lowercased #2': {
+  'preserves the case of attribute #2': {
     data: '<div xXx="Yyy" XXX=yyY/>',
     expected: [
       { type: _T.TAG, name: 'div', start: 0, end: 24, selfclose: true, attr: [
-        { name: 'xxx', value: 'Yyy', start: 5, end: 14, valueStart: 10 },
-        { name: 'xxx', value: 'yyY', start: 15, end: 22, valueStart: 19 }
+        { name: 'xXx', value: 'Yyy', start: 5, end: 14, valueStart: 10 },
+        { name: 'XXX', value: 'yyY', start: 15, end: 22, valueStart: 19 }
       ] }
     ]
   },

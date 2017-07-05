@@ -160,11 +160,15 @@ class TreeBuilder implements ITreeBuilder {
 
 
   private openTag(state: IState, node: RawTag) {
-    const name = node.name
-    const atrrs = node.attr
+    const name  = node.name
+    const ns    = state.last.ns || (name === 'svg' ? SVG_NS : '')
+    const attrs = node.attr
 
-    if (name === 'style' ||
-      name === 'script' && !this.deferred(node, atrrs)) {
+    if (attrs && !ns) {
+      attrs.forEach(a => { a.name = a.name.toLowerCase() })
+    }
+
+    if (name === 'style' || name === 'script' && !this.deferred(node, attrs)) {
 
       // only one of both script and style tags
       if (state[name]) {
@@ -192,8 +196,8 @@ class TreeBuilder implements ITreeBuilder {
       }
 
       let voids
-      if (lastTag.ns || name === 'svg') {
-        newNode.ns = SVG_NS
+      if (ns) {
+        newNode.ns = ns
         voids = voidTags.svg
       } else {
         voids = voidTags.html
@@ -209,8 +213,8 @@ class TreeBuilder implements ITreeBuilder {
       }
     }
 
-    if (atrrs) {
-      this.attrs(atrrs)
+    if (attrs) {
+      this.attrs(attrs)
     }
   }
 

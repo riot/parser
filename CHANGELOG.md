@@ -1,5 +1,8 @@
 # Changes for riot-parser
 
+### v0.0.5
+- Now, attribute names are lowercased in the builder, only for empty namespaces (i.e. not svg).
+
 ### v0.0.4
 - Included TEXTAREA as special tag that can contain only raw text and expressions.
 - For SVG tags, now the `ns` property is the full URI http://www.w3.org/2000/svg.

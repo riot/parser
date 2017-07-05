@@ -66,11 +66,6 @@ module.exports = {
     Removes extra whitespace, convert names to lowercase, removes empty values, and enclose values in double quotes.
   */
 
-  'Attributes: Names are converted to lowercase': {
-    data: '<div  CLASS="foo" Bar onClick ="f()" foo-Bar="bar" >\n</div>',
-    expected: '<div class="foo" bar onclick="f()" foo-bar="bar"></div>'
-  },
-
   'Attributes: Removes extra whitespace': {
     data: '<div  class = "foo"\n bar style \t="p{}" foo\n=\n "bar" >\n<font size= "14">  \t text  </font></div>',
     expected: '<div class="foo" bar style="p{}" foo="bar"><font size="14"> text </font></div>'

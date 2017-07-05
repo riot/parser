@@ -415,7 +415,7 @@ class TagParser implements ITagParser {
     let end     = re.lastIndex
     let quote   = match[2]                  // first letter of value or nothing
 
-    const attr: RawAttr = { name: match[1].toLowerCase(), value: '', start, end }
+    const attr: RawAttr = { name: match[1], value: '', start, end }
 
     // parse the whole value (if any) and get any expressions on it
     if (quote) {
