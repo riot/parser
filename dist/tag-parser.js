@@ -98,6 +98,7 @@ var formatError = function (data, message, pos) {
 var MSG = {
     rootTagNotFound: 'Root tag not found.',
     unexpectedEndOfFile: 'Unexpected end of file.',
+    unexpectedNamedTag: 'Unexpected tag <%1>',
     unclosedComment: 'Unclosed comment.',
     unclosedNamedBlock: 'Unclosed "%1" block.',
     duplicatedNamedTag: 'Duplicate tag "<%1>".',
@@ -420,7 +421,7 @@ var TreeBuilder = (function () {
             nodes: [],
         };
         this.compact = options.compact !== false;
-        this.prefixes = '^?=';
+        this.prefixes = "?=^"          ;
         this.state = {
             last: root,
             stack: [],
@@ -462,8 +463,11 @@ var TreeBuilder = (function () {
         var last = state.scryle || state.last;
         var expected = last.name;
         if (expected !== name.slice(1)) {
-            var msg = MSG.expectedAndInsteadSaw.replace('%1', expected).replace('%2', name);
-            this.err(msg, last.start);
+            var ok = name === '/if' && (expected === 'else' || expected === 'elif');
+            if (!ok) {
+                var msg = MSG.expectedAndInsteadSaw.replace('%1', expected).replace('%2', name);
+                this.err(msg, node.start);
+            }
         }
         last.end = node.end;
         if (state.scryle) {
@@ -493,6 +497,18 @@ var TreeBuilder = (function () {
             }
         }
         else {
+            if (name === 'else' || name === 'elif') {
+                var previous = state.last;
+                var lastName = previous.name;
+                var start = node.start;
+                if (lastName === 'if' || lastName === 'elif') {
+                    previous.end = start;
+                    this.closeTag(state, previous, "/" + lastName);
+                }
+                else {
+                    this.err(MSG.unexpectedNamedTag.replace('%1', name), start);
+                }
+            }
             var lastTag = state.last;
             var newNode = node;
             lastTag.nodes.push(newNode);
@@ -592,7 +608,7 @@ var TreeBuilder = (function () {
             }
         }
         text = text.replace(/\\/g, '\\\\');
-        return pack ? text.replace(/\s+/, ' ') : text.replace(/\r/g, '\\r').replace(/\n/g, '\\n');
+        return pack ? text.replace(/\s+/g, ' ') : text.replace(/\r/g, '\\r').replace(/\n/g, '\\n');
     };
     return TreeBuilder;
 }());

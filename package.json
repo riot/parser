@@ -1,6 +1,6 @@
 {
   "name": "riot-tag-parser",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "description": "The parser for Riot tags",
   "main": "./dist/tag-parser.js",
   "module": "./lib/index.js",
@@ -48,11 +48,11 @@
   "devDependencies": {
     "expect": "^1.20.2",
     "mocha": "^3.4.2",
-    "rollup": "^0.43.0",
+    "rollup": "^0.45.0",
     "rollup-plugin-alias": "^1.3.1",
     "rollup-plugin-cleanup": "^1.0.1",
     "rollup-plugin-jscc": "^0.3.3",
-    "tslint": "^5.4.3",
+    "tslint": "^5.5.0",
     "typescript": "^2.4.1"
   },
   "dependencies": {

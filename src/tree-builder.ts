@@ -30,7 +30,7 @@ const RAW_TAGS = /^\/?(?:pre|textarea)$/
 
 interface IHaveParts extends HasExpr {
   end: number
-  parts?: any[]
+  parts?: string[]
 }
 
 interface NonVoidTag extends NodeTag {
@@ -69,7 +69,7 @@ class TreeBuilder implements ITreeBuilder {
     }
 
     this.compact = options.compact !== false
-    this.prefixes = '^?='
+    this.prefixes = Prefixes.ALL
     this.state = {
       last: root,
       stack: [],
@@ -140,9 +140,11 @@ class TreeBuilder implements ITreeBuilder {
     const expected = last.name
 
     if (expected !== name.slice(1)) {
-      const msg = MSG.expectedAndInsteadSaw.replace('%1', expected).replace('%2', name)
-
-      this.err(msg, last.start)
+      const ok = name === '/if' && (expected === 'else' || expected === 'elif')
+      if (!ok) {
+        const msg = MSG.expectedAndInsteadSaw.replace('%1', expected).replace('%2', name)
+        this.err(msg, node.start)
+      }
     }
 
     last.end = node.end
@@ -170,7 +172,7 @@ class TreeBuilder implements ITreeBuilder {
 
     if (name === 'style' || name === 'script' && !this.deferred(node, attrs)) {
 
-      // only one of both script and style tags
+      // Only accept one of each
       if (state[name]) {
         this.err(MSG.duplicatedNamedTag.replace('%1', name), node.start)
       }
@@ -182,13 +184,27 @@ class TreeBuilder implements ITreeBuilder {
       }
 
     } else {
+
+      // "else" and "elif" have to come after an "if", closing it.
+      if (name === 'else' || name === 'elif') {
+        const previous = state.last
+        const lastName = previous.name
+        const start = node.start
+
+        if (lastName === 'if' || lastName === 'elif') {
+          previous.end = start
+          this.closeTag(state, previous, `/${lastName}`)
+        } else {
+          this.err(MSG.unexpectedNamedTag.replace('%1', name), start)
+        }
+      }
+
       // state.last holds the last tag pushed in the stack and this are
       // non-void, non-empty tags, so we are sure the `lastTag` here
       // have a `nodes` property.
       const lastTag = state.last
       const newNode = node as NodeTag
 
-      // lastTag have a nodes property
       lastTag.nodes.push(newNode)
 
       if (lastTag.raw || RAW_TAGS.test(name)) {
@@ -313,7 +329,7 @@ class TreeBuilder implements ITreeBuilder {
 
     text = text.replace(/\\/g, '\\\\')
 
-    return pack ? text.replace(/\s+/, ' ') : text.replace(/\r/g, '\\r').replace(/\n/g, '\\n')
+    return pack ? text.replace(/\s+/g, ' ') : text.replace(/\r/g, '\\r').replace(/\n/g, '\\n')
   }
 
 }

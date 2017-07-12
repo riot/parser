@@ -1,5 +1,9 @@
 # Changes for riot-parser
 
+### v0.0.6
+- Tree-builder support for 'if/else/elseif' tags (avoid unexpected closing tag errors).
+- Fix to text nodes only escaping the fist block of whitespace.
+
 ### v0.0.5
 - Now, attribute names are lowercased in the builder, only for empty namespaces (i.e. not svg).
 

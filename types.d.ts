@@ -9,6 +9,14 @@ declare const enum NodeTypes {
   DOCUMENT_FRAGMENT = 11,
 }
 
+// Prefixes for expressions
+declare const enum Prefixes {
+  HTML = '?',
+  ONCE = '=',
+  NO_PARSE = '^',
+  ALL = '?=^'
+}
+
 interface Hash<T> {
   [x: string]: T
 }
@@ -16,7 +24,7 @@ interface Hash<T> {
 interface HasExpr {
   expr?: RawExpr[]
   unescape?: string
-  parts?: any[]
+  parts?: string[]
 }
 
 interface Locatable {

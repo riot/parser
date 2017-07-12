@@ -1,6 +1,11 @@
 *.bak
 *.log
 
+# Dev files
+----------------------
+*.tgz
+test/_*.js
+
 # OSX Files
 # --------------------
 .DS_Store
