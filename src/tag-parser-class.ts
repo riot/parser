@@ -113,7 +113,7 @@ class TagParser implements ITagParser {
    * @param   {number} pos  - Position where to start the parsing
    * @returns {ParserResult} Result, contains data and output properties.
    */
-  public parse(data: string, pos: number): ParserResult {
+  public parse(data: string, pos?: number): ParserResult {
     const me = this
 
     const builder = me.bf(data, me.opts)
@@ -121,7 +121,7 @@ class TagParser implements ITagParser {
     // Creating the state in the closure and passing it as a parameter is more
     // efficient and allows to use the same parser instance asynchronously.
     const state: ParseState = {
-      pos: pos | 0,           // parsing position
+      pos: pos || 0,           // parsing position
       last: null,             // current open tag
       count: -1,              // count of nested tags with the name as root
       scryle: null,

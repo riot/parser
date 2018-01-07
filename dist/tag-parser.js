@@ -113,7 +113,7 @@ var RE_SCRYLE = {
     style: /<\/style\s*>/gi,
     textarea: /<\/textarea\s*>/gi,
 };
-var TagParser = (function () {
+var TagParser =               (function () {
     function TagParser(builderFactory, options) {
         this.opts = options;
         this.bf = builderFactory;
@@ -125,7 +125,7 @@ var TagParser = (function () {
         var me = this;
         var builder = me.bf(data, me.opts);
         var state = {
-            pos: pos | 0,
+            pos: pos || 0,
             last: null,
             count: -1,
             scryle: null,
@@ -411,7 +411,7 @@ var voidTags = {
 
 var SVG_NS = 'http://www.w3.org/2000/svg';
 var RAW_TAGS = /^\/?(?:pre|textarea)$/;
-var TreeBuilder = (function () {
+var TreeBuilder =               (function () {
     function TreeBuilder(data, options) {
         var root = {
             type: 1          ,
