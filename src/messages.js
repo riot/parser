@@ -7,5 +7,4 @@ const MSG = {
   duplicatedNamedTag: 'Duplicate tag "<%1>".',
   expectedAndInsteadSaw: 'Expected "</%1>" and instead saw "<%2>".',
 }
-
 export default MSG

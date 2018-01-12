@@ -1,5 +1,5 @@
 
-const _T = require('../nodeTypes')
+const _T = require('../').nodeTypes
 
 module.exports = {
 

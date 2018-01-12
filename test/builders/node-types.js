@@ -1,1 +1,1 @@
-module.exports = require('../../nodeTypes')
+module.exports = require('../../').nodeTypes

@@ -4,22 +4,15 @@
  * and return its text without the enclosing brackets.
  * Does not works with comments, but supports ES6 template strings.
  */
-
+import skipRegex from 'skip-regex'
 import escapeStr from './escape-str'
 import skipES6TL from './skip-es6-tl'
-import skipRegex from './skip-regex'
-
 /**
  * @exports exprExtr
  */
 const exprExtr = (function (_skipES6TL, _skipRegex, _escapeStr) {
-
-  //#if !_ES6_BQ
   const $_ES6_BQ = '`'
-  //#endif
-
   const S_SQ_STR = /'[^'\n\r\\]*(?:\\(?:\r\n?|[\S\s])[^'\n\r\\]*)*'/.source
-
   /**
    * Matches double quoted JS strings taking care about nested quotes
    * and EOLs (escaped EOLs are Ok).
@@ -28,7 +21,6 @@ const exprExtr = (function (_skipES6TL, _skipRegex, _escapeStr) {
    * @private
    */
   const S_STRING = `${S_SQ_STR}|${S_SQ_STR.replace(/'/g, '"')}`
-
   /**
    * Regex cache
    *
@@ -36,9 +28,7 @@ const exprExtr = (function (_skipES6TL, _skipRegex, _escapeStr) {
    * @const
    * @private
    */
-  const reBr: Hash<RegExp> = {}
-
-
+  const reBr = {}
   /**
    * Makes an optimal regex that matches quoted strings, brackets, backquotes
    * and the closing brackets of an expression.
@@ -46,25 +36,20 @@ const exprExtr = (function (_skipES6TL, _skipRegex, _escapeStr) {
    * @param   {string} b - Closing brackets
    * @returns {RegExp}
    */
-  function _regex(b: string) {
+  function _regex(b) {
     let re = reBr[b]
-
     if (!re) {
       let s = _escapeStr(b)
-
       if (b.length > 1) {
         s = s + '|['
-      } else {
-        s = /[\{}[\]()]/.test(b) ? '[' : `[${s}`
       }
-
+      else {
+        s = /[{}[\]()]/.test(b) ? '[' : `[${s}`
+      }
       reBr[b] = re = new RegExp(`${S_STRING}|${s}\`/\\{}[\\]()]`, 'g')
     }
-
     return re
   }
-
-
   /**
    * Parses the code string searching the end of the expression.
    * It skips braces, quoted strings, regexes, and ES6 template literals.
@@ -76,27 +61,21 @@ const exprExtr = (function (_skipES6TL, _skipRegex, _escapeStr) {
    * @returns {(Object | null)} Expression's end (after the closing brace) or -1
    *                            if it is not an expr.
    */
-  return function (code: string, start: number, bp: [string, string]): RawExpr | null {
-
+  return function (code, start, bp) {
     const openingBraces = bp[0]
     const closingBraces = bp[1]
-
-    const offset = start + openingBraces.length  // skips the opening brace
-    const stack: string[] = []              // expected closing braces ('`' for ES6 TL)
-
+    const offset = start + openingBraces.length // skips the opening brace
+    const stack = [] // expected closing braces ('`' for ES6 TL)
     const re = _regex(closingBraces)
-    re.lastIndex = offset                   // begining of the expression
-
-    let idx: number
-    let end: number
-    let str: string
-    let match: RegExpExecArray | null
-
+    re.lastIndex = offset // begining of the expression
+    let idx
+    let end
+    let str
+    let match
     while ((match = re.exec(code))) {
       idx = match.index
       end = re.lastIndex
       str = match[0]
-
       if (str === closingBraces && !stack.length) {
         return {
           text: code.slice(offset, idx),
@@ -104,47 +83,39 @@ const exprExtr = (function (_skipES6TL, _skipRegex, _escapeStr) {
           end,
         }
       }
-
       str = str[0]
-
       switch (str) {
-        case '[':
-        case '(':
-        case '{':
-          stack.push(str === '[' ? ']' : str === '(' ? ')' : '}')
-          break
-
-        case ')':
-        case ']':
-        case '}':
-          if (str !== stack.pop()) {
-            throw new Error(`Unexpected character '${str}'`)
-          }
-          if (str === '}' && stack[stack.length - 1] === $_ES6_BQ) {
-            str = stack.pop() as string
-          }
-          end = idx + 1
-          break
-
-        case '/':
-          end = _skipRegex(code, idx)
-          break
+      case '[':
+      case '(':
+      case '{':
+        stack.push(str === '[' ? ']' : str === '(' ? ')' : '}')
+        break
+      case ')':
+      case ']':
+      case '}':
+        if (str !== stack.pop()) {
+          throw new Error(`Unexpected character '${str}'`)
+        }
+        if (str === '}' && stack[stack.length - 1] === $_ES6_BQ) {
+          str = stack.pop()
+        }
+        end = idx + 1
+        break
+      case '/':
+        end = _skipRegex(code, idx)
+        break
       }
-
       if (str === $_ES6_BQ) {
         re.lastIndex = _skipES6TL(code, end, stack)
-      } else {
+      }
+      else {
         re.lastIndex = end
       }
     }
-
     if (stack.length) {
       throw new Error('Unclosed expression.')
     }
-
     return null
   }
-
 })(skipES6TL, skipRegex, escapeStr)
-
 export default exprExtr

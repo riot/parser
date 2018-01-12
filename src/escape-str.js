@@ -4,4 +4,4 @@
  * @param   {string} str - Raw string
  * @returns {string} Escaped string.
  */
-export default (str: string) => str.replace(/(?=[-[\](){^*+?.$|\\])/g, '\\')
+export default (str) => str.replace(/(?=[-[\](){^*+?.$|\\])/g, '\\')

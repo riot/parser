@@ -26,7 +26,6 @@ const voidTags = {
     'track',
     'wbr',
   ],
-
   /**
    * SVG void elements that cannot be auto-closed and shouldn't contain child nodes.
    *
@@ -44,5 +43,4 @@ const voidTags = {
     'use',
   ],
 }
-
 export default voidTags
