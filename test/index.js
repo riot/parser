@@ -2,8 +2,8 @@
 
 const compareObject = require('./utils/compare-objects')
 const echoBuilder = require('./builders/echo-builder')
-const parser = require('../')
-const expect = require('expect')
+const parser = require('../').default
+const expect = require('chai').expect
 const fs = require('fs')
 
 process.chdir(__dirname)
@@ -29,7 +29,7 @@ describe('The Parser', function () {
       const _p = parser(getOpts(test), echoBuilder)
 
       if (test.throws) {
-        expect(function () { _p.parse(test.data) }).toThrow(test.throws)
+        expect(function () { _p.parse(test.data) }).throw(test.throws)
 
       } else {
         let result = _p.parse(test.data)
@@ -40,7 +40,7 @@ describe('The Parser', function () {
           result   = JSON.stringify(result.output)
           expected = JSON.stringify(test.expected)
         }
-        expect(result).toBe(expected)
+        expect(result).to.be.equal(expected)
       }
     })
 
@@ -67,7 +67,7 @@ describe('Expressions', function () {
       if (_TDEBUG && title === _TDEBUG) debugger
 
       if (test.throws) {
-        expect(function () { _p.parse(test.data) }).toThrow(test.throws)
+        expect(function () { _p.parse(test.data) }).throw(test.throws)
 
       } else {
         let result = _p.parse(test.data)
@@ -78,7 +78,7 @@ describe('Expressions', function () {
           result   = JSON.stringify(result.output)
           expected = JSON.stringify(test.expected)
         }
-        expect(result).toBe(expected)
+        expect(result).to.be.equal(expected)
       }
     })
 
@@ -116,19 +116,19 @@ describe('Tree Builder', function () {
       if (name === _TDEBUG) debugger
       const res = _p.parse(src)
 
-      expect(res).toBeAn(Object)
-      expect(res.output).toBeAn(Object)
+      expect(res).to.be.an('object')
+      expect(res.output).to.be.an('object')
 
       const tree = res.output
 
       const json = JSON.stringify(tree, null, '  ')
 
-      if (_TOSAVE[0] === '*' || ~_TOSAVE.indexOf(name)) {
+      if (_TOSAVE[0] === '*' || _TOSAVE.indexOf(name) !== -1) {
         fs.writeFile(path.join('.', 'expected', name + '_out.json'), json, function (err) {
           if (err) throw err
         })
       }
-      expect(json.trim()).toEqual(cat('expected', name + '.json').trim())
+      expect(json.trim()).to.be.equal(cat('expected', name + '.json').trim())
     })
 
     if (_TDEBUG && title === _TDEBUG) break
@@ -158,11 +158,11 @@ describe('HTML Builder', function () {
       if (test.throws) {
         expect(function () {
           builder.build(_p.parse(test.data))
-        }).toThrow(test.throws)
+        }).throw(test.throws)
 
       } else {
         const result = builder.build(_p.parse(test.data))
-        expect(result).toBe(test.expected)
+        expect(result).to.be.equal(test.expected)
       }
     })
 
@@ -190,7 +190,7 @@ describe('HTML Builder', function () {
     ].join('\n')
 
     const result = builder.build(_p.parse(source))
-    expect(result).toBe(expected)
+    expect(result).to.be.equal(expected)
   })
 
 })

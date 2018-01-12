@@ -1,9 +1,11 @@
-import resolve from 'rollup-plugin-node-resolve';
+import resolve from 'rollup-plugin-node-resolve'
 
 export default {
-  input: 'lib/src/index.js',
-  dest: './index.js',
-  format: 'cjs',
+  input: 'src/index.js',
+  name: 'parser',
+  output: {
+    format: 'umd',
+    file: './index.js'
+  },
   plugins: [resolve()]
 }
-

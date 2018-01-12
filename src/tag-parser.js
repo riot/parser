@@ -1,5 +1,5 @@
-import TagParser from './tag-parser-class';
-import treeBuilder from './tree-builder';
+import TagParser from './tag-parser-class'
+import treeBuilder from './tree-builder'
 /**
  * Factory for the TagParser class, exposing only the `parse` method.
  * The export adds the TagParser class as property.
@@ -9,5 +9,5 @@ import treeBuilder from './tree-builder';
  * @returns {Function} Public TagParser implementation.
  */
 export default function tagParser(options, tbf) {
-    return new TagParser(tbf || treeBuilder, options);
+  return new TagParser(tbf || treeBuilder, options)
 }

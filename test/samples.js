@@ -1,6 +1,6 @@
 'use strict'
 
-const tagParser = require('../')
+const tagParser = require('../').default
 const fs = require('fs')
 const opts = {
   brackets: ['{', '}']
