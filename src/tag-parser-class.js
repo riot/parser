@@ -48,9 +48,9 @@ const RE_SCRYLE = {
  */
 class TagParser {
   /**
-     * @param {Function} builderFactory - Factory function for the builder
-     * @param {Object} options - User options
-     */
+   * @param {Function} builderFactory - Factory function for the builder
+   * @param {Object} options - User options
+   */
   constructor(builderFactory, options) {
     this.opts = options
     this.bf = builderFactory
@@ -61,17 +61,17 @@ class TagParser {
   // ------------------------------------------------------------------
   // Methods
   /**
-     * It creates a raw output of pseudo-nodes with one of three different types,
-     * all of them having a start/end position:
-     *
-     * - TAG     -- Opening or closing tags
-     * - TEXT    -- Raw text
-     * - COMMENT -- Comments
-     *
-     * @param   {string} data - HTML markup
-     * @param   {number} pos  - Position where to start the parsing
-     * @returns {ParserResult} Result, contains data and output properties.
-     */
+   * It creates a raw output of pseudo-nodes with one of three different types,
+   * all of them having a start/end position:
+   *
+   * - TAG     -- Opening or closing tags
+   * - TEXT    -- Raw text
+   * - COMMENT -- Comments
+   *
+   * @param   {string} data - HTML markup
+   * @param   {number} pos  - Position where to start the parsing
+   * @returns {ParserResult} Result, contains data and output properties.
+   */
   parse(data, pos) {
     const me = this
     const builder = me.bf(data, me.opts)
@@ -109,25 +109,25 @@ class TagParser {
     return { data, output: builder.get() }
   }
   /**
-     * Custom error handler can replace this method.
-     * The `state` object includes the buffer (`data`)
-     * The error position (`loc`) contains line (base 1) and col (base 0).
-     *
-     * @param {string} source   - Processing buffer
-     * @param {string} message  - Error message
-     * @param {number} pos    - Error position
-     * @private
-     */
+   * Custom error handler can replace this method.
+   * The `state` object includes the buffer (`data`)
+   * The error position (`loc`) contains line (base 1) and col (base 0).
+   *
+   * @param {string} source   - Processing buffer
+   * @param {string} message  - Error message
+   * @param {number} pos    - Error position
+   * @private
+   */
   err(data, msg, pos) {
     const message = formatError(data, msg, pos)
     throw new Error(message)
   }
   /**
-     * Outputs the last parsed node. Can be used with a builder too.
-     *
-     * @param {ParseState} state - Parsing state
-     * @private
-     */
+   * Outputs the last parsed node. Can be used with a builder too.
+   *
+   * @param {ParseState} state - Parsing state
+   * @private
+   */
   flush(state) {
     const last = state.last
     state.last = null
@@ -136,13 +136,13 @@ class TagParser {
     }
   }
   /**
-     * Stores a comment.
-     *
-     * @param {ParseState}  state - Current parser state
-     * @param {number}  start - Start position of the tag
-     * @param {number}  end   - Ending position (last char of the tag)
-     * @private
-     */
+   * Stores a comment.
+   *
+   * @param {ParseState}  state - Current parser state
+   * @param {number}  start - Start position of the tag
+   * @param {number}  end   - Ending position (last char of the tag)
+   * @private
+   */
   pushCmnt(state, start, end) {
     this.flush(state)
     state.pos = end
@@ -151,15 +151,15 @@ class TagParser {
     }
   }
   /**
-     * Stores text in the last text node, or creates a new one if needed.
-     *
-     * @param {ParseState}   state   - Current parser state
-     * @param {number}  start   - Start position of the tag
-     * @param {number}  end     - Ending position (last char of the tag)
-     * @param {RawExpr[]} [expr]  - Found expressions
-     * @param {string}  [rep]   - Brackets to unescape
-     * @private
-     */
+   * Stores text in the last text node, or creates a new one if needed.
+   *
+   * @param {ParseState}   state   - Current parser state
+   * @param {number}  start   - Start position of the tag
+   * @param {number}  end     - Ending position (last char of the tag)
+   * @param {RawExpr[]} [expr]  - Found expressions
+   * @param {string}  [rep]   - Brackets to unescape
+   * @private
+   */
   pushText(state, start, end, expr, rep) {
     const text = state.data.slice(start, end)
     let q = state.last
@@ -180,15 +180,15 @@ class TagParser {
     }
   }
   /**
-     * Pushes a new *tag* and set `last` to this, so any attributes
-     * will be included on this and shifts the `end`.
-     *
-     * @param {ParseState} state  - Current parser state
-     * @param {string}  name      - Name of the node including any slash
-     * @param {number}  start     - Start position of the tag
-     * @param {number}  end       - Ending position (last char of the tag + 1)
-     * @private
-     */
+   * Pushes a new *tag* and set `last` to this, so any attributes
+   * will be included on this and shifts the `end`.
+   *
+   * @param {ParseState} state  - Current parser state
+   * @param {string}  name      - Name of the node including any slash
+   * @param {number}  start     - Start position of the tag
+   * @param {number}  end       - Ending position (last char of the tag + 1)
+   * @private
+   */
   pushTag(state, name, start, end) {
     const root = state.root
     const last = { type: 1 /* TAG */, name, start, end }
@@ -210,14 +210,14 @@ class TagParser {
     state.last = last
   }
   /**
-     * Parse the tag following a '<' character, or delegate to other parser
-     * if an invalid tag name is found.
-     *
-     * @param   {ParseState} state  - Parser state
-     * @param   {string} data       - Buffer to parse
-     * @returns {number} New parser mode
-     * @private
-     */
+   * Parse the tag following a '<' character, or delegate to other parser
+   * if an invalid tag name is found.
+   *
+   * @param   {ParseState} state  - Parser state
+   * @param   {string} data       - Buffer to parse
+   * @returns {number} New parser mode
+   * @private
+   */
   tag(state, data) {
     const pos = state.pos // pos of the char following '<'
     const start = pos - 1 // pos of '<'
@@ -247,14 +247,14 @@ class TagParser {
     return 3 /* TEXT */
   }
   /**
-     * Parses comments in long or short form
-     * (any DOCTYPE & CDATA blocks are parsed as comments).
-     *
-     * @param {ParseState} state  - Parser state
-     * @param {string} data       - Buffer to parse
-     * @param {number} start      - Position of the '<!' sequence
-     * @private
-     */
+   * Parses comments in long or short form
+   * (any DOCTYPE & CDATA blocks are parsed as comments).
+   *
+   * @param {ParseState} state  - Parser state
+   * @param {string} data       - Buffer to parse
+   * @param {number} start      - Position of the '<!' sequence
+   * @private
+   */
   cmnt(state, data, start) {
     const pos = start + 2 // skip '<!'
     const str = data.substr(pos, 2) === '--' ? '-->' : '>'
@@ -265,14 +265,14 @@ class TagParser {
     this.pushCmnt(state, start, end + str.length)
   }
   /**
-     * The more complex parsing is for attributes as it can contain quoted or
-     * unquoted values or expressions.
-     *
-     * @param   {ParseState} state  - Parser state
-     * @param   {string} data       - Buffer to parse
-     * @returns {number} New parser mode.
-     * @private
-     */
+   * The more complex parsing is for attributes as it can contain quoted or
+   * unquoted values or expressions.
+   *
+   * @param   {ParseState} state  - Parser state
+   * @param   {string} data       - Buffer to parse
+   * @returns {number} New parser mode.
+   * @private
+   */
   attr(state, data) {
     const tag = state.last // the last (current) tag in the output
     const _CH = /\S/g // matches the first non-space char
@@ -305,14 +305,14 @@ class TagParser {
     return 2 /* ATTR */
   }
   /**
-     * Parses an attribute and its expressions.
-     *
-     * @param   {ParseState}  state  - Parser state
-     * @param   {string} data   - Whole buffer
-     * @param   {number} pos    - Starting position of the attribute
-     * @param   {Object} tag    - Current parent tag
-     * @private
-     */
+   * Parses an attribute and its expressions.
+   *
+   * @param   {ParseState}  state  - Parser state
+   * @param   {string} data   - Whole buffer
+   * @param   {number} pos    - Starting position of the attribute
+   * @param   {Object} tag    - Current parent tag
+   * @private
+   */
   setAttr(state, data, pos, tag) {
     const re = ATTR_START // (\S[^>/=\s]*)(?:\s*=\s*([^>/])?)? g
     const start = re.lastIndex = pos // first non-whitespace
@@ -345,14 +345,14 @@ class TagParser {
     (tag.attr || (tag.attr = [])).push(attr)
   }
   /**
-     * Parses regular text and script/style blocks ...scryle for short :-)
-     * (the content of script and style is text as well)
-     *
-     * @param   {ParseState} state - Parser state
-     * @param   {string} data  - Buffer to parse
-     * @returns {number} New parser mode.
-     * @private
-     */
+   * Parses regular text and script/style blocks ...scryle for short :-)
+   * (the content of script and style is text as well)
+   *
+   * @param   {ParseState} state - Parser state
+   * @param   {string} data  - Buffer to parse
+   * @returns {number} New parser mode.
+   * @private
+   */
   text(state, data) {
     const me = this
     const pos = state.pos // start of the text
@@ -389,18 +389,18 @@ class TagParser {
     return 3 /* TEXT */
   }
   /**
-     * Find the end of the attribute value or text node
-     * Extract expressions.
-     * Detect if value have escaped brackets.
-     *
-     * @param   {ParseState} state  - Parser state
-     * @param   {string} data       - Source code
-     * @param   {HasExpr} node      - Node if attr, info if text
-     * @param   {string} endingChars - Ends the value or text
-     * @param   {number} pos        - Starting position
-     * @returns {number} Ending position
-     * @private
-     */
+   * Find the end of the attribute value or text node
+   * Extract expressions.
+   * Detect if value have escaped brackets.
+   *
+   * @param   {ParseState} state  - Parser state
+   * @param   {string} data       - Source code
+   * @param   {HasExpr} node      - Node if attr, info if text
+   * @param   {string} endingChars - Ends the value or text
+   * @param   {number} pos        - Starting position
+   * @returns {number} Ending position
+   * @private
+   */
   expr(state, data, node, endingChars, pos) {
     const me = this
     const start = pos
@@ -443,13 +443,13 @@ class TagParser {
     return end
   }
   /**
-     * Creates a regex for the given string and the left bracket.
-     * The string is captured in $1.
-     *
-     * @param   {string} str - String to search
-     * @returns {RegExp} Resulting regex.
-     * @private
-     */
+   * Creates a regex for the given string and the left bracket.
+   * The string is captured in $1.
+   *
+   * @param   {string} str - String to search
+   * @returns {RegExp} Resulting regex.
+   * @private
+   */
   b0re(str) {
     let re = this.re[str]
     if (!re) {

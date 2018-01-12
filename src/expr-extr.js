@@ -14,28 +14,28 @@ const exprExtr = (function (_skipES6TL, _skipRegex, _escapeStr) {
   const $_ES6_BQ = '`'
   const S_SQ_STR = /'[^'\n\r\\]*(?:\\(?:\r\n?|[\S\s])[^'\n\r\\]*)*'/.source
   /**
-     * Matches double quoted JS strings taking care about nested quotes
-     * and EOLs (escaped EOLs are Ok).
-     *
-     * @const
-     * @private
-     */
+   * Matches double quoted JS strings taking care about nested quotes
+   * and EOLs (escaped EOLs are Ok).
+   *
+   * @const
+   * @private
+   */
   const S_STRING = `${S_SQ_STR}|${S_SQ_STR.replace(/'/g, '"')}`
   /**
-     * Regex cache
-     *
-     * @type {Object.<string, RegExp>}
-     * @const
-     * @private
-     */
+   * Regex cache
+   *
+   * @type {Object.<string, RegExp>}
+   * @const
+   * @private
+   */
   const reBr = {}
   /**
-     * Makes an optimal regex that matches quoted strings, brackets, backquotes
-     * and the closing brackets of an expression.
-     *
-     * @param   {string} b - Closing brackets
-     * @returns {RegExp}
-     */
+   * Makes an optimal regex that matches quoted strings, brackets, backquotes
+   * and the closing brackets of an expression.
+   *
+   * @param   {string} b - Closing brackets
+   * @returns {RegExp}
+   */
   function _regex(b) {
     let re = reBr[b]
     if (!re) {
@@ -51,16 +51,16 @@ const exprExtr = (function (_skipES6TL, _skipRegex, _escapeStr) {
     return re
   }
   /**
-     * Parses the code string searching the end of the expression.
-     * It skips braces, quoted strings, regexes, and ES6 template literals.
-     *
-     * @function exprExtr
-     * @param   {string}  code  - Buffer to parse
-     * @param   {number}  start - Position of the opening brace
-     * @param   {[string,string]} bp - Brackets pair
-     * @returns {(Object | null)} Expression's end (after the closing brace) or -1
-     *                            if it is not an expr.
-     */
+   * Parses the code string searching the end of the expression.
+   * It skips braces, quoted strings, regexes, and ES6 template literals.
+   *
+   * @function exprExtr
+   * @param   {string}  code  - Buffer to parse
+   * @param   {number}  start - Position of the opening brace
+   * @param   {[string,string]} bp - Brackets pair
+   * @returns {(Object | null)} Expression's end (after the closing brace) or -1
+   *                            if it is not an expr.
+   */
   return function (code, start, bp) {
     const openingBraces = bp[0]
     const closingBraces = bp[1]
