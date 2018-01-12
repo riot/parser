@@ -1,6 +1,4 @@
-//#if !_ES6_BQ
-const $_ES6_BQ = '`'
-//#endif
+export const $_ES6_BQ = '`'
 /**
  * Searches the next backquote that signals the end of the ES6 Template Literal
  * or the "${" sequence that starts a JS expression, skipping any escaped

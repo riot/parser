@@ -6,12 +6,11 @@
  */
 import skipRegex from 'skip-regex'
 import escapeStr from './escape-str'
-import skipES6TL from './skip-es6-tl'
+import skipES6TL, { $_ES6_BQ } from './skip-es6-tl'
 /**
  * @exports exprExtr
  */
 const exprExtr = (function (_skipES6TL, _skipRegex, _escapeStr) {
-  const $_ES6_BQ = '`'
   const S_SQ_STR = /'[^'\n\r\\]*(?:\\(?:\r\n?|[\S\s])[^'\n\r\\]*)*'/.source
   /**
    * Matches double quoted JS strings taking care about nested quotes

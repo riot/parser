@@ -133,9 +133,7 @@ var skipRegex = (function () {
 
 })();
 
-//#if !_ES6_BQ
 const $_ES6_BQ = '`';
-//#endif
 /**
  * Searches the next backquote that signals the end of the ES6 Template Literal
  * or the "${" sequence that starts a JS expression, skipping any escaped
@@ -176,7 +174,6 @@ function skipES6TL(code, pos, stack) {
  * @exports exprExtr
  */
 const exprExtr = (function (_skipES6TL, _skipRegex, _escapeStr) {
-  const $_ES6_BQ = '`';
   const S_SQ_STR = /'[^'\n\r\\]*(?:\\(?:\r\n?|[\S\s])[^'\n\r\\]*)*'/.source;
   /**
    * Matches double quoted JS strings taking care about nested quotes
