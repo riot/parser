@@ -23,8 +23,7 @@ const nodeTypes = require('riot-parser/nodeTypes')
 For ES6 modules there's not default export:
 
 ```js
-import { tagParser } from 'riot-parser'
-import { nodeTypes } from 'riot-parser'
+import parser, { nodeTypes } from 'riot-parser'
 ```
 
 This parser is a low-level tool that builds a simple array of objects with information about the given html fragment, readed secuencially. It is designed to parse one single tag and not entire html pages, the tag closing the root element ends the parsing.

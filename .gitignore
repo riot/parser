@@ -1,11 +1,4 @@
-*.bak
-*.log
-
-# Dev files
-----------------------
-*.tgz
-test/_*.js
-
+# --------------------
 # OSX Files
 # --------------------
 .DS_Store
@@ -16,6 +9,7 @@ Icon
 .Spotlight-V100
 .Trashes
 
+# --------------------
 # Windows Files
 # --------------------
 Thumbs.db
@@ -28,11 +22,13 @@ $RECYCLE.BIN/
 *.msp
 *.lnk
 
+# --------------------
 # Sublime Text Files
 # --------------------
 *.sublime-project
 *.sublime-workspace
 
+# --------------------
 # IntelliJ Files
 # --------------------
 *.iml
@@ -41,22 +37,27 @@ $RECYCLE.BIN/
 .idea/
 out/
 
+# --------------------
 # Eclipse Files
 # --------------------
 .project
 .metadata
+*.bak
 .classpath
 .settings/
 
+# --------------------
 # VS Code Files
 # --------------------
 .vscode
 /jsconfig.json
 
-# Others
+# --------------------
+# App Files
 # --------------------
 node_modules
+npm-debug.log
+bower_components
 coverage
-lib-cov
-make.js
-.grunt
+
+/dist/*
