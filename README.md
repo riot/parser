@@ -13,11 +13,11 @@ The package has two modules:
 ```js
 // The default export is a factory for the TagParser class.
 // Use as: tagParser(options).parse(code, startPosition)
-const tagParser = require('riot-parser')
+const tagParser = require('riot-parser').default
 
 // The enum NodeTypes (a plain JS object) that contains the values of the
 // type property of the nodes emited by tagParser (and more).
-const nodeTypes = require('riot-parser/nodeTypes')
+const nodeTypes = require('riot-parser').nodeTypes
 ```
 
 For ES6 modules there's not default export:
