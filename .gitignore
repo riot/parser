@@ -57,7 +57,4 @@ out/
 # --------------------
 node_modules
 npm-debug.log
-bower_components
-coverage
-
-/dist/*
+.nyc_output

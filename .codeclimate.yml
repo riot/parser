@@ -1,0 +1,10 @@
+engines:
+  eslint:
+    enabled: true
+
+exclude_patterns:
+  - "test"
+
+ratings:
+  paths:
+  - "src/*.js"

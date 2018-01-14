@@ -1,5 +1,12 @@
 # parser
 
+[![Build Status][travis-image]][travis-url]
+[![Code Quality][codeclimate-image]][codeclimate-url]
+[![NPM version][npm-version-image]][npm-url]
+[![NPM downloads][npm-downloads-image]][npm-url]
+[![MIT License][license-image]][license-url]
+[![Coverage Status][coverage-image]][coverage-url]
+
 Minimal, loose html parser for Riot tags
 
 ### Install
@@ -174,3 +181,20 @@ Sample output:
   }
 ]
 ```
+
+[travis-image]:https://img.shields.io/travis/riot/parser.svg?style=flat-square
+[travis-url]:https://travis-ci.org/riot/parser
+
+[license-image]:http://img.shields.io/badge/license-MIT-000000.svg?style=flat-square
+[license-url]:LICENSE.txt
+
+[npm-version-image]:http://img.shields.io/npm/v/riot-parser.svg?style=flat-square
+[npm-downloads-image]:http://img.shields.io/npm/dm/riot-parser.svg?style=flat-square
+[npm-url]:https://npmjs.org/package/riot-parser
+
+[coverage-image]:https://img.shields.io/coveralls/riot/parser/master.svg?style=flat-square
+[coverage-url]:https://coveralls.io/r/riot/parser/?branch=master
+
+[codeclimate-image]:https://img.shields.io/codeclimate/github/riot/parser.svg?style=flat-square
+[codeclimate-url]:https://codeclimate.com/github/riot/parser
+
