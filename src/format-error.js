@@ -1,4 +1,4 @@
-export default function (data, message, pos) {
+export default function formatError (data, message, pos) {
   if (!pos) {
     pos = data.length
   }

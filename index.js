@@ -173,46 +173,45 @@ function skipES6TL(code, pos, stack) {
 /**
  * @exports exprExtr
  */
-const exprExtr = (function (_skipES6TL, _skipRegex, _escapeStr) {
-  const S_SQ_STR = /'[^'\n\r\\]*(?:\\(?:\r\n?|[\S\s])[^'\n\r\\]*)*'/.source;
-  /**
+const S_SQ_STR = /'[^'\n\r\\]*(?:\\(?:\r\n?|[\S\s])[^'\n\r\\]*)*'/.source;
+/**
    * Matches double quoted JS strings taking care about nested quotes
    * and EOLs (escaped EOLs are Ok).
    *
    * @const
    * @private
    */
-  const S_STRING = `${S_SQ_STR}|${S_SQ_STR.replace(/'/g, '"')}`;
-  /**
+const S_STRING = `${S_SQ_STR}|${S_SQ_STR.replace(/'/g, '"')}`;
+/**
    * Regex cache
    *
    * @type {Object.<string, RegExp>}
    * @const
    * @private
    */
-  const reBr = {};
-  /**
+const reBr = {};
+/**
    * Makes an optimal regex that matches quoted strings, brackets, backquotes
    * and the closing brackets of an expression.
    *
    * @param   {string} b - Closing brackets
    * @returns {RegExp}
    */
-  function _regex(b) {
-    let re = reBr[b];
-    if (!re) {
-      let s = _escapeStr(b);
-      if (b.length > 1) {
-        s = s + '|[';
-      }
-      else {
-        s = /[{}[\]()]/.test(b) ? '[' : `[${s}`;
-      }
-      reBr[b] = re = new RegExp(`${S_STRING}|${s}\`/\\{}[\\]()]`, 'g');
+function _regex(b) {
+  let re = reBr[b];
+  if (!re) {
+    let s = escapeStr(b);
+    if (b.length > 1) {
+      s = s + '|[';
     }
-    return re
+    else {
+      s = /[{}[\]()]/.test(b) ? '[' : `[${s}`;
+    }
+    reBr[b] = re = new RegExp(`${S_STRING}|${s}\`/\\{}[\\]()]`, 'g');
   }
-  /**
+  return re
+}
+/**
    * Parses the code string searching the end of the expression.
    * It skips braces, quoted strings, regexes, and ES6 template literals.
    *
@@ -223,63 +222,62 @@ const exprExtr = (function (_skipES6TL, _skipRegex, _escapeStr) {
    * @returns {(Object | null)} Expression's end (after the closing brace) or -1
    *                            if it is not an expr.
    */
-  return function (code, start, bp) {
-    const openingBraces = bp[0];
-    const closingBraces = bp[1];
-    const offset = start + openingBraces.length; // skips the opening brace
-    const stack = []; // expected closing braces ('`' for ES6 TL)
-    const re = _regex(closingBraces);
-    re.lastIndex = offset; // begining of the expression
-    let idx;
-    let end;
-    let str;
-    let match;
-    while ((match = re.exec(code))) {
-      idx = match.index;
-      end = re.lastIndex;
-      str = match[0];
-      if (str === closingBraces && !stack.length) {
-        return {
-          text: code.slice(offset, idx),
-          start,
-          end,
-        }
-      }
-      str = str[0];
-      switch (str) {
-      case '[':
-      case '(':
-      case '{':
-        stack.push(str === '[' ? ']' : str === '(' ? ')' : '}');
-        break
-      case ')':
-      case ']':
-      case '}':
-        if (str !== stack.pop()) {
-          throw new Error(`Unexpected character '${str}'`)
-        }
-        if (str === '}' && stack[stack.length - 1] === $_ES6_BQ) {
-          str = stack.pop();
-        }
-        end = idx + 1;
-        break
-      case '/':
-        end = _skipRegex(code, idx);
-        break
-      }
-      if (str === $_ES6_BQ) {
-        re.lastIndex = _skipES6TL(code, end, stack);
-      }
-      else {
-        re.lastIndex = end;
+function exprExtr(code, start, bp) {
+  const openingBraces = bp[0];
+  const closingBraces = bp[1];
+  const offset = start + openingBraces.length; // skips the opening brace
+  const stack = []; // expected closing braces ('`' for ES6 TL)
+  const re = _regex(closingBraces);
+  re.lastIndex = offset; // begining of the expression
+  let idx;
+  let end;
+  let str;
+  let match;
+  while ((match = re.exec(code))) {
+    idx = match.index;
+    end = re.lastIndex;
+    str = match[0];
+    if (str === closingBraces && !stack.length) {
+      return {
+        text: code.slice(offset, idx),
+        start,
+        end,
       }
     }
-    if (stack.length) {
-      throw new Error('Unclosed expression.')
+    str = str[0];
+    switch (str) {
+    case '[':
+    case '(':
+    case '{':
+      stack.push(str === '[' ? ']' : str === '(' ? ')' : '}');
+      break
+    case ')':
+    case ']':
+    case '}':
+      if (str !== stack.pop()) {
+        throw new Error(`Unexpected character '${str}'`)
+      }
+      if (str === '}' && stack[stack.length - 1] === $_ES6_BQ) {
+        str = stack.pop();
+      }
+      end = idx + 1;
+      break
+    case '/':
+      end = skipRegex(code, idx);
+      break
     }
-    return null
+    if (str === $_ES6_BQ) {
+      re.lastIndex = skipES6TL(code, end, stack);
+    }
+    else {
+      re.lastIndex = end;
+    }
   }
-})(skipES6TL, skipRegex, escapeStr);
+  if (stack.length) {
+    throw new Error('Unclosed expression.')
+  }
+  return null
+}
 
 function formatError (data, message, pos) {
   if (!pos) {
@@ -294,15 +292,12 @@ function formatError (data, message, pos) {
   return `[${line},${col}]: ${message}`
 }
 
-const MSG = {
-  rootTagNotFound: 'Root tag not found.',
-  unexpectedEndOfFile: 'Unexpected end of file.',
-  unexpectedNamedTag: 'Unexpected tag <%1>',
-  unclosedComment: 'Unclosed comment.',
-  unclosedNamedBlock: 'Unclosed "%1" block.',
-  duplicatedNamedTag: 'Duplicate tag "<%1>".',
-  expectedAndInsteadSaw: 'Expected "</%1>" and instead saw "<%2>".',
-};
+const rootTagNotFound = 'Root tag not found.';
+const unexpectedEndOfFile = 'Unexpected end of file.';
+
+const unclosedComment = 'Unclosed comment.';
+const unclosedNamedBlock = 'Unclosed "%1" block.';
+const duplicatedNamedTag = 'Duplicate tag "<%1>".';
 
 /* ====================================================================
  * The Riot Tag Parser
@@ -342,13 +337,13 @@ const RE_SCRYLE = {
   textarea: /<\/textarea\s*>/gi,
 };
 // --------------------------------------------------------------------
-// The TagParser class
+// The Parser class
 //
 /**
  * @class
  * @implements {IParser}
  */
-class TagParser {
+class Parser {
   /**
    * @param {Function} builderFactory - Factory function for the builder
    * @param {Object} options - User options
@@ -406,7 +401,7 @@ class TagParser {
     me.flush(state);
     if (state.count) {
       me.err(data, state.count > 0
-        ? MSG.unexpectedEndOfFile : MSG.rootTagNotFound, state.pos);
+        ? unexpectedEndOfFile : rootTagNotFound, state.pos);
     }
     return { data, output: builder.get() }
   }
@@ -562,7 +557,7 @@ class TagParser {
     const str = data.substr(pos, 2) === '--' ? '-->' : '>';
     const end = data.indexOf(str, pos);
     if (end < 0) {
-      this.err(data, MSG.unclosedComment, start);
+      this.err(data, unclosedComment, start);
     }
     this.pushCmnt(state, start, end + str.length);
   }
@@ -664,7 +659,7 @@ class TagParser {
       re.lastIndex = pos;
       const match = re.exec(data);
       if (!match) {
-        me.err(data, MSG.unclosedNamedBlock.replace('%1', name), pos - 1);
+        me.err(data, unclosedNamedBlock.replace('%1', name), pos - 1);
       }
       const start = match.index;
       const end = re.lastIndex;
@@ -736,7 +731,7 @@ class TagParser {
     }
     // Even for text, the parser needs match a closing char
     if (!match) {
-      me.err(data, MSG.unexpectedEndOfFile, pos);
+      me.err(data, unexpectedEndOfFile, pos);
     }
     const end = match.index;
     if (node) {
@@ -770,7 +765,7 @@ class TagParser {
   }
 }
 
-const voidTags = {
+var voidTags = {
   /**
    * HTML void elements that cannot be auto-closed and shouldn't contain child nodes.
    *
@@ -796,7 +791,7 @@ const voidTags = {
     'param',
     'source',
     'track',
-    'wbr',
+    'wbr'
   ],
   /**
    * SVG void elements that cannot be auto-closed and shouldn't contain child nodes.
@@ -812,9 +807,9 @@ const voidTags = {
     'polyline',
     'rect',
     'stop',
-    'use',
-  ],
-};
+    'use'
+  ]
+}
 
 /*---------------------------------------------------------------------
  * Tree builder for the riot tag parser.
@@ -929,7 +924,7 @@ class TreeBuilder {
     if (name === 'style' || name === 'script' && !this.deferred(node, attrs)) {
       // Only accept one of each
       if (state[name]) {
-        this.err(MSG.duplicatedNamedTag.replace('%1', name), node.start);
+        this.err(duplicatedNamedTag.replace('%1', name), node.start);
       }
       state[name] = node;
       // support selfclosing script (w/o text content)
@@ -1048,15 +1043,15 @@ function treeBuilder(data, options) {
 }
 
 /**
- * Factory for the TagParser class, exposing only the `parse` method.
- * The export adds the TagParser class as property.
+ * Factory for the Parser class, exposing only the `parse` method.
+ * The export adds the Parser class as property.
  *
  * @param   {Object}   options - User Options
  * @param   {Function} [tbf]   - Tree builder factory
- * @returns {Function} Public TagParser implementation.
+ * @returns {Function} Public Parser implementation.
  */
-function tagParser(options, tbf) {
-  return new TagParser(tbf || treeBuilder, options)
+function parser$1(options, tbf) {
+  return new Parser(tbf || treeBuilder, options)
 }
 
 /**
@@ -1065,23 +1060,41 @@ function tagParser(options, tbf) {
  * @enum {number}
  * @readonly
  */
-var nodeTypes = {
-  TAG: 1 /* TAG */,
-  ATTR: 2 /* ATTR */,
-  TEXT: 3 /* TEXT */,
-  CDATA: 4 /* CDATA */,
-  COMMENT: 8 /* COMMENT */,
-  DOCUMENT: 9 /* DOCUMENT */,
-  DOCTYPE: 10 /* DOCTYPE */,
-  DOCUMENT_FRAGMENT: 11 /* DOCUMENT_FRAGMENT */,
-  PRIVATE_JAVASCRIPT: 12, /* Javascript private code */
-  PUBLIC_JAVASCRIPT: 13 /* Javascript public methods */
-}
+const TAG = 1; /* TAG */
+const ATTR = 2; /* ATTR */
+const TEXT = 3; /* TEXT */
+const CDATA = 4; /* CDATA */
+const COMMENT = 8; /* COMMENT */
+const DOCUMENT = 9; /* DOCUMENT */
+const DOCTYPE = 10; /* DOCTYPE */
+const DOCUMENT_FRAGMENT = 11; /* DOCUMENT_FRAGMENT */
 
-exports['default'] = tagParser;
-exports.TagParser = TagParser;
-exports.skipES6TL = skipES6TL;
+// Javascript logic nodes
+const PRIVATE_JAVASCRIPT = 12; /* Javascript private code */
+const PUBLIC_JAVASCRIPT = 13; /* Javascript public methods */
+
+
+
+var _nodeTypes = Object.freeze({
+	TAG: TAG,
+	ATTR: ATTR,
+	TEXT: TEXT,
+	CDATA: CDATA,
+	COMMENT: COMMENT,
+	DOCUMENT: DOCUMENT,
+	DOCTYPE: DOCTYPE,
+	DOCUMENT_FRAGMENT: DOCUMENT_FRAGMENT,
+	PRIVATE_JAVASCRIPT: PRIVATE_JAVASCRIPT,
+	PUBLIC_JAVASCRIPT: PUBLIC_JAVASCRIPT
+});
+
+/**
+ * The nodeTypes definition
+ */
+const nodeTypes = _nodeTypes;
+
 exports.nodeTypes = nodeTypes;
+exports['default'] = parser$1;
 
 Object.defineProperty(exports, '__esModule', { value: true });
 

@@ -1,16 +1,10 @@
-import parser from './tag-parser'
-/*
- * Export class TagParser if anyone want to subclass it.
- */
-export { default as TagParser } from './tag-parser-class'
-/*
- * Function to skip ES6 Literal String in a buffer.
- */
-export { default as skipES6TL } from './skip-es6-tl'
+import parser from './parser'
+import * as _nodeTypes from './node-types'
+
 /**
  * The nodeTypes definition
  */
-export { default as nodeTypes } from './node-types'
+export const nodeTypes = _nodeTypes
 
 /*
  * Factory function to create instances of the parser

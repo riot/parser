@@ -19,7 +19,7 @@
  * Selfclosing and void tags has no nodes[] property.
  */
 import formatError from './format-error'
-import MSG from './messages'
+import * as MSG from './messages'
 import voidTags from './void-tags'
 const SVG_NS = 'http://www.w3.org/2000/svg'
 // Do not touch text content inside this tags

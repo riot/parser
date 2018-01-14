@@ -4,7 +4,7 @@
 import escapeStr from './escape-str'
 import exprExtr from './expr-extr'
 import formatError from './format-error'
-import MSG from './messages'
+import * as MSG from './messages'
 // --------------------------------------------------------------------
 // Closure data and functions
 //
@@ -46,13 +46,13 @@ const RE_SCRYLE = {
  */
 const EXPORT_DEFAULT = /export(?:\W)+default(?:\s+)?{([\S\s]+)}/g
 // --------------------------------------------------------------------
-// The TagParser class
+// The Parser class
 //
 /**
  * @class
  * @implements {IParser}
  */
-class TagParser {
+class Parser {
   /**
    * @param {Function} builderFactory - Factory function for the builder
    * @param {Object} options - User options
@@ -473,4 +473,4 @@ class TagParser {
     return re
   }
 }
-export default TagParser
+export default Parser

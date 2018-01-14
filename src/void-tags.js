@@ -1,4 +1,4 @@
-const voidTags = {
+export default {
   /**
    * HTML void elements that cannot be auto-closed and shouldn't contain child nodes.
    *
@@ -24,7 +24,7 @@ const voidTags = {
     'param',
     'source',
     'track',
-    'wbr',
+    'wbr'
   ],
   /**
    * SVG void elements that cannot be auto-closed and shouldn't contain child nodes.
@@ -40,7 +40,6 @@ const voidTags = {
     'polyline',
     'rect',
     'stop',
-    'use',
-  ],
+    'use'
+  ]
 }
-export default voidTags

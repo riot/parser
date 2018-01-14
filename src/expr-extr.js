@@ -10,46 +10,45 @@ import skipES6TL, { $_ES6_BQ } from './skip-es6-tl'
 /**
  * @exports exprExtr
  */
-const exprExtr = (function (_skipES6TL, _skipRegex, _escapeStr) {
-  const S_SQ_STR = /'[^'\n\r\\]*(?:\\(?:\r\n?|[\S\s])[^'\n\r\\]*)*'/.source
-  /**
+const S_SQ_STR = /'[^'\n\r\\]*(?:\\(?:\r\n?|[\S\s])[^'\n\r\\]*)*'/.source
+/**
    * Matches double quoted JS strings taking care about nested quotes
    * and EOLs (escaped EOLs are Ok).
    *
    * @const
    * @private
    */
-  const S_STRING = `${S_SQ_STR}|${S_SQ_STR.replace(/'/g, '"')}`
-  /**
+const S_STRING = `${S_SQ_STR}|${S_SQ_STR.replace(/'/g, '"')}`
+/**
    * Regex cache
    *
    * @type {Object.<string, RegExp>}
    * @const
    * @private
    */
-  const reBr = {}
-  /**
+const reBr = {}
+/**
    * Makes an optimal regex that matches quoted strings, brackets, backquotes
    * and the closing brackets of an expression.
    *
    * @param   {string} b - Closing brackets
    * @returns {RegExp}
    */
-  function _regex(b) {
-    let re = reBr[b]
-    if (!re) {
-      let s = _escapeStr(b)
-      if (b.length > 1) {
-        s = s + '|['
-      }
-      else {
-        s = /[{}[\]()]/.test(b) ? '[' : `[${s}`
-      }
-      reBr[b] = re = new RegExp(`${S_STRING}|${s}\`/\\{}[\\]()]`, 'g')
+function _regex(b) {
+  let re = reBr[b]
+  if (!re) {
+    let s = escapeStr(b)
+    if (b.length > 1) {
+      s = s + '|['
     }
-    return re
+    else {
+      s = /[{}[\]()]/.test(b) ? '[' : `[${s}`
+    }
+    reBr[b] = re = new RegExp(`${S_STRING}|${s}\`/\\{}[\\]()]`, 'g')
   }
-  /**
+  return re
+}
+/**
    * Parses the code string searching the end of the expression.
    * It skips braces, quoted strings, regexes, and ES6 template literals.
    *
@@ -60,61 +59,59 @@ const exprExtr = (function (_skipES6TL, _skipRegex, _escapeStr) {
    * @returns {(Object | null)} Expression's end (after the closing brace) or -1
    *                            if it is not an expr.
    */
-  return function (code, start, bp) {
-    const openingBraces = bp[0]
-    const closingBraces = bp[1]
-    const offset = start + openingBraces.length // skips the opening brace
-    const stack = [] // expected closing braces ('`' for ES6 TL)
-    const re = _regex(closingBraces)
-    re.lastIndex = offset // begining of the expression
-    let idx
-    let end
-    let str
-    let match
-    while ((match = re.exec(code))) {
-      idx = match.index
-      end = re.lastIndex
-      str = match[0]
-      if (str === closingBraces && !stack.length) {
-        return {
-          text: code.slice(offset, idx),
-          start,
-          end,
-        }
-      }
-      str = str[0]
-      switch (str) {
-      case '[':
-      case '(':
-      case '{':
-        stack.push(str === '[' ? ']' : str === '(' ? ')' : '}')
-        break
-      case ')':
-      case ']':
-      case '}':
-        if (str !== stack.pop()) {
-          throw new Error(`Unexpected character '${str}'`)
-        }
-        if (str === '}' && stack[stack.length - 1] === $_ES6_BQ) {
-          str = stack.pop()
-        }
-        end = idx + 1
-        break
-      case '/':
-        end = _skipRegex(code, idx)
-        break
-      }
-      if (str === $_ES6_BQ) {
-        re.lastIndex = _skipES6TL(code, end, stack)
-      }
-      else {
-        re.lastIndex = end
+export default function exprExtr(code, start, bp) {
+  const openingBraces = bp[0]
+  const closingBraces = bp[1]
+  const offset = start + openingBraces.length // skips the opening brace
+  const stack = [] // expected closing braces ('`' for ES6 TL)
+  const re = _regex(closingBraces)
+  re.lastIndex = offset // begining of the expression
+  let idx
+  let end
+  let str
+  let match
+  while ((match = re.exec(code))) {
+    idx = match.index
+    end = re.lastIndex
+    str = match[0]
+    if (str === closingBraces && !stack.length) {
+      return {
+        text: code.slice(offset, idx),
+        start,
+        end,
       }
     }
-    if (stack.length) {
-      throw new Error('Unclosed expression.')
+    str = str[0]
+    switch (str) {
+    case '[':
+    case '(':
+    case '{':
+      stack.push(str === '[' ? ']' : str === '(' ? ')' : '}')
+      break
+    case ')':
+    case ']':
+    case '}':
+      if (str !== stack.pop()) {
+        throw new Error(`Unexpected character '${str}'`)
+      }
+      if (str === '}' && stack[stack.length - 1] === $_ES6_BQ) {
+        str = stack.pop()
+      }
+      end = idx + 1
+      break
+    case '/':
+      end = skipRegex(code, idx)
+      break
     }
-    return null
+    if (str === $_ES6_BQ) {
+      re.lastIndex = skipES6TL(code, end, stack)
+    }
+    else {
+      re.lastIndex = end
+    }
   }
-})(skipES6TL, skipRegex, escapeStr)
-export default exprExtr
+  if (stack.length) {
+    throw new Error('Unclosed expression.')
+  }
+  return null
+}

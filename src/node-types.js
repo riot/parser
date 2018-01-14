@@ -4,15 +4,16 @@
  * @enum {number}
  * @readonly
  */
-export default {
-  TAG: 1 /* TAG */,
-  ATTR: 2 /* ATTR */,
-  TEXT: 3 /* TEXT */,
-  CDATA: 4 /* CDATA */,
-  COMMENT: 8 /* COMMENT */,
-  DOCUMENT: 9 /* DOCUMENT */,
-  DOCTYPE: 10 /* DOCTYPE */,
-  DOCUMENT_FRAGMENT: 11 /* DOCUMENT_FRAGMENT */,
-  PRIVATE_JAVASCRIPT: 12, /* Javascript private code */
-  PUBLIC_JAVASCRIPT: 13 /* Javascript public methods */
-}
+export const TAG = 1 /* TAG */
+export const ATTR = 2 /* ATTR */
+export const TEXT = 3 /* TEXT */
+export const CDATA = 4 /* CDATA */
+export const COMMENT = 8 /* COMMENT */
+export const DOCUMENT = 9 /* DOCUMENT */
+export const DOCTYPE = 10 /* DOCTYPE */
+export const DOCUMENT_FRAGMENT = 11 /* DOCUMENT_FRAGMENT */
+
+// Javascript logic nodes
+export const PRIVATE_JAVASCRIPT = 12 /* Javascript private code */
+export const PUBLIC_JAVASCRIPT = 13 /* Javascript public methods */
+
