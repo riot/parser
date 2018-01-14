@@ -192,8 +192,8 @@ Sample output:
 [npm-downloads-image]:http://img.shields.io/npm/dm/riot-parser.svg?style=flat-square
 [npm-url]:https://npmjs.org/package/riot-parser
 
-[coverage-image]:https://img.shields.io/coveralls/riot/parser/dev.svg?style=flat-square
-[coverage-url]:https://coveralls.io/r/riot/parser/?branch=dev
+[coverage-image]:https://img.shields.io/coveralls/riot/parser/master.svg?style=flat-square
+[coverage-url]:https://coveralls.io/r/riot/parser/?branch=master
 
 [codeclimate-image]:https://api.codeclimate.com/v1/badges/5db4f1c96a43e3736cf0/maintainability
 [codeclimate-url]:https://codeclimate.com/github/riot/parser
