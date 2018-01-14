@@ -1,5 +1,5 @@
 {
-  "html": {
+  "template": {
     "type": 1,
     "name": "loop-svg-nodes",
     "start": 0,
@@ -134,7 +134,7 @@
     ]
   },
   "css": null,
-  "js": {
+  "javascript": {
     "type": 1,
     "name": "script",
     "start": 209,

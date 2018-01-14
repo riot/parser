@@ -86,7 +86,7 @@ module.exports = {
     expected: [
       { type: _T.TAG, name: 'div', start: 0, end: 5 },
       { type: _T.TEXT, text: 'foo & { 0 }', start: 5, end: 16, expr: [
-          { text: ' 0 ', start: 11, end: 16 }
+        { text: ' 0 ', start: 11, end: 16 }
       ] },
       { type: _T.TAG, name: '/div', start: 16, end: 22 }
     ]

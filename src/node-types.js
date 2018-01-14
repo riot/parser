@@ -13,4 +13,6 @@ export default {
   DOCUMENT: 9 /* DOCUMENT */,
   DOCTYPE: 10 /* DOCTYPE */,
   DOCUMENT_FRAGMENT: 11 /* DOCUMENT_FRAGMENT */,
+  PRIVATE_JAVASCRIPT: 12, /* Javascript private code */
+  PUBLIC_JAVASCRIPT: 13 /* Javascript public methods */
 }

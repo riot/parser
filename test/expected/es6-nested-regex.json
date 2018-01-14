@@ -1,5 +1,5 @@
 {
-  "html": {
+  "template": {
     "type": 1,
     "name": "es6-nested-regex",
     "start": 0,
@@ -33,7 +33,7 @@
     ]
   },
   "css": null,
-  "js": {
+  "javascript": {
     "type": 1,
     "name": "script",
     "start": 45,

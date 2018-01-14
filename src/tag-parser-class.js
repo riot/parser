@@ -39,6 +39,12 @@ const RE_SCRYLE = {
   style: /<\/style\s*>/gi,
   textarea: /<\/textarea\s*>/gi,
 }
+/**
+ * Matches everything that's inside an `export default {}` expression
+ * @const
+ * @private
+ */
+const EXPORT_DEFAULT = /export(?:\W)+default(?:\s+)?{([\S\s]+)}/g
 // --------------------------------------------------------------------
 // The TagParser class
 //
@@ -369,24 +375,32 @@ class TagParser {
       state.scryle = null // reset the script/style flag now
       // write the tag content, if any
       if (start > pos) {
-        if (name === 'textarea') {
-          this.expr(state, data, null, match[0], pos)
-        }
-        else {
+        switch (name) {
+        case 'textarea':
+          me.expr(state, data, null, match[0], pos)
+          break
+        case 'script':
+          me.pushText(state, pos, start)
+          //me.parseJavascript(state, data, start, end)
+          break
+        default:
           me.pushText(state, pos, start)
         }
       }
       // now the closing tag, either </script> or </style>
       me.pushTag(state, `/${name}`, start, end)
-    }
-    else if (data[pos] === '<') {
+    } else if (data[pos] === '<') {
       state.pos++
       return 1 /* TAG */
+    } else {
+      me.expr(state, data, null, '<', pos)
     }
-    else {
-      this.expr(state, data, null, '<', pos)
-    }
+
     return 3 /* TEXT */
+  }
+
+  parseJavascript(state, content, start, end) {
+
   }
   /**
    * Find the end of the attribute value or text node

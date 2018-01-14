@@ -671,24 +671,32 @@ class TagParser {
       state.scryle = null; // reset the script/style flag now
       // write the tag content, if any
       if (start > pos) {
-        if (name === 'textarea') {
-          this.expr(state, data, null, match[0], pos);
-        }
-        else {
+        switch (name) {
+        case 'textarea':
+          me.expr(state, data, null, match[0], pos);
+          break
+        case 'script':
+          me.pushText(state, pos, start);
+          //me.parseJavascript(state, data, start, end)
+          break
+        default:
           me.pushText(state, pos, start);
         }
       }
       // now the closing tag, either </script> or </style>
       me.pushTag(state, `/${name}`, start, end);
-    }
-    else if (data[pos] === '<') {
+    } else if (data[pos] === '<') {
       state.pos++;
       return 1 /* TAG */
+    } else {
+      me.expr(state, data, null, '<', pos);
     }
-    else {
-      this.expr(state, data, null, '<', pos);
-    }
+
     return 3 /* TEXT */
+  }
+
+  parseJavascript(state, content, start, end) {
+
   }
   /**
    * Find the end of the attribute value or text node
@@ -859,9 +867,9 @@ class TreeBuilder {
     const state = this.state;
     // The real root tag is in state.root.nodes[0]
     return {
-      html: state.root.nodes[0],
+      template: state.root.nodes[0],
       css: state.style,
-      js: state.script,
+      javascript: state.script,
     }
   }
   /**
@@ -896,27 +904,21 @@ class TreeBuilder {
     const message = formatError(this.state.data, msg, pos);
     throw new Error(message)
   }
-  closeTag(state, node, name) {
+  closeTag(state, node, name) { // eslint-disable-line
     const last = state.scryle || state.last;
-    const expected = last.name;
-    if (expected !== name.slice(1)) {
-      const ok = name === '/if' && (expected === 'else' || expected === 'elif');
-      if (!ok) {
-        const msg = MSG.expectedAndInsteadSaw.replace('%1', expected).replace('%2', name);
-        this.err(msg, node.start);
-      }
-    }
+
     last.end = node.end;
+
     if (state.scryle) {
       state.scryle = null;
-    }
-    else {
+    } else {
       if (!state.stack[0]) {
         this.err('Stack is empty.', last.start);
       }
       state.last = state.stack.pop();
     }
   }
+
   openTag(state, node) {
     const name = node.name;
     const ns = state.last.ns || (name === 'svg' ? SVG_NS : '');
@@ -934,21 +936,7 @@ class TreeBuilder {
       if (!node.selfclose) {
         state.scryle = state[name];
       }
-    }
-    else {
-      // "else" and "elif" have to come after an "if", closing it.
-      if (name === 'else' || name === 'elif') {
-        const previous = state.last;
-        const lastName = previous.name;
-        const start = node.start;
-        if (lastName === 'if' || lastName === 'elif') {
-          previous.end = start;
-          this.closeTag(state, previous, `/${lastName}`);
-        }
-        else {
-          this.err(MSG.unexpectedNamedTag.replace('%1', name), start);
-        }
-      }
+    } else {
       // state.last holds the last tag pushed in the stack and this are
       // non-void, non-empty tags, so we are sure the `lastTag` here
       // have a `nodes` property.
@@ -1011,8 +999,7 @@ class TreeBuilder {
       }
       this.split(node, text, node.start, pack);
       parent.nodes.push(node);
-    }
-    else if (!empty) {
+    } else if (!empty) {
       scryle.text = node;
     }
   }
@@ -1087,6 +1074,8 @@ var nodeTypes = {
   DOCUMENT: 9 /* DOCUMENT */,
   DOCTYPE: 10 /* DOCTYPE */,
   DOCUMENT_FRAGMENT: 11 /* DOCUMENT_FRAGMENT */,
+  PRIVATE_JAVASCRIPT: 12, /* Javascript private code */
+  PUBLIC_JAVASCRIPT: 13 /* Javascript public methods */
 }
 
 exports['default'] = tagParser;

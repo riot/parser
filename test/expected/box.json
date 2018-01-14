@@ -1,5 +1,5 @@
 {
-  "html": {
+  "template": {
     "type": 1,
     "name": "content",
     "start": 0,
@@ -251,7 +251,7 @@
       "end": 376
     }
   },
-  "js": {
+  "javascript": {
     "type": 1,
     "name": "script",
     "start": 388,
