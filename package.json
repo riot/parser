@@ -11,7 +11,8 @@
     "npm": ">=3.0"
   },
   "scripts": {
-    "test": "nyc mocha ./test/index.js",
+    "test": "nyc mocha ./test",
+    "test-debug": "mocha --inspect-brk ./test",
     "coverage": "nyc report --reporter=text-lcov | coveralls",
     "pretest": "npm run build",
     "lint": "eslint src test",
