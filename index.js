@@ -576,13 +576,6 @@ function exprExtr(code, start, bp) {
   return null
 }
 
-/* ====================================================================
- * The Riot Tag Parser
- */
-
-// --------------------------------------------------------------------
-// Closure data and functions
-//
 /**
  * Matches the start of valid tags names; used with the first 2 chars after the `'<'`.
  * @const
@@ -614,23 +607,12 @@ const RE_SCRYLE = {
   style: /<\/style\s*>/gi,
   textarea: /<\/textarea\s*>/gi,
 };
+
 /**
  * The parser struct object we will use to handle any parsing
  * @type {Object}
  */
-const PARSER_STORE_STRUCT = Object.seal({
-  options: {
-    brackets: ['{', '}']
-  },
-  regex: {},
-  pos: 0,
-  count: -1,
-  root: null,
-  last: null,
-  builder: null,
-  data: null,
-  scryle: null,
-});
+const PARSER_STORE_STRUCT = Object.seal();
 
 /**
  * Factory for the Parser class, exposing only the `parse` method.
@@ -641,31 +623,37 @@ const PARSER_STORE_STRUCT = Object.seal({
  * @returns {Function} Public Parser implementation.
  */
 function parser$1(options, customBuilder) {
-  const builder = customBuilder || treeBuilder;
-  const store = Object.assign(
-    Object.create(PARSER_STORE_STRUCT), {
-      options: Object.assign({}, PARSER_STORE_STRUCT.options, options)
-    }
-  );
+  const builderFactory = customBuilder || treeBuilder;
+  const store = {
+    options: Object.assign({
+      brackets: ['{', '}']
+    }, options),
+    regexCache: {},
+    pos: 0,
+    count: -1,
+    root: null,
+    last: null,
+    builder: null,
+    data: null,
+    scryle: null
+  };
 
   return {
-  /**
-   * It creates a raw output of pseudo-nodes with one of three different types,
-   * all of them having a start/end position:
-   *
-   * - TAG     -- Opening or closing tags
-   * - TEXT    -- Raw text
-   * - COMMENT -- Comments
-   *
-   * @param   {string} data - HTML markup
-   * @param   {number} pos  - Position where to start the parsing
-   * @returns {ParserResult} Result, contains data and output properties.
-   */
-    parse(data, pos) {
+    /**
+     * It creates a raw output of pseudo-nodes with one of three different types,
+     * all of them having a start/end position:
+     *
+     * - TAG     -- Opening or closing tags
+     * - TEXT    -- Raw text
+     * - COMMENT -- Comments
+     *
+     * @param   {string} data - HTML markup
+     * @returns {ParserResult} Result, contains data and output properties.
+     */
+    parse(data) {
       // extend the store adding the tree builder instance and the initial data
       Object.assign(store, {
-        builder: builder(data, options),
-        pos,
+        builder: builderFactory(data, options),
         data
       });
 
@@ -685,7 +673,9 @@ function parser$1(options, customBuilder) {
           type = attr(store, data);
         }
       }
+
       flush(store);
+
       if (store.count) {
         err(data, store.count > 0
           ? unexpectedEndOfFile : rootTagNotFound, store.pos);
@@ -699,31 +689,27 @@ function parser$1(options, customBuilder) {
   }
 }
 
-
-
-// ------------------------------------------------------------------
-// Methods
-
 /**
-   * Custom error handler can replace this method.
-   * The `store` object includes the buffer (`data`)
-   * The error position (`loc`) contains line (base 1) and col (base 0).
-   *
-   * @param {string} source   - Processing buffer
-   * @param {string} message  - Error message
-   * @param {number} pos    - Error position
-   * @private
-   */
+ * Custom error handler can replace this method.
+ * The `store` object includes the buffer (`data`)
+ * The error position (`loc`) contains line (base 1) and col (base 0).
+ *
+ * @param {string} source   - Processing buffer
+ * @param {string} message  - Error message
+ * @param {number} pos    - Error position
+ * @private
+ */
 function err(data, msg, pos) {
   const message = formatError(data, msg, pos);
   throw new Error(message)
 }
+
 /**
-   * Outputs the last parsed node. Can be used with a builder too.
-   *
-   * @param {ParserStore} store - Parsing store
-   * @private
-   */
+ * Outputs the last parsed node. Can be used with a builder too.
+ *
+ * @param {ParserStore} store - Parsing store
+ * @private
+ */
 function flush(store) {
   const last = store.last;
   store.last = null;
@@ -731,14 +717,15 @@ function flush(store) {
     store.builder.push(last);
   }
 }
+
 /**
-   * Stores a comment.
-   *
-   * @param {ParserStore}  store - Current parser store
-   * @param {number}  start - Start position of the tag
-   * @param {number}  end   - Ending position (last char of the tag)
-   * @private
-   */
+ * Stores a comment.
+ *
+ * @param {ParserStore}  store - Current parser store
+ * @param {number}  start - Start position of the tag
+ * @param {number}  end   - Ending position (last char of the tag)
+ * @private
+ */
 function pushcomment(store, start, end) {
   flush(store);
   store.pos = end;
@@ -746,16 +733,17 @@ function pushcomment(store, start, end) {
     store.last = { type: 8 /* COMMENT */, start, end };
   }
 }
+
 /**
-   * Stores text in the last text node, or creates a new one if needed.
-   *
-   * @param {ParserStore}   store   - Current parser store
-   * @param {number}  start   - Start position of the tag
-   * @param {number}  end     - Ending position (last char of the tag)
-   * @param {RawExpr[]} [expr]  - Found expressions
-   * @param {string}  [rep]   - Brackets to unescape
-   * @private
-   */
+ * Stores text in the last text node, or creates a new one if needed.
+ *
+ * @param {ParserStore}   store   - Current parser store
+ * @param {number}  start   - Start position of the tag
+ * @param {number}  end     - Ending position (last char of the tag)
+ * @param {RawExpr[]} [expr]  - Found expressions
+ * @param {string}  [rep]   - Brackets to unescape
+ * @private
+ */
 function pushText(store, start, end, expr, rep) {
   const text = store.data.slice(start, end);
   let q = store.last;
@@ -775,16 +763,17 @@ function pushText(store, start, end, expr, rep) {
     q.unescape = rep;
   }
 }
+
 /**
-   * Pushes a new *tag* and set `last` to this, so any attributes
-   * will be included on this and shifts the `end`.
-   *
-   * @param {ParserStore} store  - Current parser store
-   * @param {string}  name      - Name of the node including any slash
-   * @param {number}  start     - Start position of the tag
-   * @param {number}  end       - Ending position (last char of the tag + 1)
-   * @private
-   */
+ * Pushes a new *tag* and set `last` to this, so any attributes
+ * will be included on this and shifts the `end`.
+ *
+ * @param {ParserStore} store  - Current parser store
+ * @param {string}  name      - Name of the node including any slash
+ * @param {number}  start     - Start position of the tag
+ * @param {number}  end       - Ending position (last char of the tag + 1)
+ * @private
+ */
 function pushTag(store, name, start, end) {
   const root = store.root;
   const last = { type: 1 /* TAG */, name, start, end };
@@ -805,15 +794,16 @@ function pushTag(store, name, start, end) {
   }
   store.last = last;
 }
+
 /**
-   * Parse the tag following a '<' character, or delegate to other parser
-   * if an invalid tag name is found.
-   *
-   * @param   {ParserStore} store  - Parser store
-   * @param   {string} data       - Buffer to parse
-   * @returns {number} New parser mode
-   * @private
-   */
+ * Parse the tag following a '<' character, or delegate to other parser
+ * if an invalid tag name is found.
+ *
+ * @param   {ParserStore} store  - Parser store
+ * @param   {string} data       - Buffer to parse
+ * @returns {number} New parser mode
+ * @private
+ */
 function tag(store, data) {
   const pos = store.pos; // pos of the char following '<'
   const start = pos - 1; // pos of '<'
@@ -840,15 +830,16 @@ function tag(store, data) {
   }
   return 3 /* TEXT */
 }
+
 /**
-   * Parses comments in long or short form
-   * (any DOCTYPE & CDATA blocks are parsed as comments).
-   *
-   * @param {ParserStore} store  - Parser store
-   * @param {string} data       - Buffer to parse
-   * @param {number} start      - Position of the '<!' sequence
-   * @private
-   */
+ * Parses comments in long or short form
+ * (any DOCTYPE & CDATA blocks are parsed as comments).
+ *
+ * @param {ParserStore} store  - Parser store
+ * @param {string} data       - Buffer to parse
+ * @param {number} start      - Position of the '<!' sequence
+ * @private
+ */
 function comment(store, data, start) {
   const pos = start + 2; // skip '<!'
   const str = data.substr(pos, 2) === '--' ? '-->' : '>';
@@ -858,15 +849,16 @@ function comment(store, data, start) {
   }
   pushcomment(store, start, end + str.length);
 }
+
 /**
-   * The more complex parsing is for attributes as it can contain quoted or
-   * unquoted values or expressions.
-   *
-   * @param   {ParserStore} store  - Parser store
-   * @param   {string} data       - Buffer to parse
-   * @returns {number} New parser mode.
-   * @private
-   */
+ * The more complex parsing is for attributes as it can contain quoted or
+ * unquoted values or expressions.
+ *
+ * @param   {ParserStore} store  - Parser store
+ * @param   {string} data       - Buffer to parse
+ * @returns {number} New parser mode.
+ * @private
+ */
 function attr(store, data) {
   const tag = store.last; // the last (current) tag in the output
   const _CH = /\S/g; // matches the first non-space char
@@ -896,22 +888,25 @@ function attr(store, data) {
   }
   return 2 /* ATTR */
 }
+
 /**
-   * Parses an attribute and its expressions.
-   *
-   * @param   {ParserStore}  store  - Parser store
-   * @param   {string} data   - Whole buffer
-   * @param   {number} pos    - Starting position of the attribute
-   * @param   {Object} tag    - Current parent tag
-   * @private
-   */
+ * Parses an attribute and its expressions.
+ *
+ * @param   {ParserStore}  store  - Parser store
+ * @param   {string} data   - Whole buffer
+ * @param   {number} pos    - Starting position of the attribute
+ * @param   {Object} tag    - Current parent tag
+ * @private
+ */
 function setAttr(store, data, pos, tag) {
   const re = ATTR_START; // (\S[^>/=\s]*)(?:\s*=\s*([^>/])?)? g
   const start = re.lastIndex = pos; // first non-whitespace
   const match = re.exec(data);
+
   if (!match) {
     return
   }
+
   let end = re.lastIndex;
   let quote = match[2]; // first letter of value or nothing
   const attr = { name: match[1], value: '', start, end };
@@ -925,28 +920,32 @@ function setAttr(store, data, pos, tag) {
       quote = ''; // first char of value is not a quote
       valueStart--; // adjust the starting position
     }
+
     end = expr(store, data, attr, quote || '[>/\\s]', valueStart);
     // adjust the bounds of the value and save its content
     attr.value = data.slice(valueStart, end);
     attr.valueStart = valueStart;
     attr.end = quote ? ++end : end;
   }
+
   //assert(q && q.type === Mode.TAG, 'no previous tag for the attr!')
   // Pushes the attribute and shifts the `end` position of the tag (`last`).
   store.pos = tag.end = end;
   (tag.attr || (tag.attr = [])).push(attr);
 }
+
 /**
-   * Parses regular text and script/style blocks ...scryle for short :-)
-   * (the content of script and style is text as well)
-   *
-   * @param   {ParserStore} store - Parser store
-   * @param   {string} data  - Buffer to parse
-   * @returns {number} New parser mode.
-   * @private
-   */
+ * Parses regular text and script/style blocks ...scryle for short :-)
+ * (the content of script and style is text as well)
+ *
+ * @param   {ParserStore} store - Parser store
+ * @param   {string} data  - Buffer to parse
+ * @returns {number} New parser mode.
+ * @private
+ */
 function text(store, data) {
   const pos = store.pos; // start of the text
+
   if (store.scryle) {
     const name = store.scryle;
     const re = RE_SCRYLE[name];
@@ -989,21 +988,21 @@ function text(store, data) {
 }*/
 
 /**
-   * Find the end of the attribute value or text node
-   * Extract expressions.
-   * Detect if value have escaped brackets.
-   *
-   * @param   {ParserStore} store  - Parser store
-   * @param   {string} data       - Source code
-   * @param   {HasExpr} node      - Node if attr, info if text
-   * @param   {string} endingChars - Ends the value or text
-   * @param   {number} pos        - Starting position
-   * @returns {number} Ending position
-   * @private
-   */
+ * Find the end of the attribute value or text node
+ * Extract expressions.
+ * Detect if value have escaped brackets.
+ *
+ * @param   {ParserStore} store  - Parser store
+ * @param   {string} data       - Source code
+ * @param   {HasExpr} node      - Node if attr, info if text
+ * @param   {string} endingChars - Ends the value or text
+ * @param   {number} pos        - Starting position
+ * @returns {number} Ending position
+ * @private
+ */
 function expr(store, data, node, endingChars, pos) {
-  const { brackets } = store.options;
   const start = pos;
+  const { brackets } = store.options;
   const re = b0re(store, endingChars);
 
   let expr;
@@ -1045,26 +1044,27 @@ function expr(store, data, node, endingChars, pos) {
 
   return end
 }
+
 /**
-   * Creates a regex for the given string and the left bracket.
-   * The string is captured in $1.
-   *
-   * @param   {ParserStore} store  - Parser store
-   * @param   {string} str - String to search
-   * @returns {RegExp} Resulting regex.
-   * @private
-   */
+ * Creates a regex for the given string and the left bracket.
+ * The string is captured in $1.
+ *
+ * @param   {ParserStore} store  - Parser store
+ * @param   {string} str - String to search
+ * @returns {RegExp} Resulting regex.
+ * @private
+ */
 function b0re(store, str) {
   const { brackets } = store.options;
-  const re = store.regex[str];
+  const re = store.regexCache[str];
 
   if (re) return re
 
   const b0 = escapeStr(brackets[0]);
-  // cache the regex
-  Object.assign(store.regex, { [str]: new RegExp(`(${str})|${b0}`, 'g' ) });
+  // cache the regex extending the regexCache object
+  Object.assign(store.regexCache, { [str]: new RegExp(`(${str})|${b0}`, 'g' ) });
 
-  return store.regex[str]
+  return store.regexCache[str]
 }
 
 /**
