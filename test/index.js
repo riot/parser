@@ -99,7 +99,7 @@ describe('Tree Builder', function () {
   const _p = parser(getOpts())
 
   const _TDEBUG = 0
-  const _TOSAVE = []
+  const _TOSAVE = ['*']
 
   for (let i = 0; i < titles.length; i++) {
     const title = titles[i]
@@ -159,7 +159,6 @@ describe('HTML Builder', function () {
         expect(function () {
           builder.build(_p.parse(test.data))
         }).throw(test.throws)
-
       } else {
         const result = builder.build(_p.parse(test.data))
         expect(result).to.be.equal(test.expected)

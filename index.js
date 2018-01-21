@@ -663,15 +663,7 @@ function parser$1(options, customBuilder) {
   const store = {
     options: Object.assign({
       brackets: ['{', '}']
-    }, options),
-    regexCache: {},
-    pos: 0,
-    count: -1,
-    root: null,
-    last: null,
-    builder: null,
-    data: null,
-    scryle: null
+    }, options)
   };
 
   return {
@@ -689,6 +681,14 @@ function parser$1(options, customBuilder) {
     parse(data) {
       // extend the store adding the tree builder instance and the initial data
       Object.assign(store, {
+        regexCache: {},
+        pos: 0,
+        count: -1,
+        root: null,
+        last: null,
+        builder: null,
+        data: null,
+        scryle: null,
         builder: builderFactory(data, options),
         data
       });
@@ -786,17 +786,19 @@ function pushText(store, start, end, expr, rep) {
   const text = store.data.slice(start, end);
   let q = store.last;
   store.pos = end;
+
   if (q && q.type === TEXT) {
     q.text += text;
     q.end = end;
-  }
-  else {
+  } else {
     flush(store);
     store.last = q = { type: TEXT, text, start, end };
   }
+
   if (expr) {
     q.expr = (q.expr || []).concat(expr);
   }
+
   if (rep) {
     q.unescape = rep;
   }
@@ -1001,6 +1003,7 @@ function text(store, data) {
       case 'textarea':
         expr(store, data, null, match[0], pos);
         break
+      case 'css':
       case 'script':
         pushText(store, pos, start);
         //parseJavascript(store, data, start, end)
