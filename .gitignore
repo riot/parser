@@ -58,3 +58,5 @@ out/
 node_modules
 npm-debug.log
 .nyc_output
+
+*_out.json
