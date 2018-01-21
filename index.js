@@ -128,30 +128,20 @@ const SVG_NS = 'http://www.w3.org/2000/svg';
 // Do not touch text content inside this tags
 const RAW_TAGS = /^\/?(?:pre|textarea)$/;
 
-// Class htmlBuilder ======================================
-class TreeBuilder {
-  // This get the option `whitespace` to preserve spaces
-  // and the compact `option` to strip empty text nodes
-  constructor(data, options) {
-    const root = {
-      type: TAG,
-      name: '',
-      start: 0,
-      end: 0,
-      nodes: [],
-    };
-    this.compact = options.compact !== false;
-    this.prefixes = '?=^'; /* ALL */
-    this.state = {
-      last: root,
-      stack: [],
-      scryle: null,
-      root,
-      style: null,
-      script: null,
-      data,
-    };
-  }
+/**
+ * Custom error handler can be implemented replacing this method.
+ * The `state` object includes the buffer (`data`)
+ * The error position (`loc`) contains line (base 1) and col (base 0).
+ *
+ * @param {string} msg   - Error message
+ * @param {pos} [number] - Position of the error
+ */
+function err$1(msg, pos, data) {
+  const message = formatError(data, msg, pos);
+  throw new Error(message)
+}
+
+const TREE_BUILDER_STRUCT = Object.seal({
   get() {
     const state = this.state;
     // The real root tag is in state.root.nodes[0]
@@ -160,18 +150,17 @@ class TreeBuilder {
       css: state.style,
       javascript: state.script,
     }
-  }
-  /**
-     * Process the current tag or text.
-     *
-     * @param {Object} node - Raw pseudo-node from the parser
-     */
+  },
+ /**
+  * Process the current tag or text.
+  *
+  * @param {Object} node - Raw pseudo-node from the parser
+  */
   push(node) {
     const state = this.state;
     if (node.type === TEXT) {
       this.pushText(state, node);
-    }
-    else if (node.type === TAG) {
+    } else if (node.type === TAG) {
       const name = node.name;
       if (name[0] === '/') {
         this.closeTag(state, node, name);
@@ -180,19 +169,7 @@ class TreeBuilder {
         this.openTag(state, node);
       }
     }
-  }
-  /**
-     * Custom error handler can be implemented replacing this method.
-     * The `state` object includes the buffer (`data`)
-     * The error position (`loc`) contains line (base 1) and col (base 0).
-     *
-     * @param {string} msg   - Error message
-     * @param {pos} [number] - Position of the error
-     */
-  err(msg, pos) {
-    const message = formatError(this.state.data, msg, pos);
-    throw new Error(message)
-  }
+  },
   closeTag(state, node, name) { // eslint-disable-line
     const last = state.scryle || state.last;
 
@@ -202,11 +179,11 @@ class TreeBuilder {
       state.scryle = null;
     } else {
       if (!state.stack[0]) {
-        this.err('Stack is empty.', last.start);
+        err$1('Stack is empty.', last.start, this.state.data);
       }
       state.last = state.stack.pop();
     }
-  }
+  },
 
   openTag(state, node) {
     const name = node.name;
@@ -218,7 +195,7 @@ class TreeBuilder {
     if (name === 'style' || name === 'script' && !this.deferred(node, attrs)) {
       // Only accept one of each
       if (state[name]) {
-        this.err(duplicatedNamedTag.replace('%1', name), node.start);
+        err$1(duplicatedNamedTag.replace('%1', name), node.start, this.state.data);
       }
       state[name] = node;
       // support selfclosing script (w/o text content)
@@ -255,7 +232,7 @@ class TreeBuilder {
     if (attrs) {
       this.attrs(attrs);
     }
-  }
+  },
   deferred(node, attributes) {
     if (attributes) {
       for (let i = 0; i < attributes.length; i++) {
@@ -266,7 +243,7 @@ class TreeBuilder {
       }
     }
     return false
-  }
+  },
   attrs(attributes) {
     for (let i = 0; i < attributes.length; i++) {
       const attr = attributes[i];
@@ -274,7 +251,7 @@ class TreeBuilder {
         this.split(attr, attr.value, attr.valueStart, true);
       }
     }
-  }
+  },
   pushText(state, node) {
     const text = node.text;
     const empty = !/\S/.test(text);
@@ -291,7 +268,7 @@ class TreeBuilder {
     } else if (!empty) {
       scryle.text = node;
     }
-  }
+  },
   split(node, source, start, pack) {
     const expressions = node.expr;
     const parts = [];
@@ -316,7 +293,7 @@ class TreeBuilder {
       parts[0] = this._tt(node, source, pack);
     }
     node.parts = parts;
-  }
+  },
   // unescape escaped brackets and split prefixes of expressions
   _tt(node, text, pack) {
     let rep = node.unescape;
@@ -331,10 +308,30 @@ class TreeBuilder {
     text = text.replace(/\\/g, '\\\\');
     return pack ? text.replace(/\s+/g, ' ') : text.replace(/\r/g, '\\r').replace(/\n/g, '\\n')
   }
-}
+});
 
-function treeBuilder(data, options) {
-  return new TreeBuilder(data, options || {})
+function createTreeBuilder(data, options) {
+  const root = {
+    type: TAG,
+    name: '',
+    start: 0,
+    end: 0,
+    nodes: []
+  };
+
+  return Object.assign(Object.create(TREE_BUILDER_STRUCT), {
+    compact: options.compact !== false,
+    prefixes: '?=^',
+    state: {
+      last: root,
+      stack: [],
+      scryle: null,
+      root,
+      style: null,
+      script: null,
+      data
+    }
+  })
 }
 
 /**
@@ -659,7 +656,7 @@ const PARSER_STORE_STRUCT = Object.seal();
  * @returns {Function} Public Parser implementation.
  */
 function parser$1(options, customBuilder) {
-  const builderFactory = customBuilder || treeBuilder;
+  const builderFactory = customBuilder || createTreeBuilder;
   const store = {
     options: Object.assign({
       brackets: ['{', '}']
