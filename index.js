@@ -70,6 +70,40 @@ var voidTags = {
   ]
 }
 
+/**
+ * Not all the types are handled in this module.
+ *
+ * @enum {number}
+ * @readonly
+ */
+const TAG = 1; /* TAG */
+const ATTR = 2; /* ATTR */
+const TEXT = 3; /* TEXT */
+const CDATA = 4; /* CDATA */
+const COMMENT = 8; /* COMMENT */
+const DOCUMENT = 9; /* DOCUMENT */
+const DOCTYPE = 10; /* DOCTYPE */
+const DOCUMENT_FRAGMENT = 11; /* DOCUMENT_FRAGMENT */
+
+// Javascript logic nodes
+const PRIVATE_JAVASCRIPT = 12; /* Javascript private code */
+const PUBLIC_JAVASCRIPT = 13; /* Javascript public methods */
+
+
+
+var _nodeTypes = Object.freeze({
+	TAG: TAG,
+	ATTR: ATTR,
+	TEXT: TEXT,
+	CDATA: CDATA,
+	COMMENT: COMMENT,
+	DOCUMENT: DOCUMENT,
+	DOCTYPE: DOCTYPE,
+	DOCUMENT_FRAGMENT: DOCUMENT_FRAGMENT,
+	PRIVATE_JAVASCRIPT: PRIVATE_JAVASCRIPT,
+	PUBLIC_JAVASCRIPT: PUBLIC_JAVASCRIPT
+});
+
 /*---------------------------------------------------------------------
  * Tree builder for the riot tag parser.
  *
@@ -93,13 +127,14 @@ var voidTags = {
 const SVG_NS = 'http://www.w3.org/2000/svg';
 // Do not touch text content inside this tags
 const RAW_TAGS = /^\/?(?:pre|textarea)$/;
+
 // Class htmlBuilder ======================================
 class TreeBuilder {
   // This get the option `whitespace` to preserve spaces
   // and the compact `option` to strip empty text nodes
   constructor(data, options) {
     const root = {
-      type: 1 /* TAG */,
+      type: TAG,
       name: '',
       start: 0,
       end: 0,
@@ -133,10 +168,10 @@ class TreeBuilder {
      */
   push(node) {
     const state = this.state;
-    if (node.type === 3 /* TEXT */) {
+    if (node.type === TEXT) {
       this.pushText(state, node);
     }
-    else if (node.type === 1 /* TAG */) {
+    else if (node.type === TAG) {
       const name = node.name;
       if (name[0] === '/') {
         this.closeTag(state, node, name);
@@ -297,6 +332,7 @@ class TreeBuilder {
     return pack ? text.replace(/\s+/g, ' ') : text.replace(/\r/g, '\\r').replace(/\n/g, '\\n')
   }
 }
+
 function treeBuilder(data, options) {
   return new TreeBuilder(data, options || {})
 }
@@ -658,19 +694,21 @@ function parser$1(options, customBuilder) {
       });
 
       const length = data.length;
-      let type = 3; /* TEXT */
+      let type;
+
       // The "count" property is set to 1 when the first tag is found.
       // This becomes the root and precedent text or comments are discarded.
       // So, at the end of the parsing count must be zero.
       while (store.pos < length && store.count) {
-        if (type === 3 /* TEXT */) {
-          type = text(store, data);
-        }
-        else if (type === 1 /* TAG */) {
-          type = tag(store, data);
-        }
-        else if (type === 2 /* ATTR */) {
-          type = attr(store, data);
+        switch (type) {
+          case TAG:
+            type = tag(store, data);
+            break
+          case ATTR:
+            type = attr(store, data);
+            break
+          default:
+            type = text(store, data);
         }
       }
 
@@ -730,7 +768,7 @@ function pushcomment(store, start, end) {
   flush(store);
   store.pos = end;
   if (store.options.comments === true) {
-    store.last = { type: 8 /* COMMENT */, start, end };
+    store.last = { type: COMMENT, start, end };
   }
 }
 
@@ -748,13 +786,13 @@ function pushText(store, start, end, expr, rep) {
   const text = store.data.slice(start, end);
   let q = store.last;
   store.pos = end;
-  if (q && q.type === 3 /* TEXT */) {
+  if (q && q.type === TEXT) {
     q.text += text;
     q.end = end;
   }
   else {
     flush(store);
-    store.last = q = { type: 3 /* TEXT */, text, start, end };
+    store.last = q = { type: TEXT, text, start, end };
   }
   if (expr) {
     q.expr = (q.expr || []).concat(expr);
@@ -776,7 +814,7 @@ function pushText(store, start, end, expr, rep) {
  */
 function pushTag(store, name, start, end) {
   const root = store.root;
-  const last = { type: 1 /* TAG */, name, start, end };
+  const last = { type: TAG, name, start, end };
   store.pos = end;
   if (root) {
     if (name === root.name) {
@@ -823,12 +861,12 @@ function tag(store, data) {
     pushTag(store, name, start, end);
     // only '>' can ends the tag here, the '/' is handled in parseAttr
     if (!match[2]) {
-      return 2 /* ATTR */
+      return ATTR
     }
   } else {
     pushText(store, start, pos); // pushes the '<' as text
   }
-  return 3 /* TEXT */
+  return TEXT
 }
 
 /**
@@ -878,7 +916,7 @@ function attr(store, data) {
         store.count--; // "pop" root tag
       }
     }
-    return 3 /* TEXT */
+    return TEXT
   } else if (ch[0] === '/') {
     store.pos = _CH.lastIndex; // maybe. delegate the validation
     tag.selfclose = true; // the next loop
@@ -886,7 +924,7 @@ function attr(store, data) {
     delete tag.selfclose; // ensure unmark as selfclosing tag
     setAttr(store, data, ch.index, tag);
   }
-  return 2 /* ATTR */
+  return ATTR
 }
 
 /**
@@ -975,12 +1013,12 @@ function text(store, data) {
     pushTag(store, `/${name}`, start, end);
   } else if (data[pos] === '<') {
     store.pos++;
-    return 1 /* TAG */
+    return TAG
   } else {
     expr(store, data, null, '<', pos);
   }
 
-  return 3 /* TEXT */
+  return TEXT
 }
 
 /*function parseJavascript(store, content, start, end) {
@@ -1066,40 +1104,6 @@ function b0re(store, str) {
 
   return store.regexCache[str]
 }
-
-/**
- * Not all the types are handled in this module.
- *
- * @enum {number}
- * @readonly
- */
-const TAG = 1; /* TAG */
-const ATTR = 2; /* ATTR */
-const TEXT = 3; /* TEXT */
-const CDATA = 4; /* CDATA */
-const COMMENT = 8; /* COMMENT */
-const DOCUMENT = 9; /* DOCUMENT */
-const DOCTYPE = 10; /* DOCTYPE */
-const DOCUMENT_FRAGMENT = 11; /* DOCUMENT_FRAGMENT */
-
-// Javascript logic nodes
-const PRIVATE_JAVASCRIPT = 12; /* Javascript private code */
-const PUBLIC_JAVASCRIPT = 13; /* Javascript public methods */
-
-
-
-var _nodeTypes = Object.freeze({
-	TAG: TAG,
-	ATTR: ATTR,
-	TEXT: TEXT,
-	CDATA: CDATA,
-	COMMENT: COMMENT,
-	DOCUMENT: DOCUMENT,
-	DOCTYPE: DOCTYPE,
-	DOCUMENT_FRAGMENT: DOCUMENT_FRAGMENT,
-	PRIVATE_JAVASCRIPT: PRIVATE_JAVASCRIPT,
-	PUBLIC_JAVASCRIPT: PUBLIC_JAVASCRIPT
-});
 
 /**
  * The nodeTypes definition

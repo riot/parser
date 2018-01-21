@@ -3,6 +3,7 @@ import escapeStr from './escape-str'
 import exprExtr from './expr-extr'
 import formatError from './format-error'
 import * as MSG from './messages'
+import { TEXT, ATTR, TAG, COMMENT } from './node-types'
 
 /**
  * Matches the start of valid tags names; used with the first 2 chars after the `'<'`.
@@ -93,19 +94,21 @@ export default function parser(options, customBuilder) {
       })
 
       const length = data.length
-      let type = 3 /* TEXT */
+      let type
+
       // The "count" property is set to 1 when the first tag is found.
       // This becomes the root and precedent text or comments are discarded.
       // So, at the end of the parsing count must be zero.
       while (store.pos < length && store.count) {
-        if (type === 3 /* TEXT */) {
-          type = text(store, data)
-        }
-        else if (type === 1 /* TAG */) {
-          type = tag(store, data)
-        }
-        else if (type === 2 /* ATTR */) {
-          type = attr(store, data)
+        switch (type) {
+          case TAG:
+            type = tag(store, data)
+            break
+          case ATTR:
+            type = attr(store, data)
+            break
+          default:
+            type = text(store, data)
         }
       }
 
@@ -165,7 +168,7 @@ function pushcomment(store, start, end) {
   flush(store)
   store.pos = end
   if (store.options.comments === true) {
-    store.last = { type: 8 /* COMMENT */, start, end }
+    store.last = { type: COMMENT, start, end }
   }
 }
 
@@ -183,13 +186,13 @@ function pushText(store, start, end, expr, rep) {
   const text = store.data.slice(start, end)
   let q = store.last
   store.pos = end
-  if (q && q.type === 3 /* TEXT */) {
+  if (q && q.type === TEXT) {
     q.text += text
     q.end = end
   }
   else {
     flush(store)
-    store.last = q = { type: 3 /* TEXT */, text, start, end }
+    store.last = q = { type: TEXT, text, start, end }
   }
   if (expr) {
     q.expr = (q.expr || []).concat(expr)
@@ -211,7 +214,7 @@ function pushText(store, start, end, expr, rep) {
  */
 function pushTag(store, name, start, end) {
   const root = store.root
-  const last = { type: 1 /* TAG */, name, start, end }
+  const last = { type: TAG, name, start, end }
   store.pos = end
   if (root) {
     if (name === root.name) {
@@ -258,12 +261,12 @@ function tag(store, data) {
     pushTag(store, name, start, end)
     // only '>' can ends the tag here, the '/' is handled in parseAttr
     if (!match[2]) {
-      return 2 /* ATTR */
+      return ATTR
     }
   } else {
     pushText(store, start, pos) // pushes the '<' as text
   }
-  return 3 /* TEXT */
+  return TEXT
 }
 
 /**
@@ -313,7 +316,7 @@ function attr(store, data) {
         store.count-- // "pop" root tag
       }
     }
-    return 3 /* TEXT */
+    return TEXT
   } else if (ch[0] === '/') {
     store.pos = _CH.lastIndex // maybe. delegate the validation
     tag.selfclose = true // the next loop
@@ -321,7 +324,7 @@ function attr(store, data) {
     delete tag.selfclose // ensure unmark as selfclosing tag
     setAttr(store, data, ch.index, tag)
   }
-  return 2 /* ATTR */
+  return ATTR
 }
 
 /**
@@ -410,12 +413,12 @@ function text(store, data) {
     pushTag(store, `/${name}`, start, end)
   } else if (data[pos] === '<') {
     store.pos++
-    return 1 /* TAG */
+    return TAG
   } else {
     expr(store, data, null, '<', pos)
   }
 
-  return 3 /* TEXT */
+  return TEXT
 }
 
 /*function parseJavascript(store, content, start, end) {

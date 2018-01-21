@@ -21,16 +21,19 @@
 import formatError from './format-error'
 import * as MSG from './messages'
 import voidTags from './void-tags'
+import { TEXT, TAG } from './node-types'
+
 const SVG_NS = 'http://www.w3.org/2000/svg'
 // Do not touch text content inside this tags
 const RAW_TAGS = /^\/?(?:pre|textarea)$/
+
 // Class htmlBuilder ======================================
 class TreeBuilder {
   // This get the option `whitespace` to preserve spaces
   // and the compact `option` to strip empty text nodes
   constructor(data, options) {
     const root = {
-      type: 1 /* TAG */,
+      type: TAG,
       name: '',
       start: 0,
       end: 0,
@@ -64,10 +67,10 @@ class TreeBuilder {
      */
   push(node) {
     const state = this.state
-    if (node.type === 3 /* TEXT */) {
+    if (node.type === TEXT) {
       this.pushText(state, node)
     }
-    else if (node.type === 1 /* TAG */) {
+    else if (node.type === TAG) {
       const name = node.name
       if (name[0] === '/') {
         this.closeTag(state, node, name)
@@ -228,6 +231,7 @@ class TreeBuilder {
     return pack ? text.replace(/\s+/g, ' ') : text.replace(/\r/g, '\\r').replace(/\n/g, '\\n')
   }
 }
+
 export default function treeBuilder(data, options) {
   return new TreeBuilder(data, options || {})
 }
