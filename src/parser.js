@@ -3,7 +3,7 @@ import escapeStr from './escape-str'
 import exprExtr from './expr-extr'
 import formatError from './format-error'
 import * as MSG from './messages'
-import { TEXT, ATTR, TAG, COMMENT } from './node-types'
+import { TEXT, ATTR, TAG, COMMENT, PRIVATE_JAVASCRIPT, PUBLIC_JAVASCRIPT } from './node-types'
 
 /**
  * Matches the start of valid tags names; used with the first 2 chars after the `'<'`.
@@ -183,7 +183,7 @@ function pushcomment(store, start, end) {
  * @private
  */
 function pushText(store, start, end, expr, rep) {
-  const text = store.data.slice(start, end)
+  const text = getChunk(store.data, start, end)
   let q = store.last
   store.pos = end
 
@@ -226,8 +226,7 @@ function pushTag(store, name, start, end) {
       store.count--
     }
     flush(store)
-  }
-  else {
+  } else {
     // start with root (keep ref to output)
     store.root = { name: last.name, close: `/${name}` }
     store.count = 1
@@ -307,8 +306,7 @@ function attr(store, data) {
   if (!ch) {
     store.pos = data.length // reaching the end of the buffer with
     // NodeTypes.ATTR will generate error
-  }
-  else if (ch[0] === '>') {
+  } else if (ch[0] === '>') {
     // closing char found. If this is a self-closing tag with the name of the
     // Root tag, we need decrement the counter as we are changing mode.
     store.pos = tag.end = _CH.lastIndex
@@ -363,7 +361,7 @@ function setAttr(store, data, pos, tag) {
 
     end = expr(store, data, attr, quote || '[>/\\s]', valueStart)
     // adjust the bounds of the value and save its content
-    attr.value = data.slice(valueStart, end)
+    attr.value = getChunk(data, valueStart, end)
     attr.valueStart = valueStart
     attr.end = quote ? ++end : end
   }
@@ -403,10 +401,8 @@ function text(store, data) {
       case 'textarea':
         expr(store, data, null, match[0], pos)
         break
-      case 'css':
       case 'script':
-        pushText(store, pos, start)
-        //parseJavascript(store, data, start, end)
+        pushJavascript(store, pos, start)
         break
       default:
         pushText(store, pos, start)
@@ -424,9 +420,32 @@ function text(store, data) {
   return TEXT
 }
 
-/*function parseJavascript(store, content, start, end) {
+/**
+ * Create the javascript nodes depending
+ *
+ * @param {ParserStore}   store   - Current parser store
+ * @param {number}  start   - Start position of the tag
+ * @param {number}  end     - Ending position (last char of the tag)
+ * @param {string}  [rep]   - Brackets to unescape
+ * @private
+ */
+function pushJavascript(store, start, end) {
+  const code = getChunk(store.data, start, end)
+  const nodes = []
+  store.pos = end
 
-}*/
+  // no export rules found
+  if (!EXPORT_DEFAULT.test(code)) {
+    nodes.push({
+      type: PRIVATE_JAVASCRIPT,
+      start,
+      end,
+      code
+    })
+  }
+
+  store.last = nodes
+}
 
 /**
  * Find the end of the attribute value or text node
@@ -484,6 +503,17 @@ function expr(store, data, node, endingChars, pos) {
   }
 
   return end
+}
+
+/**
+ * Get the code chunks from start and end range
+ * @param   {string}  source  - source code
+ * @param   {number}  start   - Start position of the chunk we want to extract
+ * @param   {number}  end     - Ending position of the chunk we need
+ * @returns {string}  chunk of code extracted from the source code received
+ */
+function getChunk(source, start, end) {
+  return source.slice(start, end)
 }
 
 /**

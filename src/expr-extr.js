@@ -40,8 +40,7 @@ function _regex(b) {
     let s = escapeStr(b)
     if (b.length > 1) {
       s = s + '|['
-    }
-    else {
+    } else {
       s = /[{}[\]()]/.test(b) ? '[' : `[${s}`
     }
     reBr[b] = re = new RegExp(`${S_STRING}|${s}\`/\\{}[\\]()]`, 'g')

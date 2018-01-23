@@ -23,6 +23,8 @@ import * as MSG from './messages'
 import voidTags from './void-tags'
 import { TEXT, TAG } from './node-types'
 
+// TODO: clean up this file
+
 const SVG_NS = 'http://www.w3.org/2000/svg'
 // Do not touch text content inside this tags
 const RAW_TAGS = /^\/?(?:pre|textarea)$/

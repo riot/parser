@@ -86,8 +86,9 @@ const DOCTYPE = 10; /* DOCTYPE */
 const DOCUMENT_FRAGMENT = 11; /* DOCUMENT_FRAGMENT */
 
 // Javascript logic nodes
-const PRIVATE_JAVASCRIPT = 12; /* Javascript private code */
-const PUBLIC_JAVASCRIPT = 13; /* Javascript public methods */
+//
+const PRIVATE_JAVASCRIPT = 20; /* Javascript private code */
+const PUBLIC_JAVASCRIPT = 21; /* Javascript public methods */
 
 
 
@@ -124,6 +125,8 @@ var _nodeTypes = Object.freeze({
  * Throws on unclosed tags or closing tags without start tag.
  * Selfclosing and void tags has no nodes[] property.
  */
+// TODO: clean up this file
+
 const SVG_NS = 'http://www.w3.org/2000/svg';
 // Do not touch text content inside this tags
 const RAW_TAGS = /^\/?(?:pre|textarea)$/;
@@ -533,8 +536,7 @@ function _regex(b) {
     let s = escapeStr(b);
     if (b.length > 1) {
       s = s + '|[';
-    }
-    else {
+    } else {
       s = /[{}[\]()]/.test(b) ? '[' : `[${s}`;
     }
     reBr[b] = re = new RegExp(`${S_STRING}|${s}\`/\\{}[\\]()]`, 'g');
@@ -640,6 +642,13 @@ const RE_SCRYLE = {
   style: /<\/style\s*>/gi,
   textarea: /<\/textarea\s*>/gi,
 };
+
+/**
+ * Matches the beginning of an `export default {}` expression
+ * @const
+ * @private
+ */
+const EXPORT_DEFAULT = /export(?:\W)+default(?:\s+)?{/g;
 
 /**
  * The parser struct object we will use to handle any parsing
@@ -780,7 +789,7 @@ function pushcomment(store, start, end) {
  * @private
  */
 function pushText(store, start, end, expr, rep) {
-  const text = store.data.slice(start, end);
+  const text = getChunk(store.data, start, end);
   let q = store.last;
   store.pos = end;
 
@@ -823,8 +832,7 @@ function pushTag(store, name, start, end) {
       store.count--;
     }
     flush(store);
-  }
-  else {
+  } else {
     // start with root (keep ref to output)
     store.root = { name: last.name, close: `/${name}` };
     store.count = 1;
@@ -904,8 +912,7 @@ function attr(store, data) {
   if (!ch) {
     store.pos = data.length; // reaching the end of the buffer with
     // NodeTypes.ATTR will generate error
-  }
-  else if (ch[0] === '>') {
+  } else if (ch[0] === '>') {
     // closing char found. If this is a self-closing tag with the name of the
     // Root tag, we need decrement the counter as we are changing mode.
     store.pos = tag.end = _CH.lastIndex;
@@ -960,7 +967,7 @@ function setAttr(store, data, pos, tag) {
 
     end = expr(store, data, attr, quote || '[>/\\s]', valueStart);
     // adjust the bounds of the value and save its content
-    attr.value = data.slice(valueStart, end);
+    attr.value = getChunk(data, valueStart, end);
     attr.valueStart = valueStart;
     attr.end = quote ? ++end : end;
   }
@@ -1000,10 +1007,8 @@ function text(store, data) {
       case 'textarea':
         expr(store, data, null, match[0], pos);
         break
-      case 'css':
       case 'script':
-        pushText(store, pos, start);
-        //parseJavascript(store, data, start, end)
+        pushJavascript(store, pos, start);
         break
       default:
         pushText(store, pos, start);
@@ -1021,9 +1026,33 @@ function text(store, data) {
   return TEXT
 }
 
-/*function parseJavascript(store, content, start, end) {
+/**
+ * Create the javascript nodes depending
+ *
+ * @param {ParserStore}   store   - Current parser store
+ * @param {number}  start   - Start position of the tag
+ * @param {number}  end     - Ending position (last char of the tag)
+ * @param {string}  [rep]   - Brackets to unescape
+ * @private
+ */
+function pushJavascript(store, start, end) {
+  const code = getChunk(store.data, start, end);
+  const nodes = [];
+  store.pos = end;
 
-}*/
+  // no export rules found
+  if (!EXPORT_DEFAULT.test(code)) {
+    nodes.push({
+      type: PRIVATE_JAVASCRIPT,
+      start,
+      end,
+      code
+    });
+  }
+
+  store.last = nodes;
+  flush(store);
+}
 
 /**
  * Find the end of the attribute value or text node
@@ -1081,6 +1110,17 @@ function expr(store, data, node, endingChars, pos) {
   }
 
   return end
+}
+
+/**
+ * Get the code chunks from start and end range
+ * @param   {string}  source  - source code
+ * @param   {number}  start   - Start position of the chunk we want to extract
+ * @param   {number}  end     - Ending position of the chunk we need
+ * @returns {string}  chunk of code extracted from the source code received
+ */
+function getChunk(source, start, end) {
+  return source.slice(start, end)
 }
 
 /**
