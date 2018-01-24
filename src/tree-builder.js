@@ -21,13 +21,20 @@
 import formatError from './format-error'
 import * as MSG from './messages'
 import voidTags from './void-tags'
-import { TEXT, TAG } from './node-types'
+import { TEXT, TAG, PRIVATE_JAVASCRIPT, PUBLIC_JAVASCRIPT } from './node-types'
 
 // TODO: clean up this file
 
 const SVG_NS = 'http://www.w3.org/2000/svg'
 // Do not touch text content inside this tags
 const RAW_TAGS = /^\/?(?:pre|textarea)$/
+
+const JAVASCRIPT_OUTPUT_NAME = 'javascript'
+const CSS_OUTPUT_NAME = 'css'
+const TEMPLATE_OUTPUT_NAME = 'template'
+
+const JAVASCRIPT_TAG = 'script'
+const STYLE_TAG = 'style'
 
 /**
  * Custom error handler can be implemented replacing this method.
@@ -42,14 +49,43 @@ function err(msg, pos, data) {
   throw new Error(message)
 }
 
+/**
+ * Escape the carriage return and the line feed from a string
+ * @param   {string} string - input string
+ * @returns {string} output string escaped
+ */
+function escapeReturn(string) {
+  return string
+          .replace(/\r/g, '\\r')
+          .replace(/\n/g, '\\n')
+}
+
+/**
+ * Escape double slashes in a string
+ * @param   {string} string - input string
+ * @returns {string} output string escaped
+ */
+function escapeSlashes(string) {
+  return string.replace(/\\/g, '\\\\')
+}
+
+/**
+ * Replace the multiple spaces with only one
+ * @param   {string} string - input string
+ * @returns {string} string without trailing spaces
+ */
+function cleanSpaces(string) {
+  return string.replace(/\s+/g, ' ')
+}
+
 const TREE_BUILDER_STRUCT = Object.seal({
   get() {
     const state = this.state
     // The real root tag is in state.root.nodes[0]
     return {
-      template: state.root.nodes[0],
-      css: state.style,
-      javascript: state.script,
+      [TEMPLATE_OUTPUT_NAME]: state.root.nodes[0],
+      [CSS_OUTPUT_NAME]: state.style,
+      [JAVASCRIPT_OUTPUT_NAME]: state.script,
     }
   },
  /**
@@ -65,10 +101,11 @@ const TREE_BUILDER_STRUCT = Object.seal({
       const name = node.name
       if (name[0] === '/') {
         this.closeTag(state, node, name)
-      }
-      else {
+      } else {
         this.openTag(state, node)
       }
+    } else if ([PRIVATE_JAVASCRIPT, PUBLIC_JAVASCRIPT].includes(node.type)) {
+      (state[JAVASCRIPT_TAG].nodes = state[JAVASCRIPT_TAG].nodes || []).push(node)
     }
   },
   closeTag(state, node, name) { // eslint-disable-line
@@ -93,7 +130,7 @@ const TREE_BUILDER_STRUCT = Object.seal({
     if (attrs && !ns) {
       attrs.forEach(a => { a.name = a.name.toLowerCase() })
     }
-    if (name === 'style' || name === 'script' && !this.deferred(node, attrs)) {
+    if ([JAVASCRIPT_TAG, STYLE_TAG].includes(name) && !this.deferred(node, attrs)) {
       // Only accept one of each
       if (state[name]) {
         err(MSG.duplicatedNamedTag.replace('%1', name), node.start, this.state.data)
@@ -183,7 +220,7 @@ const TREE_BUILDER_STRUCT = Object.seal({
           expr.prefix = code[0]
           code = code.substr(1)
         }
-        parts.push(this._tt(node, text, pack), code.replace(/\\/g, '\\\\').trim().replace(/\r/g, '\\r').replace(/\n/g, '\\n'))
+        parts.push(this._tt(node, text, pack), escapeReturn(escapeSlashes(code).trim()))
         pos = expr.end - start
       }
       if ((pos += start) < node.end) {
@@ -206,8 +243,8 @@ const TREE_BUILDER_STRUCT = Object.seal({
         idx++
       }
     }
-    text = text.replace(/\\/g, '\\\\')
-    return pack ? text.replace(/\s+/g, ' ') : text.replace(/\r/g, '\\r').replace(/\n/g, '\\n')
+    text = escapeSlashes(text)
+    return pack ? cleanSpaces(text) : escapeReturn(text)
   }
 })
 

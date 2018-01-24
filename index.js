@@ -131,6 +131,13 @@ const SVG_NS = 'http://www.w3.org/2000/svg';
 // Do not touch text content inside this tags
 const RAW_TAGS = /^\/?(?:pre|textarea)$/;
 
+const JAVASCRIPT_OUTPUT_NAME = 'javascript';
+const CSS_OUTPUT_NAME = 'css';
+const TEMPLATE_OUTPUT_NAME = 'template';
+
+const JAVASCRIPT_TAG = 'script';
+const STYLE_TAG = 'style';
+
 /**
  * Custom error handler can be implemented replacing this method.
  * The `state` object includes the buffer (`data`)
@@ -144,14 +151,43 @@ function err$1(msg, pos, data) {
   throw new Error(message)
 }
 
+/**
+ * Escape the carriage return and the line feed from a string
+ * @param   {string} string - input string
+ * @returns {string} output string escaped
+ */
+function escapeReturn(string) {
+  return string
+          .replace(/\r/g, '\\r')
+          .replace(/\n/g, '\\n')
+}
+
+/**
+ * Escape double slashes in a string
+ * @param   {string} string - input string
+ * @returns {string} output string escaped
+ */
+function escapeSlashes(string) {
+  return string.replace(/\\/g, '\\\\')
+}
+
+/**
+ * Replace the multiple spaces with only one
+ * @param   {string} string - input string
+ * @returns {string} string without trailing spaces
+ */
+function cleanSpaces(string) {
+  return string.replace(/\s+/g, ' ')
+}
+
 const TREE_BUILDER_STRUCT = Object.seal({
   get() {
     const state = this.state;
     // The real root tag is in state.root.nodes[0]
     return {
-      template: state.root.nodes[0],
-      css: state.style,
-      javascript: state.script,
+      [TEMPLATE_OUTPUT_NAME]: state.root.nodes[0],
+      [CSS_OUTPUT_NAME]: state.style,
+      [JAVASCRIPT_OUTPUT_NAME]: state.script,
     }
   },
  /**
@@ -167,10 +203,11 @@ const TREE_BUILDER_STRUCT = Object.seal({
       const name = node.name;
       if (name[0] === '/') {
         this.closeTag(state, node, name);
-      }
-      else {
+      } else {
         this.openTag(state, node);
       }
+    } else if ([PRIVATE_JAVASCRIPT, PUBLIC_JAVASCRIPT].includes(node.type)) {
+      (state[JAVASCRIPT_TAG].nodes = state[JAVASCRIPT_TAG].nodes || []).push(node);
     }
   },
   closeTag(state, node, name) { // eslint-disable-line
@@ -195,7 +232,7 @@ const TREE_BUILDER_STRUCT = Object.seal({
     if (attrs && !ns) {
       attrs.forEach(a => { a.name = a.name.toLowerCase(); });
     }
-    if (name === 'style' || name === 'script' && !this.deferred(node, attrs)) {
+    if ([JAVASCRIPT_TAG, STYLE_TAG].includes(name) && !this.deferred(node, attrs)) {
       // Only accept one of each
       if (state[name]) {
         err$1(duplicatedNamedTag.replace('%1', name), node.start, this.state.data);
@@ -285,7 +322,7 @@ const TREE_BUILDER_STRUCT = Object.seal({
           expr.prefix = code[0];
           code = code.substr(1);
         }
-        parts.push(this._tt(node, text, pack), code.replace(/\\/g, '\\\\').trim().replace(/\r/g, '\\r').replace(/\n/g, '\\n'));
+        parts.push(this._tt(node, text, pack), escapeReturn(escapeSlashes(code).trim()));
         pos = expr.end - start;
       }
       if ((pos += start) < node.end) {
@@ -308,8 +345,8 @@ const TREE_BUILDER_STRUCT = Object.seal({
         idx++;
       }
     }
-    text = text.replace(/\\/g, '\\\\');
-    return pack ? text.replace(/\s+/g, ' ') : text.replace(/\r/g, '\\r').replace(/\n/g, '\\n')
+    text = escapeSlashes(text);
+    return pack ? cleanSpaces(text) : escapeReturn(text)
   }
 });
 
@@ -642,13 +679,6 @@ const RE_SCRYLE = {
   style: /<\/style\s*>/gi,
   textarea: /<\/textarea\s*>/gi,
 };
-
-/**
- * Matches the beginning of an `export default {}` expression
- * @const
- * @private
- */
-const EXPORT_DEFAULT = /export(?:\W)+default(?:\s+)?{/g;
 
 /**
  * The parser struct object we will use to handle any parsing
@@ -1008,7 +1038,8 @@ function text(store, data) {
         expr(store, data, null, match[0], pos);
         break
       case 'script':
-        pushJavascript(store, pos, start);
+        pushText(store, pos, start);
+        //pushJavascript(store, pos, start)
         break
       default:
         pushText(store, pos, start);
@@ -1024,34 +1055,6 @@ function text(store, data) {
   }
 
   return TEXT
-}
-
-/**
- * Create the javascript nodes depending
- *
- * @param {ParserStore}   store   - Current parser store
- * @param {number}  start   - Start position of the tag
- * @param {number}  end     - Ending position (last char of the tag)
- * @param {string}  [rep]   - Brackets to unescape
- * @private
- */
-function pushJavascript(store, start, end) {
-  const code = getChunk(store.data, start, end);
-  const nodes = [];
-  store.pos = end;
-
-  // no export rules found
-  if (!EXPORT_DEFAULT.test(code)) {
-    nodes.push({
-      type: PRIVATE_JAVASCRIPT,
-      start,
-      end,
-      code
-    });
-  }
-
-  store.last = nodes;
-  flush(store);
 }
 
 /**

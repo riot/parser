@@ -402,7 +402,8 @@ function text(store, data) {
         expr(store, data, null, match[0], pos)
         break
       case 'script':
-        pushJavascript(store, pos, start)
+        pushText(store, pos, start)
+        //pushJavascript(store, pos, start)
         break
       default:
         pushText(store, pos, start)
@@ -432,10 +433,11 @@ function text(store, data) {
 function pushJavascript(store, start, end) {
   const code = getChunk(store.data, start, end)
   const nodes = []
+  const match = EXPORT_DEFAULT.exec(code)
   store.pos = end
 
   // no export rules found
-  if (!EXPORT_DEFAULT.test(code)) {
+  if (!match) {
     nodes.push({
       type: PRIVATE_JAVASCRIPT,
       start,
@@ -444,7 +446,7 @@ function pushJavascript(store, start, end) {
     })
   }
 
-  store.last = nodes
+  nodes.forEach(node => store.builder.push(node))
 }
 
 /**

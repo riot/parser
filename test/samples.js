@@ -27,7 +27,6 @@ process.chdir(__dirname)
 
   const parser  = tagParser(opts)
   const source  = fs.readFileSync('fixtures/loop-svg-nodes.tag', 'utf8').trim()
-  debugger
   const result  = parser.parse(source).output
 
   console.dir(result, { depth: 12, colors: true })
