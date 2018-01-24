@@ -580,6 +580,47 @@ function _regex(b) {
   }
   return re
 }
+
+/**
+ * Update the scopes stack removing or adding closures to it
+ * @param   {array} stack - array stacking the expression closures
+ * @param   {string} char - current char to add or remove from the stack
+ * @param   {string} idx  - matching index
+ * @param   {string} code - expression code
+ * @returns {object} result
+ * @returns {object} result.char - either the char received or the closing braces
+ * @returns {object} result.index - either a new index to skip part of the source code,
+ *                                  or 0 to keep from parsing from the old position
+ */
+function updateStack(stack, char, idx, code) {
+  let index = 0;
+
+  switch (char) {
+  case '[':
+  case '(':
+  case '{':
+    stack.push(char === '[' ? ']' : char === '(' ? ')' : '}');
+    break
+  case ')':
+  case ']':
+  case '}':
+    if (char !== stack.pop()) {
+      throw new Error(`Unexpected character '${char}'`)
+    }
+
+    if (char === '}' && stack[stack.length - 1] === $_ES6_BQ) {
+      char = stack.pop();
+    }
+
+    index = idx + 1;
+    break
+  case '/':
+    index = skipRegex(code, idx);
+  }
+
+  return { char, index }
+}
+
 /**
    * Parses the code string searching the end of the expression.
    * It skips braces, quoted strings, regexes, and ES6 template literals.
@@ -592,20 +633,22 @@ function _regex(b) {
    *                            if it is not an expr.
    */
 function exprExtr(code, start, bp) {
-  const openingBraces = bp[0];
-  const closingBraces = bp[1];
+  const [openingBraces, closingBraces] = bp;
   const offset = start + openingBraces.length; // skips the opening brace
   const stack = []; // expected closing braces ('`' for ES6 TL)
   const re = _regex(closingBraces);
+
   re.lastIndex = offset; // begining of the expression
-  let idx;
+
   let end;
-  let str;
   let match;
-  while ((match = re.exec(code))) {
-    idx = match.index;
+
+  while (match = re.exec(code)) {
+    const idx = match.index;
+    const str = match[0];
     end = re.lastIndex;
-    str = match[0];
+
+    // end the iteration
     if (str === closingBraces && !stack.length) {
       return {
         text: code.slice(offset, idx),
@@ -613,38 +656,18 @@ function exprExtr(code, start, bp) {
         end,
       }
     }
-    str = str[0];
-    switch (str) {
-    case '[':
-    case '(':
-    case '{':
-      stack.push(str === '[' ? ']' : str === '(' ? ')' : '}');
-      break
-    case ')':
-    case ']':
-    case '}':
-      if (str !== stack.pop()) {
-        throw new Error(`Unexpected character '${str}'`)
-      }
-      if (str === '}' && stack[stack.length - 1] === $_ES6_BQ) {
-        str = stack.pop();
-      }
-      end = idx + 1;
-      break
-    case '/':
-      end = skipRegex(code, idx);
-      break
-    }
-    if (str === $_ES6_BQ) {
-      re.lastIndex = skipES6TL(code, end, stack);
-    }
-    else {
-      re.lastIndex = end;
-    }
+
+    const { char, index } = updateStack(stack, str[0], idx, code);
+    // update the end value depending on the new index received
+    end = index || end;
+    // update the regex last index
+    re.lastIndex = char === $_ES6_BQ ? skipES6TL(code, end, stack) : end;
   }
+
   if (stack.length) {
     throw new Error('Unclosed expression.')
   }
+
   return null
 }
 
