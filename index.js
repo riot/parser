@@ -545,28 +545,28 @@ function skipES6TL(code, pos, stack) {
  */
 const S_SQ_STR = /'[^'\n\r\\]*(?:\\(?:\r\n?|[\S\s])[^'\n\r\\]*)*'/.source;
 /**
-   * Matches double quoted JS strings taking care about nested quotes
-   * and EOLs (escaped EOLs are Ok).
-   *
-   * @const
-   * @private
-   */
+ * Matches double quoted JS strings taking care about nested quotes
+ * and EOLs (escaped EOLs are Ok).
+ *
+ * @const
+ * @private
+ */
 const S_STRING = `${S_SQ_STR}|${S_SQ_STR.replace(/'/g, '"')}`;
 /**
-   * Regex cache
-   *
-   * @type {Object.<string, RegExp>}
-   * @const
-   * @private
-   */
+ * Regex cache
+ *
+ * @type {Object.<string, RegExp>}
+ * @const
+ * @private
+ */
 const reBr = {};
 /**
-   * Makes an optimal regex that matches quoted strings, brackets, backquotes
-   * and the closing brackets of an expression.
-   *
-   * @param   {string} b - Closing brackets
-   * @returns {RegExp}
-   */
+ * Makes an optimal regex that matches quoted strings, brackets, backquotes
+ * and the closing brackets of an expression.
+ *
+ * @param   {string} b - Closing brackets
+ * @returns {RegExp}
+ */
 function _regex(b) {
   let re = reBr[b];
   if (!re) {
@@ -632,7 +632,7 @@ function updateStack(stack, char, idx, code) {
    * @returns {(Object | null)} Expression's end (after the closing brace) or -1
    *                            if it is not an expr.
    */
-function exprExtr(code, start, bp) {
+function exprExtr(code, start, bp, isExportDefault) {
   const [openingBraces, closingBraces] = bp;
   const offset = start + openingBraces.length; // skips the opening brace
   const stack = []; // expected closing braces ('`' for ES6 TL)
@@ -649,7 +649,7 @@ function exprExtr(code, start, bp) {
     end = re.lastIndex;
 
     // end the iteration
-    if (str === closingBraces && !stack.length) {
+    if (str === closingBraces && (!stack.length || isExportDefault && stack.length === 1)) {
       return {
         text: code.slice(offset, idx),
         start,
@@ -704,10 +704,11 @@ const RE_SCRYLE = {
 };
 
 /**
- * The parser struct object we will use to handle any parsing
- * @type {Object}
+ * Matches the beginning of an `export default {}` expression
+ * @const
+ * @private
  */
-const PARSER_STORE_STRUCT = Object.seal();
+const EXPORT_DEFAULT = /export(?:\W)+default/g;
 
 /**
  * Factory for the Parser class, exposing only the `parse` method.
@@ -745,8 +746,6 @@ function parser$1(options, customBuilder) {
         count: -1,
         root: null,
         last: null,
-        builder: null,
-        data: null,
         scryle: null,
         builder: builderFactory(data, options),
         data
@@ -760,14 +759,14 @@ function parser$1(options, customBuilder) {
       // So, at the end of the parsing count must be zero.
       while (store.pos < length && store.count) {
         switch (type) {
-          case TAG:
-            type = tag(store, data);
-            break
-          case ATTR:
-            type = attr(store, data);
-            break
-          default:
-            type = text(store, data);
+        case TAG:
+          type = tag(store, data);
+          break
+        case ATTR:
+          type = attr(store, data);
+          break
+        default:
+          type = text(store, data);
         }
       }
 
@@ -1062,7 +1061,7 @@ function text(store, data) {
         break
       case 'script':
         pushText(store, pos, start);
-        //pushJavascript(store, pos, start)
+        pushJavascript(store, pos, start);
         break
       default:
         pushText(store, pos, start);
@@ -1078,6 +1077,62 @@ function text(store, data) {
   }
 
   return TEXT
+}
+
+/**
+ * Create the javascript nodes depending
+ *
+ * @param {ParserStore}   store   - Current parser store
+ * @param {number}  start   - Start position of the tag
+ * @param {number}  end     - Ending position (last char of the tag)
+ * @param {string}  [rep]   - Brackets to unescape
+ * @private
+ */
+function pushJavascript(store, start, end) {
+  const code = getChunk(store.data, start, end);
+  const nodes = [];
+  const match = EXPORT_DEFAULT.exec(code);
+  store.pos = end;
+
+  // no export rules found
+  if (!match) {
+    nodes.push({
+      type: PRIVATE_JAVASCRIPT,
+      start,
+      end,
+      code
+    });
+  } else {
+    const publicJsIndex = EXPORT_DEFAULT.lastIndex;
+    const publicJs = exprExtr(code.substr(publicJsIndex, end), 0, ['{', '}'], true);[
+      getPrivateJs(code, start, 0, match.index),
+      {
+        type: PUBLIC_JAVASCRIPT,
+        start: publicJsIndex,
+        end: publicJs.end,
+        code: publicJs.text
+      },
+      getPrivateJs(code, start, publicJs.end, end)
+    ].forEach(nodes.push.bind(nodes));
+  }
+
+  nodes
+    // filter null nodes
+    .filter(node => node)
+    .forEach(node => store.builder.push(node));
+}
+
+function getPrivateJs(code, offset, start, end) {
+  const match = code.substr(start, end).trim();
+
+  if (!match) return null
+
+  return {
+    type: PRIVATE_JAVASCRIPT,
+    start: offset,
+    end: end,
+    code: match
+  }
 }
 
 /**

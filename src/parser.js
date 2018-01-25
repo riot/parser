@@ -42,13 +42,7 @@ const RE_SCRYLE = {
  * @const
  * @private
  */
-const EXPORT_DEFAULT = /export(?:\W)+default(?:\s+)?{/g
-
-/**
- * The parser struct object we will use to handle any parsing
- * @type {Object}
- */
-const PARSER_STORE_STRUCT = Object.seal()
+const EXPORT_DEFAULT = /export(?:\W)+default/g
 
 /**
  * Factory for the Parser class, exposing only the `parse` method.
@@ -86,8 +80,6 @@ export default function parser(options, customBuilder) {
         count: -1,
         root: null,
         last: null,
-        builder: null,
-        data: null,
         scryle: null,
         builder: builderFactory(data, options),
         data
@@ -101,14 +93,14 @@ export default function parser(options, customBuilder) {
       // So, at the end of the parsing count must be zero.
       while (store.pos < length && store.count) {
         switch (type) {
-          case TAG:
-            type = tag(store, data)
-            break
-          case ATTR:
-            type = attr(store, data)
-            break
-          default:
-            type = text(store, data)
+        case TAG:
+          type = tag(store, data)
+          break
+        case ATTR:
+          type = attr(store, data)
+          break
+        default:
+          type = text(store, data)
         }
       }
 
@@ -403,7 +395,7 @@ function text(store, data) {
         break
       case 'script':
         pushText(store, pos, start)
-        //pushJavascript(store, pos, start)
+        pushJavascript(store, pos, start)
         break
       default:
         pushText(store, pos, start)
@@ -444,9 +436,39 @@ function pushJavascript(store, start, end) {
       end,
       code
     })
+  } else {
+    const publicJsIndex = EXPORT_DEFAULT.lastIndex
+    const publicJs = exprExtr(code.substr(publicJsIndex, end), 0, ['{', '}'], true)
+
+    ;[
+      getPrivateJs(code, start, 0, match.index),
+      {
+        type: PUBLIC_JAVASCRIPT,
+        start: publicJsIndex,
+        end: publicJs.end,
+        code: publicJs.text
+      },
+      getPrivateJs(code, start, publicJs.end, end)
+    ].forEach(nodes.push.bind(nodes))
   }
 
-  nodes.forEach(node => store.builder.push(node))
+  nodes
+    // filter null nodes
+    .filter(node => node)
+    .forEach(node => store.builder.push(node))
+}
+
+function getPrivateJs(code, offset, start, end) {
+  const match = code.substr(start, end).trim()
+
+  if (!match) return null
+
+  return {
+    type: PRIVATE_JAVASCRIPT,
+    start: offset,
+    end: end,
+    code: match
+  }
 }
 
 /**
@@ -539,5 +561,3 @@ function b0re(store, str) {
 
   return store.regexCache[str]
 }
-
-

@@ -21,6 +21,18 @@ process.chdir(__dirname)
 })()
 
 ;(function () {
+  console.log('Tree Builder')
+  console.log('------------')
+
+  const parser  = tagParser(opts)
+  const source  = fs.readFileSync('fixtures/es6-nested-regex.tag', 'utf8').trim()
+  const result  = parser.parse(source).output
+
+  console.dir(result, { depth: 12, colors: true })
+  console.log()
+})()
+
+;(function () {
   console.log('------------------')
   console.log('Tree Builder (svg)')
   console.log('------------------')

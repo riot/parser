@@ -4,20 +4,24 @@
   <script>
     const x = 1
 
-    this.message = `
-      regex: ${
-        /x}`/.source
-      }`
+    export default {
+      message: `
+        regex: ${
+          /x}`/.source
+        }`
 
-    this.foobar = `
-    foobar() {
-      return ${
-        foo( 5 /x/.1 )  // not regex
+      foobar() { `
+        foobar() {
+          return ${
+            foo( 5 /x/.1 )  // not regex
+          }
+        }`
       }
     }
-`
 
-  foo(bar) {}
+  function foo(bar) {
+
+  }
 
   </script>
 </es6-nested-regex>

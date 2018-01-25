@@ -12,28 +12,28 @@ import skipES6TL, { $_ES6_BQ } from './skip-es6-tl'
  */
 const S_SQ_STR = /'[^'\n\r\\]*(?:\\(?:\r\n?|[\S\s])[^'\n\r\\]*)*'/.source
 /**
-   * Matches double quoted JS strings taking care about nested quotes
-   * and EOLs (escaped EOLs are Ok).
-   *
-   * @const
-   * @private
-   */
+ * Matches double quoted JS strings taking care about nested quotes
+ * and EOLs (escaped EOLs are Ok).
+ *
+ * @const
+ * @private
+ */
 const S_STRING = `${S_SQ_STR}|${S_SQ_STR.replace(/'/g, '"')}`
 /**
-   * Regex cache
-   *
-   * @type {Object.<string, RegExp>}
-   * @const
-   * @private
-   */
+ * Regex cache
+ *
+ * @type {Object.<string, RegExp>}
+ * @const
+ * @private
+ */
 const reBr = {}
 /**
-   * Makes an optimal regex that matches quoted strings, brackets, backquotes
-   * and the closing brackets of an expression.
-   *
-   * @param   {string} b - Closing brackets
-   * @returns {RegExp}
-   */
+ * Makes an optimal regex that matches quoted strings, brackets, backquotes
+ * and the closing brackets of an expression.
+ *
+ * @param   {string} b - Closing brackets
+ * @returns {RegExp}
+ */
 function _regex(b) {
   let re = reBr[b]
   if (!re) {
@@ -99,7 +99,7 @@ function updateStack(stack, char, idx, code) {
    * @returns {(Object | null)} Expression's end (after the closing brace) or -1
    *                            if it is not an expr.
    */
-export default function exprExtr(code, start, bp) {
+export default function exprExtr(code, start, bp, isExportDefault) {
   const [openingBraces, closingBraces] = bp
   const offset = start + openingBraces.length // skips the opening brace
   const stack = [] // expected closing braces ('`' for ES6 TL)
@@ -116,7 +116,7 @@ export default function exprExtr(code, start, bp) {
     end = re.lastIndex
 
     // end the iteration
-    if (str === closingBraces && !stack.length) {
+    if (str === closingBraces && (!stack.length || isExportDefault && stack.length === 1)) {
       return {
         text: code.slice(offset, idx),
         start,
