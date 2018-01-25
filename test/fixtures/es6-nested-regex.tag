@@ -8,7 +8,7 @@
       message: `
         regex: ${
           /x}`/.source
-        }`
+        }`,
 
       foobar() { `
         foobar() {

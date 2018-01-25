@@ -99,7 +99,7 @@ function updateStack(stack, char, idx, code) {
    * @returns {(Object | null)} Expression's end (after the closing brace) or -1
    *                            if it is not an expr.
    */
-export default function exprExtr(code, start, bp, isExportDefault) {
+export default function exprExtr(code, start, bp) {
   const [openingBraces, closingBraces] = bp
   const offset = start + openingBraces.length // skips the opening brace
   const stack = [] // expected closing braces ('`' for ES6 TL)
@@ -116,7 +116,7 @@ export default function exprExtr(code, start, bp, isExportDefault) {
     end = re.lastIndex
 
     // end the iteration
-    if (str === closingBraces && (!stack.length || isExportDefault && stack.length === 1)) {
+    if (str === closingBraces && !stack.length) {
       return {
         text: code.slice(offset, idx),
         start,

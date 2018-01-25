@@ -42,7 +42,7 @@ const RE_SCRYLE = {
  * @const
  * @private
  */
-const EXPORT_DEFAULT = /export(?:\W)+default/g
+const EXPORT_DEFAULT = /export(?:\W)+default(?:\s+)?{/g
 
 /**
  * Factory for the Parser class, exposing only the `parse` method.
@@ -430,25 +430,19 @@ function pushJavascript(store, start, end) {
 
   // no export rules found
   if (!match) {
-    nodes.push({
-      type: PRIVATE_JAVASCRIPT,
-      start,
-      end,
-      code
-    })
+    nodes.push(getPrivateJs(code, 0, code.length, start))
   } else {
     const publicJsIndex = EXPORT_DEFAULT.lastIndex
-    const publicJs = exprExtr(code.substr(publicJsIndex, end), 0, ['{', '}'], true)
-
+    const publicJs = exprExtr(code.substr(publicJsIndex, end), 0, ['{', '}'])
     ;[
       getPrivateJs(code, start, 0, match.index),
       {
         type: PUBLIC_JAVASCRIPT,
-        start: publicJsIndex,
-        end: publicJs.end,
+        start: start + publicJsIndex,
+        end: start + publicJs.end,
         code: publicJs.text
       },
-      getPrivateJs(code, start, publicJs.end, end)
+      getPrivateJs(code, start, publicJs.end, code.length)
     ].forEach(nodes.push.bind(nodes))
   }
 
@@ -465,8 +459,8 @@ function getPrivateJs(code, offset, start, end) {
 
   return {
     type: PRIVATE_JAVASCRIPT,
-    start: offset,
-    end: end,
+    start: start + offset,
+    end: end + offset,
     code: match
   }
 }
