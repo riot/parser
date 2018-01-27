@@ -1,5 +1,8 @@
 # Changes for riot-parser
 
+### v0.2.0
+- Add `voidTags` to the exports
+
 ### v0.1.0
 - Enhance the javascript parsing: the javascript node will contain nested nodes containing the private and the public javascript methods
 - Add the PUBLIC_JAVASCRIPT and PRIVATE_JAVASCRIPT nodes

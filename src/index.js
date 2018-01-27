@@ -6,6 +6,11 @@ import * as _nodeTypes from './node-types'
  */
 export const nodeTypes = _nodeTypes
 
+/**
+ * Void svg and html tags
+ */
+export { default as voidTags } from './void-tags'
+
 /*
  * Factory function to create instances of the parser
  */

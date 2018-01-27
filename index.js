@@ -1241,6 +1241,7 @@ const nodeTypes = _nodeTypes;
 
 exports.nodeTypes = nodeTypes;
 exports['default'] = parser$1;
+exports.voidTags = voidTags;
 
 Object.defineProperty(exports, '__esModule', { value: true });
 
