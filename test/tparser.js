@@ -539,7 +539,7 @@ module.exports = {
     data: '<div wierd>xxx</div>',
     expected: [
       { type: _T.TAG, name: 'div', start: 0, end: 11, attr: [
-          { name: 'wierd', value: '', start: 5, end: 10 }
+        { name: 'wierd', value: '', start: 5, end: 10 }
       ] },
       { type: _T.TEXT, text: 'xxx', start: 11, end: 14 },
       { type: _T.TAG, name: '/div', start: 14, end: 20 }

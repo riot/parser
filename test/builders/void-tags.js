@@ -39,6 +39,6 @@ const svgTags = [
   'use'
 ]
 
-module.exports = new RegExp(`^\/?(?:${htmlTags.join('|')}|${svgTags.join('|')})$`, 'i')
+module.exports = new RegExp(`^/?(?:${htmlTags.join('|')}|${svgTags.join('|')})$`, 'i')
 module.exports.htmlTags = htmlTags
 module.exports.svgTags  = svgTags

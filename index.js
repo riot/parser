@@ -24,6 +24,8 @@ const unclosedComment = 'Unclosed comment.';
 const unclosedNamedBlock = 'Unclosed "%1" block.';
 const duplicatedNamedTag = 'Duplicate tag "<%1>".';
 
+const unableToParseExportDefault = 'Unable to parse your tag \'export default\' contents';
+
 var voidTags = {
   /**
    * HTML void elements that cannot be auto-closed and shouldn't contain child nodes.
@@ -158,8 +160,8 @@ function err$1(msg, pos, data) {
  */
 function escapeReturn(string) {
   return string
-          .replace(/\r/g, '\\r')
-          .replace(/\n/g, '\\n')
+    .replace(/\r/g, '\\r')
+    .replace(/\n/g, '\\n')
 }
 
 /**
@@ -190,9 +192,9 @@ const TREE_BUILDER_STRUCT = Object.seal({
       [JAVASCRIPT_OUTPUT_NAME]: state.script,
     }
   },
- /**
+
+  /**
   * Process the current tag or text.
-  *
   * @param {Object} node - Raw pseudo-node from the parser
   */
   push(node) {
@@ -1080,53 +1082,59 @@ function text(store, data) {
 }
 
 /**
- * Create the javascript nodes depending
- *
- * @param {ParserStore}   store   - Current parser store
+ * Create the javascript nodes
+ * @param {ParserStore} store  - Current parser store
  * @param {number}  start   - Start position of the tag
  * @param {number}  end     - Ending position (last char of the tag)
- * @param {string}  [rep]   - Brackets to unescape
  * @private
  */
 function pushJavascript(store, start, end) {
   const code = getChunk(store.data, start, end);
-  const nodes = [];
+  const push = store.builder.push.bind(store.builder);
   const match = EXPORT_DEFAULT.exec(code);
   store.pos = end;
 
   // no export rules found
-  if (!match) {
-    nodes.push(getPrivateJs(code, 0, code.length, start));
-  } else {
-    const publicJsIndex = EXPORT_DEFAULT.lastIndex;
-    const publicJs = exprExtr(code.substr(publicJsIndex, end), 0, ['{', '}']);[
-      getPrivateJs(code, start, 0, match.index),
-      {
-        type: PUBLIC_JAVASCRIPT,
-        start: start + publicJsIndex,
-        end: start + publicJs.end,
-        code: publicJs.text
-      },
-      getPrivateJs(code, start, publicJs.end, code.length)
-    ].forEach(nodes.push.bind(nodes));
-  }
+  if (!match) return
 
-  nodes
-    // filter null nodes
-    .filter(node => node)
-    .forEach(node => store.builder.push(node));
+  // find the export default index
+  const publicJsIndex = EXPORT_DEFAULT.lastIndex;
+  // get the content of the export default tag
+  // the exprExtr was meant to be used for expressions but it works
+  // perfectly also in this case matching everything there is in { ... } block
+  const publicJs = exprExtr(getChunk(code, publicJsIndex, end), 0, ['{', '}']);
+
+  // dispatch syntax errors
+  if (!publicJs)
+    err(store.data, unableToParseExportDefault, start + publicJsIndex)
+
+  ;[
+    createPrivateJsNode(code, start, 0, match.index),
+    {
+      type: PUBLIC_JAVASCRIPT,
+      start: start + publicJsIndex,
+      end: start + publicJsIndex + publicJs.end,
+      code: publicJs.text
+    },
+    createPrivateJsNode(code, start, publicJsIndex + publicJs.end, code.length)
+  ].forEach(push);
 }
 
-function getPrivateJs(code, offset, start, end) {
-  const match = code.substr(start, end).trim();
-
-  if (!match) return null
-
+/**
+ * Create the private javascript chunks objects
+ * @param   {string} code - code chunk
+ * @param   {number} offset - offset from the top of the file
+ * @param   {number} start - inner offset from the <script> tag
+ * @param   {number} end - end offset
+ * @returns {object} private js node
+ * @private
+ */
+function createPrivateJsNode(code, offset, start, end) {
   return {
     type: PRIVATE_JAVASCRIPT,
     start: start + offset,
     end: end + offset,
-    code: match
+    code: getChunk(code, start, end)
   }
 }
 
@@ -1194,6 +1202,7 @@ function expr(store, data, node, endingChars, pos) {
  * @param   {number}  start   - Start position of the chunk we want to extract
  * @param   {number}  end     - Ending position of the chunk we need
  * @returns {string}  chunk of code extracted from the source code received
+ * @private
  */
 function getChunk(source, start, end) {
   return source.slice(start, end)

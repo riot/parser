@@ -179,7 +179,7 @@ Object.assign(RiotBuilder.prototype, {
   unescape(s, c) {
     const rep = '\\' + c
     let ix = 0
-    while (~(ix = s.indexOf(rep, ix))) {
+    while (~(ix = s.indexOf(rep, ix))) { // eslint-disable-line
       s = s.substr(0, ix) + s.substr(ix + 1)
       ix++
     }

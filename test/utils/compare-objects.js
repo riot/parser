@@ -23,20 +23,20 @@ function compareObjects(a, b) {
     }
     if (a[p]) {
       switch (typeof a[p]) {
-        case 'object':
-          if (!compareObjects(a[p], b[p])) {
-            return false
-          }
-          break
-        case 'function':
-          if (typeof b[p] != 'function') {
-            return false
-          }
-          break
-        default:
-          if (a[p] !== b[p]) {
-            return false
-          }
+      case 'object':
+        if (!compareObjects(a[p], b[p])) {
+          return false
+        }
+        break
+      case 'function':
+        if (typeof b[p] != 'function') {
+          return false
+        }
+        break
+      default:
+        if (a[p] !== b[p]) {
+          return false
+        }
       }
     } else if (a[p] !== b[p]) {
       return false

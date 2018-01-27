@@ -19,9 +19,23 @@
       }
     }
 
+
+
+
+
+  function foo(bar) {
+
+  }
+
   function foo(bar) {
 
   }
 
   </script>
+
+  <style>
+    :root {
+      color: blue;
+    }
+  </style>
 </es6-nested-regex>

@@ -3,7 +3,7 @@
     "type": 1,
     "name": "es6-nested-regex",
     "start": 0,
-    "end": 290,
+    "end": 450,
     "nodes": [
       {
         "type": 1,
@@ -32,17 +32,48 @@
       }
     ]
   },
-  "css": null,
+  "css": {
+    "type": 1,
+    "name": "style",
+    "start": 375,
+    "end": 430,
+    "text": {
+      "type": 3,
+      "text": "\n    :root {\n      color: blue;\n    }\n  ",
+      "start": 382,
+      "end": 422
+    }
+  },
   "javascript": {
     "type": 1,
     "name": "script",
     "start": 45,
-    "end": 270,
+    "end": 371,
+    "nodes": [
+      {
+        "type": 20,
+        "start": 53,
+        "end": 75,
+        "code": "\n    const x = 1\n\n    "
+      },
+      {
+        "type": 21,
+        "start": 91,
+        "end": 298,
+        "code": "      message: `\n        regex: ${\n          /x}`/.source\n        }`,\n\n      foobar() { `\n        foobar() {\n          return ${\n            foo( 5 /x/.1 )  // not regex\n          }\n        }`\n      }\n    "
+      },
+      {
+        "type": 20,
+        "start": 298,
+        "end": 362,
+        "code": "\n\n\n\n\n\n  function foo(bar) {\n\n  }\n\n  function foo(bar) {\n\n  }\n\n  "
+      }
+    ],
     "text": {
       "type": 3,
-      "text": "\n    const x = 1\n\n    this.message = `\n      regex: ${\n        /x}`/.source\n      }`\n\n    this.foobar = `\n    foobar() {\n      return ${\n        foo( 5 /x/.1 )  // not regex\n      }\n    }\n`\n\n  foo(bar) {}\n\n  ",
+      "text": "\n    const x = 1\n\n    export default {\n      message: `\n        regex: ${\n          /x}`/.source\n        }`,\n\n      foobar() { `\n        foobar() {\n          return ${\n            foo( 5 /x/.1 )  // not regex\n          }\n        }`\n      }\n    }\n\n\n\n\n\n  function foo(bar) {\n\n  }\n\n  function foo(bar) {\n\n  }\n\n  ",
       "start": 53,
-      "end": 261
+      "end": 362
     }
   }
 }

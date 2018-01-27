@@ -56,8 +56,8 @@ function err(msg, pos, data) {
  */
 function escapeReturn(string) {
   return string
-          .replace(/\r/g, '\\r')
-          .replace(/\n/g, '\\n')
+    .replace(/\r/g, '\\r')
+    .replace(/\n/g, '\\n')
 }
 
 /**
@@ -88,9 +88,9 @@ const TREE_BUILDER_STRUCT = Object.seal({
       [JAVASCRIPT_OUTPUT_NAME]: state.script,
     }
   },
- /**
+
+  /**
   * Process the current tag or text.
-  *
   * @param {Object} node - Raw pseudo-node from the parser
   */
   push(node) {
