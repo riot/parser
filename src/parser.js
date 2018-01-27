@@ -45,12 +45,6 @@ const RE_SCRYLE = {
 const EXPORT_DEFAULT = /export(?:\W)+default(?:\s+)?{/g
 
 /**
- * The parser struct object we will use to handle any parsing
- * @type {Object}
- */
-const PARSER_STORE_STRUCT = Object.seal()
-
-/**
  * Factory for the Parser class, exposing only the `parse` method.
  * The export adds the Parser class as property.
  *
@@ -86,8 +80,6 @@ export default function parser(options, customBuilder) {
         count: -1,
         root: null,
         last: null,
-        builder: null,
-        data: null,
         scryle: null,
         builder: builderFactory(data, options),
         data
@@ -101,14 +93,14 @@ export default function parser(options, customBuilder) {
       // So, at the end of the parsing count must be zero.
       while (store.pos < length && store.count) {
         switch (type) {
-          case TAG:
-            type = tag(store, data)
-            break
-          case ATTR:
-            type = attr(store, data)
-            break
-          default:
-            type = text(store, data)
+        case TAG:
+          type = tag(store, data)
+          break
+        case ATTR:
+          type = attr(store, data)
+          break
+        default:
+          type = text(store, data)
         }
       }
 
@@ -403,7 +395,7 @@ function text(store, data) {
         break
       case 'script':
         pushText(store, pos, start)
-        //pushJavascript(store, pos, start)
+        pushJavascript(store, pos, start)
         break
       default:
         pushText(store, pos, start)
@@ -422,31 +414,61 @@ function text(store, data) {
 }
 
 /**
- * Create the javascript nodes depending
- *
- * @param {ParserStore}   store   - Current parser store
+ * Create the javascript nodes
+ * @param {ParserStore} store  - Current parser store
  * @param {number}  start   - Start position of the tag
  * @param {number}  end     - Ending position (last char of the tag)
- * @param {string}  [rep]   - Brackets to unescape
  * @private
  */
 function pushJavascript(store, start, end) {
   const code = getChunk(store.data, start, end)
-  const nodes = []
+  const push = store.builder.push.bind(store.builder)
   const match = EXPORT_DEFAULT.exec(code)
   store.pos = end
 
   // no export rules found
-  if (!match) {
-    nodes.push({
-      type: PRIVATE_JAVASCRIPT,
-      start,
-      end,
-      code
-    })
-  }
+  // skip the nodes creation
+  if (!match) return
 
-  nodes.forEach(node => store.builder.push(node))
+  // find the export default index
+  const publicJsIndex = EXPORT_DEFAULT.lastIndex
+  // get the content of the export default tag
+  // the exprExtr was meant to be used for expressions but it works
+  // perfectly also in this case matching everything there is in { ... } block
+  const publicJs = exprExtr(getChunk(code, publicJsIndex, end), 0, ['{', '}'])
+
+  // dispatch syntax errors
+  if (!publicJs)
+    err(store.data, MSG.unableToParseExportDefault, start + publicJsIndex)
+
+  ;[
+    createPrivateJsNode(code, start, 0, match.index),
+    {
+      type: PUBLIC_JAVASCRIPT,
+      start: start + publicJsIndex,
+      end: start + publicJsIndex + publicJs.end,
+      code: publicJs.text
+    },
+    createPrivateJsNode(code, start, publicJsIndex + publicJs.end, code.length)
+  ].forEach(push)
+}
+
+/**
+ * Create the private javascript chunks objects
+ * @param   {string} code - code chunk
+ * @param   {number} offset - offset from the top of the file
+ * @param   {number} start - inner offset from the <script> tag
+ * @param   {number} end - end offset
+ * @returns {object} private js node
+ * @private
+ */
+function createPrivateJsNode(code, offset, start, end) {
+  return {
+    type: PRIVATE_JAVASCRIPT,
+    start: start + offset,
+    end: end + offset,
+    code: getChunk(code, start, end)
+  }
 }
 
 /**
@@ -513,6 +535,7 @@ function expr(store, data, node, endingChars, pos) {
  * @param   {number}  start   - Start position of the chunk we want to extract
  * @param   {number}  end     - Ending position of the chunk we need
  * @returns {string}  chunk of code extracted from the source code received
+ * @private
  */
 function getChunk(source, start, end) {
   return source.slice(start, end)
@@ -539,5 +562,3 @@ function b0re(store, str) {
 
   return store.regexCache[str]
 }
-
-

@@ -24,6 +24,8 @@ const unclosedComment = 'Unclosed comment.';
 const unclosedNamedBlock = 'Unclosed "%1" block.';
 const duplicatedNamedTag = 'Duplicate tag "<%1>".';
 
+const unableToParseExportDefault = 'Unable to parse your tag \'export default\' contents';
+
 var voidTags = {
   /**
    * HTML void elements that cannot be auto-closed and shouldn't contain child nodes.
@@ -158,8 +160,8 @@ function err$1(msg, pos, data) {
  */
 function escapeReturn(string) {
   return string
-          .replace(/\r/g, '\\r')
-          .replace(/\n/g, '\\n')
+    .replace(/\r/g, '\\r')
+    .replace(/\n/g, '\\n')
 }
 
 /**
@@ -190,9 +192,9 @@ const TREE_BUILDER_STRUCT = Object.seal({
       [JAVASCRIPT_OUTPUT_NAME]: state.script,
     }
   },
- /**
+
+  /**
   * Process the current tag or text.
-  *
   * @param {Object} node - Raw pseudo-node from the parser
   */
   push(node) {
@@ -545,28 +547,28 @@ function skipES6TL(code, pos, stack) {
  */
 const S_SQ_STR = /'[^'\n\r\\]*(?:\\(?:\r\n?|[\S\s])[^'\n\r\\]*)*'/.source;
 /**
-   * Matches double quoted JS strings taking care about nested quotes
-   * and EOLs (escaped EOLs are Ok).
-   *
-   * @const
-   * @private
-   */
+ * Matches double quoted JS strings taking care about nested quotes
+ * and EOLs (escaped EOLs are Ok).
+ *
+ * @const
+ * @private
+ */
 const S_STRING = `${S_SQ_STR}|${S_SQ_STR.replace(/'/g, '"')}`;
 /**
-   * Regex cache
-   *
-   * @type {Object.<string, RegExp>}
-   * @const
-   * @private
-   */
+ * Regex cache
+ *
+ * @type {Object.<string, RegExp>}
+ * @const
+ * @private
+ */
 const reBr = {};
 /**
-   * Makes an optimal regex that matches quoted strings, brackets, backquotes
-   * and the closing brackets of an expression.
-   *
-   * @param   {string} b - Closing brackets
-   * @returns {RegExp}
-   */
+ * Makes an optimal regex that matches quoted strings, brackets, backquotes
+ * and the closing brackets of an expression.
+ *
+ * @param   {string} b - Closing brackets
+ * @returns {RegExp}
+ */
 function _regex(b) {
   let re = reBr[b];
   if (!re) {
@@ -580,6 +582,47 @@ function _regex(b) {
   }
   return re
 }
+
+/**
+ * Update the scopes stack removing or adding closures to it
+ * @param   {array} stack - array stacking the expression closures
+ * @param   {string} char - current char to add or remove from the stack
+ * @param   {string} idx  - matching index
+ * @param   {string} code - expression code
+ * @returns {object} result
+ * @returns {object} result.char - either the char received or the closing braces
+ * @returns {object} result.index - either a new index to skip part of the source code,
+ *                                  or 0 to keep from parsing from the old position
+ */
+function updateStack(stack, char, idx, code) {
+  let index = 0;
+
+  switch (char) {
+  case '[':
+  case '(':
+  case '{':
+    stack.push(char === '[' ? ']' : char === '(' ? ')' : '}');
+    break
+  case ')':
+  case ']':
+  case '}':
+    if (char !== stack.pop()) {
+      throw new Error(`Unexpected character '${char}'`)
+    }
+
+    if (char === '}' && stack[stack.length - 1] === $_ES6_BQ) {
+      char = stack.pop();
+    }
+
+    index = idx + 1;
+    break
+  case '/':
+    index = skipRegex(code, idx);
+  }
+
+  return { char, index }
+}
+
 /**
    * Parses the code string searching the end of the expression.
    * It skips braces, quoted strings, regexes, and ES6 template literals.
@@ -592,20 +635,22 @@ function _regex(b) {
    *                            if it is not an expr.
    */
 function exprExtr(code, start, bp) {
-  const openingBraces = bp[0];
-  const closingBraces = bp[1];
+  const [openingBraces, closingBraces] = bp;
   const offset = start + openingBraces.length; // skips the opening brace
   const stack = []; // expected closing braces ('`' for ES6 TL)
   const re = _regex(closingBraces);
+
   re.lastIndex = offset; // begining of the expression
-  let idx;
+
   let end;
-  let str;
   let match;
-  while ((match = re.exec(code))) {
-    idx = match.index;
+
+  while (match = re.exec(code)) {
+    const idx = match.index;
+    const str = match[0];
     end = re.lastIndex;
-    str = match[0];
+
+    // end the iteration
     if (str === closingBraces && !stack.length) {
       return {
         text: code.slice(offset, idx),
@@ -613,38 +658,18 @@ function exprExtr(code, start, bp) {
         end,
       }
     }
-    str = str[0];
-    switch (str) {
-    case '[':
-    case '(':
-    case '{':
-      stack.push(str === '[' ? ']' : str === '(' ? ')' : '}');
-      break
-    case ')':
-    case ']':
-    case '}':
-      if (str !== stack.pop()) {
-        throw new Error(`Unexpected character '${str}'`)
-      }
-      if (str === '}' && stack[stack.length - 1] === $_ES6_BQ) {
-        str = stack.pop();
-      }
-      end = idx + 1;
-      break
-    case '/':
-      end = skipRegex(code, idx);
-      break
-    }
-    if (str === $_ES6_BQ) {
-      re.lastIndex = skipES6TL(code, end, stack);
-    }
-    else {
-      re.lastIndex = end;
-    }
+
+    const { char, index } = updateStack(stack, str[0], idx, code);
+    // update the end value depending on the new index received
+    end = index || end;
+    // update the regex last index
+    re.lastIndex = char === $_ES6_BQ ? skipES6TL(code, end, stack) : end;
   }
+
   if (stack.length) {
     throw new Error('Unclosed expression.')
   }
+
   return null
 }
 
@@ -681,10 +706,11 @@ const RE_SCRYLE = {
 };
 
 /**
- * The parser struct object we will use to handle any parsing
- * @type {Object}
+ * Matches the beginning of an `export default {}` expression
+ * @const
+ * @private
  */
-const PARSER_STORE_STRUCT = Object.seal();
+const EXPORT_DEFAULT = /export(?:\W)+default(?:\s+)?{/g;
 
 /**
  * Factory for the Parser class, exposing only the `parse` method.
@@ -722,8 +748,6 @@ function parser$1(options, customBuilder) {
         count: -1,
         root: null,
         last: null,
-        builder: null,
-        data: null,
         scryle: null,
         builder: builderFactory(data, options),
         data
@@ -737,14 +761,14 @@ function parser$1(options, customBuilder) {
       // So, at the end of the parsing count must be zero.
       while (store.pos < length && store.count) {
         switch (type) {
-          case TAG:
-            type = tag(store, data);
-            break
-          case ATTR:
-            type = attr(store, data);
-            break
-          default:
-            type = text(store, data);
+        case TAG:
+          type = tag(store, data);
+          break
+        case ATTR:
+          type = attr(store, data);
+          break
+        default:
+          type = text(store, data);
         }
       }
 
@@ -1039,7 +1063,7 @@ function text(store, data) {
         break
       case 'script':
         pushText(store, pos, start);
-        //pushJavascript(store, pos, start)
+        pushJavascript(store, pos, start);
         break
       default:
         pushText(store, pos, start);
@@ -1055,6 +1079,63 @@ function text(store, data) {
   }
 
   return TEXT
+}
+
+/**
+ * Create the javascript nodes
+ * @param {ParserStore} store  - Current parser store
+ * @param {number}  start   - Start position of the tag
+ * @param {number}  end     - Ending position (last char of the tag)
+ * @private
+ */
+function pushJavascript(store, start, end) {
+  const code = getChunk(store.data, start, end);
+  const push = store.builder.push.bind(store.builder);
+  const match = EXPORT_DEFAULT.exec(code);
+  store.pos = end;
+
+  // no export rules found
+  if (!match) return
+
+  // find the export default index
+  const publicJsIndex = EXPORT_DEFAULT.lastIndex;
+  // get the content of the export default tag
+  // the exprExtr was meant to be used for expressions but it works
+  // perfectly also in this case matching everything there is in { ... } block
+  const publicJs = exprExtr(getChunk(code, publicJsIndex, end), 0, ['{', '}']);
+
+  // dispatch syntax errors
+  if (!publicJs)
+    err(store.data, unableToParseExportDefault, start + publicJsIndex)
+
+  ;[
+    createPrivateJsNode(code, start, 0, match.index),
+    {
+      type: PUBLIC_JAVASCRIPT,
+      start: start + publicJsIndex,
+      end: start + publicJsIndex + publicJs.end,
+      code: publicJs.text
+    },
+    createPrivateJsNode(code, start, publicJsIndex + publicJs.end, code.length)
+  ].forEach(push);
+}
+
+/**
+ * Create the private javascript chunks objects
+ * @param   {string} code - code chunk
+ * @param   {number} offset - offset from the top of the file
+ * @param   {number} start - inner offset from the <script> tag
+ * @param   {number} end - end offset
+ * @returns {object} private js node
+ * @private
+ */
+function createPrivateJsNode(code, offset, start, end) {
+  return {
+    type: PRIVATE_JAVASCRIPT,
+    start: start + offset,
+    end: end + offset,
+    code: getChunk(code, start, end)
+  }
 }
 
 /**
@@ -1121,6 +1202,7 @@ function expr(store, data, node, endingChars, pos) {
  * @param   {number}  start   - Start position of the chunk we want to extract
  * @param   {number}  end     - Ending position of the chunk we need
  * @returns {string}  chunk of code extracted from the source code received
+ * @private
  */
 function getChunk(source, start, end) {
   return source.slice(start, end)

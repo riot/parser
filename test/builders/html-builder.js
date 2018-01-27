@@ -88,7 +88,7 @@ Object.assign(HtmlBuilder.prototype, {
     const name   = node.name
     const allTag = [name]
     const isVoid = VOID_TAGS.test(name)
-    const slash  = isVoid && ~VOID_TAGS.svgTags.indexOf(name) ? '/' : ''
+    const slash  = isVoid && VOID_TAGS.svgTags.includes(name) ? '/' : ''
 
     if (node.attr) {
       node.attr.forEach(a => {
@@ -115,18 +115,18 @@ Object.assign(HtmlBuilder.prototype, {
     let text = this._data.slice(node.start, node.end)
 
     switch (node.type) {
-      case T.COMMENT:
-        if (text.substr(2, 2) !== '--') {
-          text = `<!--${text.slice(2, -1)}-->`
-        }
-        break
+    case T.COMMENT:
+      if (text.substr(2, 2) !== '--') {
+        text = `<!--${text.slice(2, -1)}-->`
+      }
+      break
 
-      case T.TEXT:
-        if (!this._raw && this.options.compact) {
-          if (!/\S/.test(text)) return
-          text = text.replace(/\s+/g, ' ')
-        }
-        break
+    case T.TEXT:
+      if (!this._raw && this.options.compact) {
+        if (!/\S/.test(text)) return
+        text = text.replace(/\s+/g, ' ')
+      }
+      break
     }
     this._output.push(text)
   }

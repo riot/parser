@@ -4,17 +4,17 @@
 const Echo = {
 
   init(errorFn) {
-    this.output = [];
-    this.error = errorFn;
-    return this;
+    this.output = []
+    this.error = errorFn
+    return this
   },
 
   get() {
-    return this.output;
+    return this.output
   },
 
   push(node) {
-    this.output.push(node);
+    this.output.push(node)
   },
 
 }
