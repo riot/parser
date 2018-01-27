@@ -79,7 +79,8 @@ Input
 </my-tag>
 ```
 Output
-```json
+```js
+{
   "javascript": {
     "type": 1,
     "name": "script",
@@ -87,21 +88,21 @@ Output
     "end": 112,
     "nodes": [
       {
-        "type": JAVASCRIPT_PRIVATE,
+        "type": NodeTypes.JAVASCRIPT_PRIVATE,
         "start": 53,
         "end": 75,
         "code": "\n    function foo() {}"
       },
       {
-        "type": JAVASCRIPT_PUBLIC,
-        "start": 91,
-        "end": 298,
+        "type": NodeTypes.JAVASCRIPT_PUBLIC,
+        "start": 62,
+        "end": 86,
         "code": "\n    onMount() {}"
       },
       {
-        "type": JAVASCRIPT_PRIVATE,
-        "start": 53,
-        "end": 75,
+        "type": NodeTypes.JAVASCRIPT_PRIVATE,
+        "start": 86,
+        "end": 112,
         "code": "\n    function bar() {}"
       },
     ],
@@ -112,6 +113,7 @@ Output
       "end": 112
     }
   }
+}
 ```
 
 ### Commands
