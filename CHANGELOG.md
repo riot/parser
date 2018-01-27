@@ -1,5 +1,10 @@
 # Changes for riot-parser
 
+### v0.1.0
+- Enhance the javascript parsing: the javascript node will contain nested nodes containing the private and the public javascript methods
+- Add the PUBLIC_JAVASCRIPT and PRIVATE_JAVASCRIPT nodes
+- Change the `attr` to `attributes` and `expr` to `expressions` keys
+
 ### v0.0.6
 - Tree-builder support for 'if/else/elseif' tags (avoid unexpected closing tag errors).
 - Fix to text nodes only escaping the fist block of whitespace.

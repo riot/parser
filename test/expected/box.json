@@ -4,16 +4,13 @@
     "name": "content",
     "start": 0,
     "end": 559,
-    "attr": [
+    "attributes": [
       {
         "name": "class",
         "value": "container",
         "start": 9,
         "end": 26,
-        "valueStart": 16,
-        "parts": [
-          "container"
-        ]
+        "valueStart": 16
       }
     ],
     "nodes": [
@@ -22,26 +19,20 @@
         "name": "div",
         "start": 30,
         "end": 291,
-        "attr": [
+        "attributes": [
           {
             "name": "class",
             "value": "box",
             "start": 35,
             "end": 46,
-            "valueStart": 42,
-            "parts": [
-              "box"
-            ]
+            "valueStart": 42
           },
           {
-            "name": "align",
+            "name": "Align",
             "value": "center",
             "start": 47,
             "end": 61,
-            "valueStart": 54,
-            "parts": [
-              "center"
-            ]
+            "valueStart": 54
           }
         ],
         "nodes": [
@@ -56,7 +47,7 @@
                 "text": "{box.title}",
                 "start": 71,
                 "end": 82,
-                "expr": [
+                "expressions": [
                   {
                     "text": "box.title",
                     "start": 71,
@@ -64,8 +55,7 @@
                   }
                 ],
                 "parts": [
-                  "",
-                  "box.title"
+                  "{box.title}"
                 ]
               }
             ]
@@ -75,34 +65,27 @@
             "name": "img",
             "start": 92,
             "end": 127,
-            "attr": [
+            "attributes": [
               {
-                "name": "src",
+                "name": "Src",
                 "value": "{box.image}",
                 "start": 97,
                 "end": 112,
-                "expr": [
+                "expressions": [
                   {
                     "text": "box.image",
                     "start": 101,
                     "end": 112
                   }
                 ],
-                "valueStart": 101,
-                "parts": [
-                  "",
-                  "box.image"
-                ]
+                "valueStart": 101
               },
               {
                 "name": "width",
                 "value": "480",
                 "start": 113,
                 "end": 124,
-                "valueStart": 120,
-                "parts": [
-                  "480"
-                ]
+                "valueStart": 120
               }
             ],
             "selfclose": true,
@@ -113,16 +96,13 @@
             "name": "div",
             "start": 132,
             "end": 282,
-            "attr": [
+            "attributes": [
               {
                 "name": "class",
                 "value": "body",
                 "start": 137,
                 "end": 149,
-                "valueStart": 144,
-                "parts": [
-                  "body"
-                ]
+                "valueStart": 144
               }
             ],
             "nodes": [
@@ -155,7 +135,7 @@
                     "text": "Body: {box.body}",
                     "start": 188,
                     "end": 204,
-                    "expr": [
+                    "expressions": [
                       {
                         "text": "box.body",
                         "start": 194,
@@ -163,8 +143,7 @@
                       }
                     ],
                     "parts": [
-                      "Body: ",
-                      "box.body"
+                      "Body: {box.body}"
                     ]
                   }
                 ]
@@ -232,16 +211,13 @@
     "name": "style",
     "start": 302,
     "end": 384,
-    "attr": [
+    "attributes": [
       {
         "name": "type",
         "value": "less",
         "start": 309,
         "end": 320,
-        "valueStart": 315,
-        "parts": [
-          "less"
-        ]
+        "valueStart": 315
       }
     ],
     "text": {

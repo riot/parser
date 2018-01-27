@@ -90,8 +90,8 @@ Object.assign(HtmlBuilder.prototype, {
     const isVoid = VOID_TAGS.test(name)
     const slash  = isVoid && VOID_TAGS.svgTags.includes(name) ? '/' : ''
 
-    if (node.attr) {
-      node.attr.forEach(a => {
+    if (node.attributes) {
+      node.attributes.forEach(a => {
         const s = a.name
         allTag.push(a.value ? `${s}="${a.value.replace(/"/g, '&quot;')}"` : s)
       })

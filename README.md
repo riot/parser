@@ -18,16 +18,15 @@ npm i riot-parser --save
 The package has two modules:
 
 ```js
-// The default export is a factory for the TagParser class.
-// Use as: tagParser(options).parse(code, startPosition)
-const tagParser = require('riot-parser').default
+// Use as: parser(options).parse(code, startPosition)
+const parser = require('riot-parser').default
 
 // The enum NodeTypes (a plain JS object) that contains the values of the
 // type property of the nodes emited by tagParser (and more).
 const nodeTypes = require('riot-parser').nodeTypes
 ```
 
-For ES6 modules there's not default export:
+ES6 modules export:
 
 ```js
 import parser, { nodeTypes } from 'riot-parser'
@@ -57,6 +56,63 @@ The value returned by the parser is an object like this:
 The first element of `output` is the opening tag of the root element.
 
 The parsing stops when the closing tag of the root is found, so the last node have the ending position.
+
+#### Javascript fragments
+
+The `export default {}` object is used to identify the tags public API.
+The remaining javascript will be considered private.
+If a tag contains the `export default` expression the parser will detect and split the javascript node into children nodes
+of type `NodeTypes.JAVASCRIPT_PUBLIC` and `NodeTypes.JAVASCRIPT_PRIVATE`.
+
+For example:
+
+Input
+```html
+<my-tag>
+  <script>
+    function foo() {}
+    export default {
+      onMount() {}
+    }
+    function bar() {}
+  </script>
+</my-tag>
+```
+Output
+```json
+  "javascript": {
+    "type": 1,
+    "name": "script",
+    "start": 24,
+    "end": 112,
+    "nodes": [
+      {
+        "type": NodeTypes.JAVASCRIPT_PRIVATE,
+        "start": 53,
+        "end": 75,
+        "code": "\n    function foo() {}"
+      },
+      {
+        "type": NodeTypes.JAVASCRIPT_PUBLIC,
+        "start": 91,
+        "end": 298,
+        "code": "\n    onMount() {}"
+      },
+      {
+        "type": NodeTypes.JAVASCRIPT_PRIVATE,
+        "start": 53,
+        "end": 75,
+        "code": "\n    function bar() {}"
+      },
+    ],
+    "text": {
+      "type": 3,
+      "text": "...",
+      "start": 19,
+      "end": 112
+    }
+  }
+```
 
 ### Commands
 
@@ -121,66 +177,6 @@ This character is preserved in the output, but the parser will add a `replace` p
 
 * `comments` - Pass `true` to preserve the comments.
 * `brackets` - Array of two string with the left/right brackets used to extract expressions.
-
-## Pseudo-node structure
-
-#### Tags
-
-Sample markup:
-
-```html
-<div data-str="Hi { "world" }">{ text }<br></div>
-```
-
-Sample output:
-
-```js
-[
-  {
-    type: TAG,
-    name: 'div',              // element name, closing tags are prefixed with a slash
-    start: 0,                 // start position of the tag (the character `<`)
-    end: 31,                  // ending position (character following the `>`)
-    attributes: [             // tag attributes of opening tags, missed if tag has no attributes
-      name: 'data-str',       // attribute name, always lowercased
-      value: 'hi',            // attribute value without quotes, trimmed for unquoted values.
-      start: 5,               // start position of the attribute name
-      end: 30                 // ending position + 1 of the attribute
-      valueStart: 15,         // start of the value, initial quote skipped
-      expressions: [          // array of expressions, missed if the attribue has no expressions
-        {
-          text: ' world ',    // text of the expression without brackets
-          start: 18,          // starting position, including left brackets
-          end: 29             // ending position (character following the closing bracket)
-        }
-      ]
-    ]
-  },
-  {
-    type: TEXT,
-    value: '{ text }',
-    start: 31,
-    end: 39,
-    expressions: [
-      text: ' text '
-      start: 31,
-      end: 39
-    ]
-  },
-  {
-    type: TAG,
-    name: 'br',
-    start: 39,
-    end: 43,
-  },
-  {
-    type: TAG,
-    name: '/div',
-    start: 43,
-    end: 49,
-  }
-]
-```
 
 [travis-image]:https://img.shields.io/travis/riot/parser.svg?style=flat-square
 [travis-url]:https://travis-ci.org/riot/parser

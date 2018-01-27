@@ -17,81 +17,62 @@
             "name": "circle",
             "start": 29,
             "end": 119,
-            "attr": [
+            "attributes": [
               {
                 "name": "each",
                 "value": "{ points }",
                 "start": 37,
                 "end": 52,
-                "expr": [
+                "expressions": [
                   {
                     "text": " points ",
                     "start": 42,
                     "end": 52
                   }
                 ],
-                "valueStart": 42,
-                "parts": [
-                  "",
-                  "points"
-                ]
+                "valueStart": 42
               },
               {
                 "name": "riot-cx",
                 "value": "{ x * 10 + 5 }",
                 "start": 53,
                 "end": 77,
-                "expr": [
+                "expressions": [
                   {
                     "text": " x * 10 + 5 ",
                     "start": 62,
                     "end": 76
                   }
                 ],
-                "valueStart": 62,
-                "parts": [
-                  "",
-                  "x * 10 + 5",
-                  ""
-                ]
+                "valueStart": 62
               },
               {
                 "name": "riot-cy",
                 "value": "{ y * 10 + 5 }",
                 "start": 78,
                 "end": 100,
-                "expr": [
+                "expressions": [
                   {
                     "text": " y * 10 + 5 ",
                     "start": 86,
                     "end": 100
                   }
                 ],
-                "valueStart": 86,
-                "parts": [
-                  "",
-                  "y * 10 + 5"
-                ]
+                "valueStart": 86
               },
               {
                 "name": "r",
                 "value": "2",
                 "start": 101,
                 "end": 104,
-                "valueStart": 103,
-                "parts": [
-                  "2"
-                ]
+                "valueStart": 103
               },
               {
                 "name": "fill",
                 "value": "black",
                 "start": 105,
                 "end": 117,
-                "valueStart": 111,
-                "parts": [
-                  "black"
-                ]
+                "valueStart": 111
               }
             ],
             "selfclose": true,

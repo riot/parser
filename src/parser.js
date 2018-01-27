@@ -188,7 +188,7 @@ function pushText(store, start, end, expr, rep) {
   }
 
   if (expr) {
-    q.expr = (q.expr || []).concat(expr)
+    q.expressions = (q.expressions || []).concat(expr)
   }
 
   if (rep) {
@@ -361,7 +361,7 @@ function setAttr(store, data, pos, tag) {
   //assert(q && q.type === Mode.TAG, 'no previous tag for the attr!')
   // Pushes the attribute and shifts the `end` position of the tag (`last`).
   store.pos = tag.end = end;
-  (tag.attr || (tag.attr = [])).push(attr)
+  (tag.attributes || (tag.attributes = [])).push(attr)
 }
 
 /**
@@ -520,7 +520,7 @@ function expr(store, data, node, endingChars, pos) {
       node.unescape = unescape
     }
     if (expr) {
-      node.expr = expr
+      node.expressions = expr
     }
   } else {
     pushText(store, start, end, expr, unescape)

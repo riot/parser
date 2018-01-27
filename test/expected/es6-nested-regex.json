@@ -16,7 +16,7 @@
             "text": "{ message }",
             "start": 25,
             "end": 36,
-            "expr": [
+            "expressions": [
               {
                 "text": " message ",
                 "start": 25,
@@ -24,8 +24,7 @@
               }
             ],
             "parts": [
-              "",
-              "message"
+              "{ message }"
             ]
           }
         ]

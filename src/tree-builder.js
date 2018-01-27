@@ -210,6 +210,7 @@ const TREE_BUILDER_STRUCT = Object.seal({
   split(node, source, start, pack) {
     const expressions = node.expr
     const parts = []
+
     if (expressions) {
       let pos = 0
       for (let i = 0; i < expressions.length; i++) {
@@ -226,11 +227,11 @@ const TREE_BUILDER_STRUCT = Object.seal({
       if ((pos += start) < node.end) {
         parts.push(this._tt(node, source.slice(pos), pack))
       }
-    }
-    else {
+    } else {
       parts[0] = this._tt(node, source, pack)
     }
-    node.parts = parts
+
+    node.parts = parts.filter(p => p) // remove the empty strings
   },
   // unescape escaped brackets and split prefixes of expressions
   _tt(node, text, pack) {
@@ -243,7 +244,9 @@ const TREE_BUILDER_STRUCT = Object.seal({
         idx++
       }
     }
+
     text = escapeSlashes(text)
+
     return pack ? cleanSpaces(text) : escapeReturn(text)
   }
 })

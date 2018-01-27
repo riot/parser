@@ -314,6 +314,7 @@ const TREE_BUILDER_STRUCT = Object.seal({
   split(node, source, start, pack) {
     const expressions = node.expr;
     const parts = [];
+
     if (expressions) {
       let pos = 0;
       for (let i = 0; i < expressions.length; i++) {
@@ -330,11 +331,11 @@ const TREE_BUILDER_STRUCT = Object.seal({
       if ((pos += start) < node.end) {
         parts.push(this._tt(node, source.slice(pos), pack));
       }
-    }
-    else {
+    } else {
       parts[0] = this._tt(node, source, pack);
     }
-    node.parts = parts;
+
+    node.parts = parts.filter(p => p); // remove the empty strings
   },
   // unescape escaped brackets and split prefixes of expressions
   _tt(node, text, pack) {
@@ -347,7 +348,9 @@ const TREE_BUILDER_STRUCT = Object.seal({
         idx++;
       }
     }
+
     text = escapeSlashes(text);
+
     return pack ? cleanSpaces(text) : escapeReturn(text)
   }
 });
@@ -856,7 +859,7 @@ function pushText(store, start, end, expr, rep) {
   }
 
   if (expr) {
-    q.expr = (q.expr || []).concat(expr);
+    q.expressions = (q.expressions || []).concat(expr);
   }
 
   if (rep) {
@@ -1029,7 +1032,7 @@ function setAttr(store, data, pos, tag) {
   //assert(q && q.type === Mode.TAG, 'no previous tag for the attr!')
   // Pushes the attribute and shifts the `end` position of the tag (`last`).
   store.pos = tag.end = end;
-  (tag.attr || (tag.attr = [])).push(attr);
+  (tag.attributes || (tag.attributes = [])).push(attr);
 }
 
 /**
@@ -1095,6 +1098,7 @@ function pushJavascript(store, start, end) {
   store.pos = end;
 
   // no export rules found
+  // skip the nodes creation
   if (!match) return
 
   // find the export default index
@@ -1187,7 +1191,7 @@ function expr(store, data, node, endingChars, pos) {
       node.unescape = unescape;
     }
     if (expr) {
-      node.expr = expr;
+      node.expressions = expr;
     }
   } else {
     pushText(store, start, end, expr, unescape);
