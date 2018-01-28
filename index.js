@@ -810,26 +810,8 @@ function createStore(userOptions, builder, data) {
  */
 function parse(store) {
   const { data } = store;
-  // extend the store adding the tree builder instance and the initial data
-  const length = data.length;
-  let type;
 
-  // The "count" property is set to 1 when the first tag is found.
-  // This becomes the root and precedent text or comments are discarded.
-  // So, at the end of the parsing count must be zero.
-  while (store.pos < length && store.count) {
-    switch (type) {
-    case TAG:
-      type = tag(store);
-      break
-    case ATTR:
-      type = attr(store);
-      break
-    default:
-      type = text(store);
-    }
-  }
-
+  walk(store);
   flush(store);
 
   if (store.count) {
@@ -839,6 +821,41 @@ function parse(store) {
   return {
     data,
     output: store.builder.get()
+  }
+}
+
+/**
+ * Parser walking recursive function
+ * @param {ParserStore}  store - Current parser store
+ * @param   {string} type - current parsing context
+ */
+function walk(store, type) {
+  const { data } = store;
+  // extend the store adding the tree builder instance and the initial data
+  const length = data.length;
+
+  // The "count" property is set to 1 when the first tag is found.
+  // This becomes the root and precedent text or comments are discarded.
+  // So, at the end of the parsing count must be zero.
+  if (store.pos < length && store.count) {
+    walk(store, eat(store, type));
+  }
+}
+
+/**
+ * Function to help iterating on the current parser store
+ * @param {ParserStore}  store - Current parser store
+ * @param   {string} type - current parsing context
+ * @returns {string} parsing context
+ */
+function eat(store, type) {
+  switch (type) {
+  case TAG:
+    return tag(store)
+  case ATTR:
+    return attr(store)
+  default:
+    return text(store)
   }
 }
 
@@ -951,9 +968,11 @@ function tag(store) {
   const start = pos - 1; // pos of '<'
   const str = data.substr(pos, 2); // first two chars following '<'
 
-  if (str[0] === '!') {
+  switch (true) {
+  case str[0] === '!':
     comment(store, data, start);
-  } else if (TAG_2C.test(str)) {
+    break
+  case TAG_2C.test(str): {
     const re = TAG_NAME; // (\/?[^\s>/]+)\s*(>)? g
     re.lastIndex = pos;
     const match = re.exec(data);
@@ -969,7 +988,10 @@ function tag(store) {
     if (!match[2]) {
       return ATTR
     }
-  } else {
+
+    break
+  }
+  default:
     pushText(store, start, pos); // pushes the '<' as text
   }
 
@@ -1112,8 +1134,9 @@ function parseAttribute(store, match, start, end) {
 function text(store) {
   const { pos, data, scryle } = store;
 
-  if (scryle) {
-    const name = store.scryle;
+  switch (true) {
+  case typeof scryle === 'string': {
+    const name = scryle;
     const re = RE_SCRYLE[name];
     re.lastIndex = pos;
     const match = re.exec(data);
@@ -1129,10 +1152,12 @@ function text(store) {
     }
     // now the closing tag, either </script> or </style>
     pushTag(store, `/${name}`, start, end);
-  } else if (data[pos] === '<') {
+    break
+  }
+  case data[pos] === '<':
     store.pos++;
     return TAG
-  } else {
+  default:
     expr(store, null, '<', pos);
   }
 
