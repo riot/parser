@@ -724,7 +724,6 @@ const EXPORT_DEFAULT = /export(?:\W)+default(?:\s+)?{/g;
  * @returns {Function} Public Parser implementation.
  */
 function parser$1(options, customBuilder) {
-  const builderFactory = customBuilder || createTreeBuilder;
   const store = {
     options: Object.assign({
       brackets: ['{', '}']
@@ -732,61 +731,65 @@ function parser$1(options, customBuilder) {
   };
 
   return {
-    /**
-     * It creates a raw output of pseudo-nodes with one of three different types,
-     * all of them having a start/end position:
-     *
-     * - TAG     -- Opening or closing tags
-     * - TEXT    -- Raw text
-     * - COMMENT -- Comments
-     *
-     * @param   {string} data - HTML markup
-     * @returns {ParserResult} Result, contains data and output properties.
-     */
-    parse(data) {
-      // extend the store adding the tree builder instance and the initial data
-      Object.assign(store, {
-        regexCache: {},
-        pos: 0,
-        count: -1,
-        root: null,
-        last: null,
-        scryle: null,
-        builder: builderFactory(data, options),
-        data
-      });
+    parse: (data) => parse(data, store, customBuilder || createTreeBuilder)
+  }
+}
 
-      const length = data.length;
-      let type;
+/**
+ * It creates a raw output of pseudo-nodes with one of three different types,
+ * all of them having a start/end position:
+ *
+ * - TAG     -- Opening or closing tags
+ * - TEXT    -- Raw text
+ * - COMMENT -- Comments
+ *
+ * @param   {string} data - HTML markup
+ * @param   {ParserStore}  store - Current parser store
+ * @param   {function}  builder - Tree builder factory function
+ * @returns {ParserResult} Result, contains data and output properties.
+ */
+function parse(data, store, builder) {
+  // extend the store adding the tree builder instance and the initial data
+  Object.assign(store, {
+    regexCache: {},
+    pos: 0,
+    count: -1,
+    root: null,
+    last: null,
+    scryle: null,
+    builder: builder(data, store.options),
+    data
+  });
 
-      // The "count" property is set to 1 when the first tag is found.
-      // This becomes the root and precedent text or comments are discarded.
-      // So, at the end of the parsing count must be zero.
-      while (store.pos < length && store.count) {
-        switch (type) {
-        case TAG:
-          type = tag(store, data);
-          break
-        case ATTR:
-          type = attr(store, data);
-          break
-        default:
-          type = text(store, data);
-        }
-      }
+  const length = data.length;
+  let type;
 
-      flush(store);
-
-      if (store.count) {
-        err(data, store.count > 0
-          ? unexpectedEndOfFile : rootTagNotFound, store.pos);
-      }
-
-      return {
-        data,
-        output: store.builder.get()
-      }
+  // The "count" property is set to 1 when the first tag is found.
+  // This becomes the root and precedent text or comments are discarded.
+  // So, at the end of the parsing count must be zero.
+  while (store.pos < length && store.count) {
+    switch (type) {
+    case TAG:
+      type = tag(store, data);
+      break
+    case ATTR:
+      type = attr(store, data);
+      break
+    default:
+      type = text(store, data);
     }
+  }
+
+  flush(store);
+
+  if (store.count) {
+    err(data, store.count > 0
+      ? unexpectedEndOfFile : rootTagNotFound, store.pos);
+  }
+
+  return {
+    data,
+    output: store.builder.get()
   }
 }
 
@@ -910,6 +913,7 @@ function tag(store, data) {
   const pos = store.pos; // pos of the char following '<'
   const start = pos - 1; // pos of '<'
   const str = data.substr(pos, 2); // first two chars following '<'
+
   if (str[0] === '!') {
     comment(store, data, start);
   } else if (TAG_2C.test(str)) {
@@ -922,6 +926,7 @@ function tag(store, data) {
     if (name in RE_SCRYLE) {
       store.scryle = name; // used by parseText
     }
+
     pushTag(store, name, start, end);
     // only '>' can ends the tag here, the '/' is handled in parseAttr
     if (!match[2]) {
@@ -930,6 +935,7 @@ function tag(store, data) {
   } else {
     pushText(store, start, pos); // pushes the '<' as text
   }
+
   return TEXT
 }
 
@@ -966,10 +972,13 @@ function attr(store, data) {
   const _CH = /\S/g; // matches the first non-space char
   _CH.lastIndex = store.pos; // first char of attribute's name
   const ch = _CH.exec(data);
-  if (!ch) {
+
+  switch (true) {
+  case !ch:
     store.pos = data.length; // reaching the end of the buffer with
     // NodeTypes.ATTR will generate error
-  } else if (ch[0] === '>') {
+    break
+  case ch[0] === '>':
     // closing char found. If this is a self-closing tag with the name of the
     // Root tag, we need decrement the counter as we are changing mode.
     store.pos = tag.end = _CH.lastIndex;
@@ -980,13 +989,15 @@ function attr(store, data) {
       }
     }
     return TEXT
-  } else if (ch[0] === '/') {
+  case ch[0] === '/':
     store.pos = _CH.lastIndex; // maybe. delegate the validation
     tag.selfclose = true; // the next loop
-  } else {
+    break
+  default:
     delete tag.selfclose; // ensure unmark as selfclosing tag
     setAttr(store, data, ch.index, tag);
   }
+
   return ATTR
 }
 
