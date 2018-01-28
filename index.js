@@ -87,6 +87,18 @@ var voidTags = {
 }
 
 /**
+ * Add an item into a collection, if the collection is not an array
+ * we create one and add the item to it
+ * @param   {array} collection - target collection
+ * @param   {*} item - item to add to the collection
+ * @returns {array} array containing the new item added to it
+ */
+function addToCollection(collection = [], item) {
+  collection.push(item);
+  return collection
+}
+
+/**
  * Not all the types are handled in this module.
  *
  * @enum {number}
@@ -173,7 +185,7 @@ const TEMPLATE_OUTPUT_NAME = 'template';
 const JAVASCRIPT_TAG = 'script';
 const STYLE_TAG = 'style';
 const TEXTAREA_TAG = 'textarea';
-const PRE_TAG = 'textarea';
+
 const SVG_TAG = 'svg';
 
 const DEFER_ATTR = 'defer';
@@ -244,17 +256,24 @@ const TREE_BUILDER_STRUCT = Object.seal({
   */
   push(node) {
     const state = this.state;
-    if (node.type === TEXT) {
+
+    switch (node.type) {
+    case TEXT:
       this.pushText(state, node);
-    } else if (node.type === TAG) {
+      break
+    case TAG: {
       const name = node.name;
       if (name[0] === '/') {
         this.closeTag(state, node, name);
       } else {
         this.openTag(state, node);
       }
-    } else if ([PRIVATE_JAVASCRIPT, PUBLIC_JAVASCRIPT].includes(node.type)) {
-      (state[JAVASCRIPT_TAG].nodes = state[JAVASCRIPT_TAG].nodes || []).push(node);
+      break
+    }
+    case PRIVATE_JAVASCRIPT:
+    case PUBLIC_JAVASCRIPT:
+      state[JAVASCRIPT_TAG].nodes = addToCollection(state[JAVASCRIPT_TAG].nodes, node);
+      break
     }
   },
   closeTag(state, node, name) { // eslint-disable-line
@@ -801,21 +820,20 @@ function parse(store) {
   while (store.pos < length && store.count) {
     switch (type) {
     case TAG:
-      type = tag(store, data);
+      type = tag(store);
       break
     case ATTR:
-      type = attr(store, data);
+      type = attr(store);
       break
     default:
-      type = text(store, data);
+      type = text(store);
     }
   }
 
   flush(store);
 
   if (store.count) {
-    panic(data, store.count > 0
-      ? unexpectedEndOfFile : rootTagNotFound, store.pos);
+    panic(data, store.count > 0 ? unexpectedEndOfFile : rootTagNotFound, store.pos);
   }
 
   return {
@@ -860,12 +878,16 @@ function pushcomment(store, start, end) {
  * @param {ParserStore}   store   - Current parser store
  * @param {number}  start   - Start position of the tag
  * @param {number}  end     - Ending position (last char of the tag)
- * @param {RawExpr[]} [expr]  - Found expressions
- * @param {string}  [rep]   - Brackets to unescape
+ * @param {object}  extra   - extra properties to add to the text node
+ * @param {RawExpr[]} extra.expressions  - Found expressions
+ * @param {string}    extra.unescape     - Brackets to unescape
  * @private
  */
-function pushText(store, start, end, expr, rep) {
+function pushText(store, start, end, extra = {}) {
   const text = getChunk(store.data, start, end);
+  const expressions = extra.expressions;
+  const unescape = extra.unescape;
+
   let q = store.last;
   store.pos = end;
 
@@ -877,12 +899,12 @@ function pushText(store, start, end, expr, rep) {
     store.last = q = { type: TEXT, text, start, end };
   }
 
-  if (expr) {
-    q.expressions = (q.expressions || []).concat(expr);
+  if (expressions && expressions.length) {
+    q.expressions = (q.expressions || []).concat(expressions);
   }
 
-  if (rep) {
-    q.unescape = rep;
+  if (unescape) {
+    q.unescape = unescape;
   }
 }
 
@@ -921,12 +943,11 @@ function pushTag(store, name, start, end) {
  * if an invalid tag name is found.
  *
  * @param   {ParserStore} store  - Parser store
- * @param   {string} data       - Buffer to parse
  * @returns {number} New parser mode
  * @private
  */
-function tag(store, data) {
-  const pos = store.pos; // pos of the char following '<'
+function tag(store) {
+  const { pos, data } = store; // pos of the char following '<'
   const start = pos - 1; // pos of '<'
   const str = data.substr(pos, 2); // first two chars following '<'
 
@@ -944,7 +965,7 @@ function tag(store, data) {
     }
 
     pushTag(store, name, start, end);
-    // only '>' can ends the tag here, the '/' is handled in parseAttr
+    // only '>' can ends the tag here, the '/' is handled in parseAttribute
     if (!match[2]) {
       return ATTR
     }
@@ -979,14 +1000,14 @@ function comment(store, data, start) {
  * unquoted values or expressions.
  *
  * @param   {ParserStore} store  - Parser store
- * @param   {string} data       - Buffer to parse
  * @returns {number} New parser mode.
  * @private
  */
-function attr(store, data) {
-  const tag = store.last; // the last (current) tag in the output
+function attr(store) {
+  const { data, last, pos, root } = store;
+  const tag = last; // the last (current) tag in the output
   const _CH = /\S/g; // matches the first non-space char
-  _CH.lastIndex = store.pos; // first char of attribute's name
+  _CH.lastIndex = pos; // first char of attribute's name
   const ch = _CH.exec(data);
 
   switch (true) {
@@ -1000,7 +1021,7 @@ function attr(store, data) {
     store.pos = tag.end = _CH.lastIndex;
     if (tag.selfclose) {
       store.scryle = null; // allow selfClosing script/style tags
-      if (store.root && store.root.name === tag.name) {
+      if (root && root.name === tag.name) {
         store.count--; // "pop" root tag
       }
     }
@@ -1011,7 +1032,7 @@ function attr(store, data) {
     break
   default:
     delete tag.selfclose; // ensure unmark as selfclosing tag
-    setAttr(store, data, ch.index, tag);
+    setAttribute(store, ch.index, tag);
   }
 
   return ATTR
@@ -1021,12 +1042,12 @@ function attr(store, data) {
  * Parses an attribute and its expressions.
  *
  * @param   {ParserStore}  store  - Parser store
- * @param   {string} data   - Whole buffer
  * @param   {number} pos    - Starting position of the attribute
  * @param   {Object} tag    - Current parent tag
  * @private
  */
-function setAttr(store, data, pos, tag) {
+function setAttribute(store, pos, tag) {
+  const { data } = store;
   const re = ATTR_START; // (\S[^>/=\s]*)(?:\s*=\s*([^>/])?)? g
   const start = re.lastIndex = pos; // first non-whitespace
   const match = re.exec(data);
@@ -1036,8 +1057,28 @@ function setAttr(store, data, pos, tag) {
   }
 
   let end = re.lastIndex;
-  let quote = match[2]; // first letter of value or nothing
+  const attr = parseAttribute(store, match, start, end);
+
+  //assert(q && q.type === Mode.TAG, 'no previous tag for the attr!')
+  // Pushes the attribute and shifts the `end` position of the tag (`last`).
+  store.pos = tag.end = attr.end;
+  tag.attributes = addToCollection(tag.attributes, attr);
+}
+
+/**
+ * Parse the attribute values normalising the quotes
+ * @param   {ParserStore}  store  - Parser store
+ * @param   {array} match - results of the attributes regex
+ * @param   {number} start - attribute start position
+ * @param   {number} end - attribute end position
+ * @returns {object} attribute object
+ */
+function parseAttribute(store, match, start, end) {
+  const { data } = store;
   const attr = { name: match[1], value: '', start, end };
+
+  let quote = match[2]; // first letter of value or nothing
+
   // parse the whole value (if any) and get any expressions on it
   if (quote) {
     // Usually, the value's first char (`quote`) is a quote and the lastIndex
@@ -1049,17 +1090,15 @@ function setAttr(store, data, pos, tag) {
       valueStart--; // adjust the starting position
     }
 
-    end = expr(store, data, attr, quote || '[>/\\s]', valueStart);
+    end = expr(store, attr, quote || '[>/\\s]', valueStart);
+
     // adjust the bounds of the value and save its content
     attr.value = getChunk(data, valueStart, end);
     attr.valueStart = valueStart;
     attr.end = quote ? ++end : end;
   }
 
-  //assert(q && q.type === Mode.TAG, 'no previous tag for the attr!')
-  // Pushes the attribute and shifts the `end` position of the tag (`last`).
-  store.pos = tag.end = end;
-  (tag.attributes || (tag.attributes = [])).push(attr);
+  return attr
 }
 
 /**
@@ -1067,14 +1106,13 @@ function setAttr(store, data, pos, tag) {
  * (the content of script and style is text as well)
  *
  * @param   {ParserStore} store - Parser store
- * @param   {string} data  - Buffer to parse
  * @returns {number} New parser mode.
  * @private
  */
-function text(store, data) {
-  const { pos } = store; // start of the text
+function text(store) {
+  const { pos, data, scryle } = store;
 
-  if (store.scryle) {
+  if (scryle) {
     const name = store.scryle;
     const re = RE_SCRYLE[name];
     re.lastIndex = pos;
@@ -1087,7 +1125,7 @@ function text(store, data) {
     store.scryle = null; // reset the script/style flag now
     // write the tag content, if any
     if (start > pos) {
-      parseSpecialTagContent(store, data, name, match);
+      parseSpecialTagsContent(store, name, match);
     }
     // now the closing tag, either </script> or </style>
     pushTag(store, `/${name}`, start, end);
@@ -1095,7 +1133,7 @@ function text(store, data) {
     store.pos++;
     return TAG
   } else {
-    expr(store, data, null, '<', pos);
+    expr(store, null, '<', pos);
   }
 
   return TEXT
@@ -1108,14 +1146,13 @@ function text(store, data) {
  * @param   {string} name  - one of the tags matched by the RE_SCRYLE regex
  * @returns {array}  match - result of the regex matching the content of the parsed tag
  */
-function parseSpecialTagContent(store, data, name, match) {
+function parseSpecialTagsContent(store, name, match) {
   const { pos } = store;
   const start = match.index;
 
   switch (name) {
   case TEXTAREA_TAG:
-  case PRE_TAG:
-    expr(store, data, null, match[0], pos);
+    expr(store, null, match[0], pos);
     break
   case JAVASCRIPT_TAG:
     pushText(store, pos, start);
@@ -1191,23 +1228,44 @@ function createPrivateJsNode(code, offset, start, end) {
  * Detect if value have escaped brackets.
  *
  * @param   {ParserStore} store  - Parser store
- * @param   {string} data       - Source code
  * @param   {HasExpr} node      - Node if attr, info if text
  * @param   {string} endingChars - Ends the value or text
  * @param   {number} pos        - Starting position
  * @returns {number} Ending position
  * @private
  */
-function expr(store, data, node, endingChars, pos) {
-  const start = pos;
-  const { brackets } = store.options;
+function expr(store, node, endingChars, start) {
   const re = b0re(store, endingChars);
 
-  let expr;
-  let unescape = '';
-  let match;
+  re.lastIndex = start; // reset re position
 
-  re.lastIndex = pos;
+  const { unescape, expressions, end } = parseExpressions(store, re);
+
+  if (node) {
+    if (unescape) {
+      node.unescape = unescape;
+    }
+    if (expressions.length) {
+      node.expressions = expressions;
+    }
+  } else {
+    pushText(store, start, end, {expressions, unescape});
+  }
+
+  return end
+}
+
+/**
+ * Parse a text chunk finding all the expressions in it
+ * @param   {ParserStore} store  - Parser store
+ * @param   {RegExp} re - regex to match the expressions contents
+ * @returns {object} result containing the expression found, the string to unescape and the end position
+ */
+function parseExpressions(store, re) {
+  const { data, options } = store;
+  const { brackets } = options;
+  const expressions = [];
+  let unescape, pos, match;
 
   // Anything captured in $1 (closing quote or character) ends the loop...
   while ((match = re.exec(data)) && !match[1]) {
@@ -1218,7 +1276,7 @@ function expr(store, data, node, endingChars, pos) {
     } else {
       const tmpExpr = exprExtr(data, pos, brackets);
       if (tmpExpr) {
-        (expr || (expr = [])).push(tmpExpr);
+        expressions.push(tmpExpr);
         re.lastIndex = tmpExpr.end;
       }
     }
@@ -1228,19 +1286,12 @@ function expr(store, data, node, endingChars, pos) {
   if (!match) {
     panic(data, unexpectedEndOfFile, pos);
   }
-  const end = match.index;
-  if (node) {
-    if (unescape) {
-      node.unescape = unescape;
-    }
-    if (expr) {
-      node.expressions = expr;
-    }
-  } else {
-    pushText(store, start, end, expr, unescape);
-  }
 
-  return end
+  return {
+    unescape,
+    expressions,
+    end: match.index
+  }
 }
 
 /**

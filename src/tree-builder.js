@@ -21,6 +21,7 @@
 import panic from './utils/panic'
 import * as MSG from './messages'
 import voidTags from './void-tags'
+import addToCollection from './utils/add-to-collection'
 import { TEXT, TAG, PRIVATE_JAVASCRIPT, PUBLIC_JAVASCRIPT } from './node-types'
 import { RAW_TAGS } from './regex'
 import {
@@ -80,17 +81,24 @@ const TREE_BUILDER_STRUCT = Object.seal({
   */
   push(node) {
     const state = this.state
-    if (node.type === TEXT) {
+
+    switch (node.type) {
+    case TEXT:
       this.pushText(state, node)
-    } else if (node.type === TAG) {
+      break
+    case TAG: {
       const name = node.name
       if (name[0] === '/') {
         this.closeTag(state, node, name)
       } else {
         this.openTag(state, node)
       }
-    } else if ([PRIVATE_JAVASCRIPT, PUBLIC_JAVASCRIPT].includes(node.type)) {
-      (state[JAVASCRIPT_TAG].nodes = state[JAVASCRIPT_TAG].nodes || []).push(node)
+      break
+    }
+    case PRIVATE_JAVASCRIPT:
+    case PUBLIC_JAVASCRIPT:
+      state[JAVASCRIPT_TAG].nodes = addToCollection(state[JAVASCRIPT_TAG].nodes, node)
+      break
     }
   },
   closeTag(state, node, name) { // eslint-disable-line
