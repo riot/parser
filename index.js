@@ -4,315 +4,6 @@
 	(factory((global.parser = {})));
 }(this, (function (exports) { 'use strict';
 
-/**
- * Escape special characters in a given string, in preparation to create a regex.
- *
- * @param   {string} str - Raw string
- * @returns {string} Escaped string.
- */
-var escapeStr = (str) => str.replace(/(?=[-[\](){^*+?.$|\\])/g, '\\')
-
-/**
- * Add an item into a collection, if the collection is not an array
- * we create one and add the item to it
- * @param   {array} collection - target collection
- * @param   {*} item - item to add to the collection
- * @returns {array} array containing the new item added to it
- */
-function addToCollection(collection = [], item) {
-  collection.push(item);
-  return collection
-}
-
-/**
- * skipRegex v0.3.1
- * @author aMarCruz
- * @license MIT
- */
-/** @exports skipRegex */
-var skipRegex = (function () {
-
-  // safe characters to precced a regex (including `=>`, `**`, and `...`)
-  var beforeReChars = '[{(,;:?=|&!^~>%*/';
-  var beforeReSign = beforeReChars + '+-';
-
-  // keyword that can preceed a regex (`in` is handled as special case)
-  var beforeReWords = [
-    'case',
-    'default',
-    'do',
-    'else',
-    'in',
-    'instanceof',
-    'prefix',
-    'return',
-    'typeof',
-    'void',
-    'yield'
-  ];
-
-  // Last chars of all the beforeReWords elements to speed up the process.
-  var wordsEndChar = beforeReWords.reduce(function (s, w) { return s + w.slice(-1); }, '');
-
-  // Matches literal regex from the start of the buffer.
-  // The buffer to search must not include line-endings.
-  var RE_LIT_REGEX = /^\/(?=[^*>/])[^[/\\]*(?:(?:\\.|\[(?:\\.|[^\]\\]*)*\])[^[\\/]*)*?\/[gimuy]*/;
-
-  // Valid characters for JavaScript variable names and literal numbers.
-  var RE_JS_VCHAR = /[$\w]/;
-
-  /**
-   * Searches the position of the previous non-blank character inside `code`,
-   * starting with `pos - 1`.
-   *
-   * @param   {string} code - Buffer to search
-   * @param   {number} pos  - Starting position
-   * @returns {number} Position of the first non-blank character to the left.
-   * @private
-   */
-  function _prev(code, pos) {
-    while (--pos >= 0 && /\s/.test(code[pos])){  }
-    return pos
-  }
-
-  /**
-   * Check if the character in the `start` position within `code` can be a regex
-   * and returns the position following this regex or `start+1` if this is not
-   * one.
-   *
-   * NOTE: Ensure `start` points to a slash (this is not checked).
-   *
-   * @function skipRegex
-   * @param   {string} code  - Buffer to test in
-   * @param   {number} start - Position the first slash inside `code`
-   * @returns {number} Position of the char following the regex.
-   *
-   */
-  return function skipRegex(code, start) {
-
-    var re = /.*/g;
-    var pos = re.lastIndex = start++;
-
-    // `exec()` will extract from the slash to the end of the line
-    //   and the chained `match()` will match the possible regex.
-    var match = (re.exec(code) || ' ')[0].match(RE_LIT_REGEX);
-
-    if (match) {
-      var next = pos + match[0].length;      // result comes from `re.match`
-
-      pos = _prev(code, pos);
-      var c = code[pos];
-
-      // start of buffer or safe prefix?
-      if (pos < 0 || ~beforeReChars.indexOf(c)) {
-        return next
-      }
-
-      // from here, `pos` is >= 0 and `c` is code[pos]
-      if (c === '.') {
-        // can be `...` or something silly like 5./2
-        if (code[pos - 1] === '.') {
-          start = next;
-        }
-
-      } else {
-
-        if (c === '+' || c === '-') {
-          // tricky case
-          if (code[--pos] !== c ||            // if have a single operator or
-             (pos = _prev(code, pos)) < 0 ||  // ...have `++` and no previous token
-             ~beforeReSign.indexOf(c = code[pos])) {
-            return next                       // ...this is a regex
-          }
-        }
-
-        if (~wordsEndChar.indexOf(c)) {  // looks like a keyword?
-          var end = pos + 1;
-
-          // get the complete (previous) keyword
-          while (--pos >= 0 && RE_JS_VCHAR.test(code[pos])){  }
-
-          // it is in the allowed keywords list?
-          if (~beforeReWords.indexOf(code.slice(pos + 1, end))) {
-            start = next;
-          }
-        }
-      }
-    }
-
-    return start
-  }
-
-})();
-
-const $_ES6_BQ = '`';
-/**
- * Searches the next backquote that signals the end of the ES6 Template Literal
- * or the "${" sequence that starts a JS expression, skipping any escaped
- * character.
- *
- * @param   {string}    code  - Whole code
- * @param   {number}    pos   - The start position of the template
- * @param   {string[]}  stack - To save nested ES6 TL count
- * @returns {number}    The end of the string (-1 if not found)
- */
-function skipES6TL(code, pos, stack) {
-  // we are in the char following the backquote (`),
-  // find the next unescaped backquote or the sequence "${"
-  const re = /[`$\\]/g;
-  let c;
-  while (re.lastIndex = pos, re.exec(code)) {
-    pos = re.lastIndex;
-    c = code[pos - 1];
-    if (c === '`') {
-      return pos
-    }
-    if (c === '$' && code[pos++] === '{') {
-      stack.push($_ES6_BQ, '}');
-      return pos
-    }
-    // else this is an escaped char
-  }
-  throw new Error('Unclosed ES6 template')
-}
-
-/*
- * Mini-parser for expressions.
- * The main pourpose of this module is to find the end of an expression
- * and return its text without the enclosing brackets.
- * Does not works with comments, but supports ES6 template strings.
- */
-/**
- * @exports exprExtr
- */
-const S_SQ_STR = /'[^'\n\r\\]*(?:\\(?:\r\n?|[\S\s])[^'\n\r\\]*)*'/.source;
-/**
- * Matches double quoted JS strings taking care about nested quotes
- * and EOLs (escaped EOLs are Ok).
- *
- * @const
- * @private
- */
-const S_STRING = `${S_SQ_STR}|${S_SQ_STR.replace(/'/g, '"')}`;
-/**
- * Regex cache
- *
- * @type {Object.<string, RegExp>}
- * @const
- * @private
- */
-const reBr = {};
-/**
- * Makes an optimal regex that matches quoted strings, brackets, backquotes
- * and the closing brackets of an expression.
- *
- * @param   {string} b - Closing brackets
- * @returns {RegExp}
- */
-function _regex(b) {
-  let re = reBr[b];
-  if (!re) {
-    let s = escapeStr(b);
-    if (b.length > 1) {
-      s = s + '|[';
-    } else {
-      s = /[{}[\]()]/.test(b) ? '[' : `[${s}`;
-    }
-    reBr[b] = re = new RegExp(`${S_STRING}|${s}\`/\\{}[\\]()]`, 'g');
-  }
-  return re
-}
-
-/**
- * Update the scopes stack removing or adding closures to it
- * @param   {array} stack - array stacking the expression closures
- * @param   {string} char - current char to add or remove from the stack
- * @param   {string} idx  - matching index
- * @param   {string} code - expression code
- * @returns {object} result
- * @returns {object} result.char - either the char received or the closing braces
- * @returns {object} result.index - either a new index to skip part of the source code,
- *                                  or 0 to keep from parsing from the old position
- */
-function updateStack(stack, char, idx, code) {
-  let index = 0;
-
-  switch (char) {
-  case '[':
-  case '(':
-  case '{':
-    stack.push(char === '[' ? ']' : char === '(' ? ')' : '}');
-    break
-  case ')':
-  case ']':
-  case '}':
-    if (char !== stack.pop()) {
-      throw new Error(`Unexpected character '${char}'`)
-    }
-
-    if (char === '}' && stack[stack.length - 1] === $_ES6_BQ) {
-      char = stack.pop();
-    }
-
-    index = idx + 1;
-    break
-  case '/':
-    index = skipRegex(code, idx);
-  }
-
-  return { char, index }
-}
-
-/**
-   * Parses the code string searching the end of the expression.
-   * It skips braces, quoted strings, regexes, and ES6 template literals.
-   *
-   * @function exprExtr
-   * @param   {string}  code  - Buffer to parse
-   * @param   {number}  start - Position of the opening brace
-   * @param   {[string,string]} bp - Brackets pair
-   * @returns {(Object | null)} Expression's end (after the closing brace) or -1
-   *                            if it is not an expr.
-   */
-function exprExtr(code, start, bp) {
-  const [openingBraces, closingBraces] = bp;
-  const offset = start + openingBraces.length; // skips the opening brace
-  const stack = []; // expected closing braces ('`' for ES6 TL)
-  const re = _regex(closingBraces);
-
-  re.lastIndex = offset; // begining of the expression
-
-  let end;
-  let match;
-
-  while (match = re.exec(code)) {
-    const idx = match.index;
-    const str = match[0];
-    end = re.lastIndex;
-
-    // end the iteration
-    if (str === closingBraces && !stack.length) {
-      return {
-        text: code.slice(offset, idx),
-        start,
-        end,
-      }
-    }
-
-    const { char, index } = updateStack(stack, str[0], idx, code);
-    // update the end value depending on the new index received
-    end = index || end;
-    // update the regex last index
-    re.lastIndex = char === $_ES6_BQ ? skipES6TL(code, end, stack) : end;
-  }
-
-  if (stack.length) {
-    throw new Error('Unclosed expression.')
-  }
-
-  return null
-}
-
 function formatError (data, message, pos) {
   if (!pos) {
     pos = data.length;
@@ -340,15 +31,17 @@ function panic(data, msg, pos) {
 }
 
 /**
- * Run RegExp.exec starting from a specific position
- * @param   {[type]} re   [description]
- * @param   {[type]} pos  [description]
- * @param   {[type]} data [description]
- * @returns {[type]}      [description]
+ * Outputs the last parsed node. Can be used with a builder too.
+ *
+ * @param {ParserStore} store - Parsing store
+ * @private
  */
-function execFromPos(re, pos, data) {
-  re.lastIndex = pos;
-  return re.exec(data)
+function flush(store) {
+  const last = store.last;
+  store.last = null;
+  if (last && store.root) {
+    store.builder.push(last);
+  }
 }
 
 const rootTagNotFound = 'Root tag not found.';
@@ -405,6 +98,18 @@ var voidTags = {
     'stop',
     'use'
   ]
+}
+
+/**
+ * Add an item into a collection, if the collection is not an array
+ * we create one and add the item to it
+ * @param   {array} collection - target collection
+ * @param   {*} item - item to add to the collection
+ * @returns {array} array containing the new item added to it
+ */
+function addToCollection(collection = [], item) {
+  collection.push(item);
+  return collection
 }
 
 /**
@@ -770,134 +475,478 @@ function curry(fn, ...acc) {
 }
 
 /**
- * Factory for the Parser class, exposing only the `parse` method.
- * The export adds the Parser class as property.
- *
- * @param   {Object}   options - User Options
- * @param   {Function} customBuilder - Tree builder factory
- * @returns {Function} Public Parser implementation.
+ * Run RegExp.exec starting from a specific position
+ * @param   {[type]} re   [description]
+ * @param   {[type]} pos  [description]
+ * @param   {[type]} data [description]
+ * @returns {[type]}      [description]
  */
-function parser$1(options, customBuilder) {
-  const store = curry(createStore)(options, customBuilder || createTreeBuilder);
-  return {
-    parse: (data) => parse(store(data))
-  }
+function execFromPos(re, pos, data) {
+  re.lastIndex = pos;
+  return re.exec(data)
 }
 
 /**
- * Create a new store object
- * @param   {object} userOptions - parser options
- * @param   {Function} customBuilder - Tree builder factory
- * @param   {string} data - data to parse
- * @returns {ParserStore}
- */
-function createStore(userOptions, builder, data) {
-  const options = Object.assign({
-    brackets: ['{', '}']
-  }, userOptions);
-
-  return {
-    options,
-    regexCache: {},
-    pos: 0,
-    count: -1,
-    root: null,
-    last: null,
-    scryle: null,
-    builder: builder(data, options),
-    data
-  }
-}
-
-/**
- * It creates a raw output of pseudo-nodes with one of three different types,
- * all of them having a start/end position:
- *
- * - TAG     -- Opening or closing tags
- * - TEXT    -- Raw text
- * - COMMENT -- Comments
- *
- * @param   {ParserStore}  store - Current parser store
- * @returns {ParserResult} Result, contains data and output properties.
- */
-function parse(store) {
-  const { data } = store;
-
-  walk(store);
-  flush(store);
-
-  if (store.count) {
-    panic(data, store.count > 0 ? unexpectedEndOfFile : rootTagNotFound, store.pos);
-  }
-
-  return {
-    data,
-    output: store.builder.get()
-  }
-}
-
-/**
- * Parser walking recursive function
- * @param {ParserStore}  store - Current parser store
- * @param   {string} type - current parsing context
- */
-function walk(store, type) {
-  const { data } = store;
-  // extend the store adding the tree builder instance and the initial data
-  const length = data.length;
-
-  // The "count" property is set to 1 when the first tag is found.
-  // This becomes the root and precedent text or comments are discarded.
-  // So, at the end of the parsing count must be zero.
-  if (store.pos < length && store.count) {
-    walk(store, eat(store, type));
-  }
-}
-
-/**
- * Function to help iterating on the current parser store
- * @param {ParserStore}  store - Current parser store
- * @param   {string} type - current parsing context
- * @returns {string} parsing context
- */
-function eat(store, type) {
-  switch (type) {
-  case TAG:
-    return tag(store)
-  case ATTR:
-    return attr(store)
-  default:
-    return text(store)
-  }
-}
-
-/**
- * Outputs the last parsed node. Can be used with a builder too.
- *
- * @param {ParserStore} store - Parsing store
+ * Get the code chunks from start and end range
+ * @param   {string}  source  - source code
+ * @param   {number}  start   - Start position of the chunk we want to extract
+ * @param   {number}  end     - Ending position of the chunk we need
+ * @returns {string}  chunk of code extracted from the source code received
  * @private
  */
-function flush(store) {
-  const last = store.last;
-  store.last = null;
-  if (last && store.root) {
-    store.builder.push(last);
-  }
+function getChunk(source, start, end) {
+  return source.slice(start, end)
 }
 
 /**
- * Stores a comment.
+ * skipRegex v0.3.1
+ * @author aMarCruz
+ * @license MIT
+ */
+/** @exports skipRegex */
+var skipRegex = (function () {
+
+  // safe characters to precced a regex (including `=>`, `**`, and `...`)
+  var beforeReChars = '[{(,;:?=|&!^~>%*/';
+  var beforeReSign = beforeReChars + '+-';
+
+  // keyword that can preceed a regex (`in` is handled as special case)
+  var beforeReWords = [
+    'case',
+    'default',
+    'do',
+    'else',
+    'in',
+    'instanceof',
+    'prefix',
+    'return',
+    'typeof',
+    'void',
+    'yield'
+  ];
+
+  // Last chars of all the beforeReWords elements to speed up the process.
+  var wordsEndChar = beforeReWords.reduce(function (s, w) { return s + w.slice(-1); }, '');
+
+  // Matches literal regex from the start of the buffer.
+  // The buffer to search must not include line-endings.
+  var RE_LIT_REGEX = /^\/(?=[^*>/])[^[/\\]*(?:(?:\\.|\[(?:\\.|[^\]\\]*)*\])[^[\\/]*)*?\/[gimuy]*/;
+
+  // Valid characters for JavaScript variable names and literal numbers.
+  var RE_JS_VCHAR = /[$\w]/;
+
+  /**
+   * Searches the position of the previous non-blank character inside `code`,
+   * starting with `pos - 1`.
+   *
+   * @param   {string} code - Buffer to search
+   * @param   {number} pos  - Starting position
+   * @returns {number} Position of the first non-blank character to the left.
+   * @private
+   */
+  function _prev(code, pos) {
+    while (--pos >= 0 && /\s/.test(code[pos])){  }
+    return pos
+  }
+
+  /**
+   * Check if the character in the `start` position within `code` can be a regex
+   * and returns the position following this regex or `start+1` if this is not
+   * one.
+   *
+   * NOTE: Ensure `start` points to a slash (this is not checked).
+   *
+   * @function skipRegex
+   * @param   {string} code  - Buffer to test in
+   * @param   {number} start - Position the first slash inside `code`
+   * @returns {number} Position of the char following the regex.
+   *
+   */
+  return function skipRegex(code, start) {
+
+    var re = /.*/g;
+    var pos = re.lastIndex = start++;
+
+    // `exec()` will extract from the slash to the end of the line
+    //   and the chained `match()` will match the possible regex.
+    var match = (re.exec(code) || ' ')[0].match(RE_LIT_REGEX);
+
+    if (match) {
+      var next = pos + match[0].length;      // result comes from `re.match`
+
+      pos = _prev(code, pos);
+      var c = code[pos];
+
+      // start of buffer or safe prefix?
+      if (pos < 0 || ~beforeReChars.indexOf(c)) {
+        return next
+      }
+
+      // from here, `pos` is >= 0 and `c` is code[pos]
+      if (c === '.') {
+        // can be `...` or something silly like 5./2
+        if (code[pos - 1] === '.') {
+          start = next;
+        }
+
+      } else {
+
+        if (c === '+' || c === '-') {
+          // tricky case
+          if (code[--pos] !== c ||            // if have a single operator or
+             (pos = _prev(code, pos)) < 0 ||  // ...have `++` and no previous token
+             ~beforeReSign.indexOf(c = code[pos])) {
+            return next                       // ...this is a regex
+          }
+        }
+
+        if (~wordsEndChar.indexOf(c)) {  // looks like a keyword?
+          var end = pos + 1;
+
+          // get the complete (previous) keyword
+          while (--pos >= 0 && RE_JS_VCHAR.test(code[pos])){  }
+
+          // it is in the allowed keywords list?
+          if (~beforeReWords.indexOf(code.slice(pos + 1, end))) {
+            start = next;
+          }
+        }
+      }
+    }
+
+    return start
+  }
+
+})();
+
+/**
+ * Escape special characters in a given string, in preparation to create a regex.
  *
- * @param {ParserStore}  store - Current parser store
- * @param {number}  start - Start position of the tag
- * @param {number}  end   - Ending position (last char of the tag)
+ * @param   {string} str - Raw string
+ * @returns {string} Escaped string.
+ */
+var escapeStr = (str) => str.replace(/(?=[-[\](){^*+?.$|\\])/g, '\\')
+
+const $_ES6_BQ = '`';
+/**
+ * Searches the next backquote that signals the end of the ES6 Template Literal
+ * or the "${" sequence that starts a JS expression, skipping any escaped
+ * character.
+ *
+ * @param   {string}    code  - Whole code
+ * @param   {number}    pos   - The start position of the template
+ * @param   {string[]}  stack - To save nested ES6 TL count
+ * @returns {number}    The end of the string (-1 if not found)
+ */
+function skipES6TL(code, pos, stack) {
+  // we are in the char following the backquote (`),
+  // find the next unescaped backquote or the sequence "${"
+  const re = /[`$\\]/g;
+  let c;
+  while (re.lastIndex = pos, re.exec(code)) {
+    pos = re.lastIndex;
+    c = code[pos - 1];
+    if (c === '`') {
+      return pos
+    }
+    if (c === '$' && code[pos++] === '{') {
+      stack.push($_ES6_BQ, '}');
+      return pos
+    }
+    // else this is an escaped char
+  }
+  throw new Error('Unclosed ES6 template')
+}
+
+/*
+ * Mini-parser for expressions.
+ * The main pourpose of this module is to find the end of an expression
+ * and return its text without the enclosing brackets.
+ * Does not works with comments, but supports ES6 template strings.
+ */
+/**
+ * @exports exprExtr
+ */
+const S_SQ_STR = /'[^'\n\r\\]*(?:\\(?:\r\n?|[\S\s])[^'\n\r\\]*)*'/.source;
+/**
+ * Matches double quoted JS strings taking care about nested quotes
+ * and EOLs (escaped EOLs are Ok).
+ *
+ * @const
  * @private
  */
-function pushcomment(store, start, end) {
-  flush(store);
+const S_STRING = `${S_SQ_STR}|${S_SQ_STR.replace(/'/g, '"')}`;
+/**
+ * Regex cache
+ *
+ * @type {Object.<string, RegExp>}
+ * @const
+ * @private
+ */
+const reBr = {};
+/**
+ * Makes an optimal regex that matches quoted strings, brackets, backquotes
+ * and the closing brackets of an expression.
+ *
+ * @param   {string} b - Closing brackets
+ * @returns {RegExp}
+ */
+function _regex(b) {
+  let re = reBr[b];
+  if (!re) {
+    let s = escapeStr(b);
+    if (b.length > 1) {
+      s = s + '|[';
+    } else {
+      s = /[{}[\]()]/.test(b) ? '[' : `[${s}`;
+    }
+    reBr[b] = re = new RegExp(`${S_STRING}|${s}\`/\\{}[\\]()]`, 'g');
+  }
+  return re
+}
+
+/**
+ * Update the scopes stack removing or adding closures to it
+ * @param   {array} stack - array stacking the expression closures
+ * @param   {string} char - current char to add or remove from the stack
+ * @param   {string} idx  - matching index
+ * @param   {string} code - expression code
+ * @returns {object} result
+ * @returns {object} result.char - either the char received or the closing braces
+ * @returns {object} result.index - either a new index to skip part of the source code,
+ *                                  or 0 to keep from parsing from the old position
+ */
+function updateStack(stack, char, idx, code) {
+  let index = 0;
+
+  switch (char) {
+  case '[':
+  case '(':
+  case '{':
+    stack.push(char === '[' ? ']' : char === '(' ? ')' : '}');
+    break
+  case ')':
+  case ']':
+  case '}':
+    if (char !== stack.pop()) {
+      throw new Error(`Unexpected character '${char}'`)
+    }
+
+    if (char === '}' && stack[stack.length - 1] === $_ES6_BQ) {
+      char = stack.pop();
+    }
+
+    index = idx + 1;
+    break
+  case '/':
+    index = skipRegex(code, idx);
+  }
+
+  return { char, index }
+}
+
+/**
+   * Parses the code string searching the end of the expression.
+   * It skips braces, quoted strings, regexes, and ES6 template literals.
+   *
+   * @function exprExtr
+   * @param   {string}  code  - Buffer to parse
+   * @param   {number}  start - Position of the opening brace
+   * @param   {[string,string]} bp - Brackets pair
+   * @returns {(Object | null)} Expression's end (after the closing brace) or -1
+   *                            if it is not an expr.
+   */
+function exprExtr(code, start, bp) {
+  const [openingBraces, closingBraces] = bp;
+  const offset = start + openingBraces.length; // skips the opening brace
+  const stack = []; // expected closing braces ('`' for ES6 TL)
+  const re = _regex(closingBraces);
+
+  re.lastIndex = offset; // begining of the expression
+
+  let end;
+  let match;
+
+  while (match = re.exec(code)) {
+    const idx = match.index;
+    const str = match[0];
+    end = re.lastIndex;
+
+    // end the iteration
+    if (str === closingBraces && !stack.length) {
+      return {
+        text: code.slice(offset, idx),
+        start,
+        end,
+      }
+    }
+
+    const { char, index } = updateStack(stack, str[0], idx, code);
+    // update the end value depending on the new index received
+    end = index || end;
+    // update the regex last index
+    re.lastIndex = char === $_ES6_BQ ? skipES6TL(code, end, stack) : end;
+  }
+
+  if (stack.length) {
+    throw new Error('Unclosed expression.')
+  }
+
+  return null
+}
+
+/**
+ * Find the end of the attribute value or text node
+ * Extract expressions.
+ * Detect if value have escaped brackets.
+ *
+ * @param   {ParserStore} store  - Parser store
+ * @param   {HasExpr} node      - Node if attr, info if text
+ * @param   {string} endingChars - Ends the value or text
+ * @param   {number} pos        - Starting position
+ * @returns {number} Ending position
+ * @private
+ */
+function expr(store, node, endingChars, start) {
+  const re = b0re(store, endingChars);
+
+  re.lastIndex = start; // reset re position
+
+  const { unescape, expressions, end } = parseExpressions(store, re);
+
+  if (node) {
+    if (unescape) {
+      node.unescape = unescape;
+    }
+    if (expressions.length) {
+      node.expressions = expressions;
+    }
+  } else {
+    pushText(store, start, end, {expressions, unescape});
+  }
+
+  return end
+}
+
+/**
+ * Parse a text chunk finding all the expressions in it
+ * @param   {ParserStore} store  - Parser store
+ * @param   {RegExp} re - regex to match the expressions contents
+ * @returns {object} result containing the expression found, the string to unescape and the end position
+ */
+function parseExpressions(store, re) {
+  const { data, options } = store;
+  const { brackets } = options;
+  const expressions = [];
+  let unescape, pos, match;
+
+  // Anything captured in $1 (closing quote or character) ends the loop...
+  while ((match = re.exec(data)) && !match[1]) {
+    // ...else, we have an opening bracket and maybe an expression.
+    pos = match.index;
+    if (data[pos - 1] === '\\') {
+      unescape = match[0]; // it is an escaped opening brace
+    } else {
+      const tmpExpr = exprExtr(data, pos, brackets);
+      if (tmpExpr) {
+        expressions.push(tmpExpr);
+        re.lastIndex = tmpExpr.end;
+      }
+    }
+  }
+
+  // Even for text, the parser needs match a closing char
+  if (!match) {
+    panic(data, unexpectedEndOfFile, pos);
+  }
+
+  return {
+    unescape,
+    expressions,
+    end: match.index
+  }
+}
+
+
+
+/**
+ * Creates a regex for the given string and the left bracket.
+ * The string is captured in $1.
+ *
+ * @param   {ParserStore} store  - Parser store
+ * @param   {string} str - String to search
+ * @returns {RegExp} Resulting regex.
+ * @private
+ */
+function b0re(store, str) {
+  const { brackets } = store.options;
+  const re = store.regexCache[str];
+
+  if (re) return re
+
+  const b0 = escapeStr(brackets[0]);
+  // cache the regex extending the regexCache object
+  Object.assign(store.regexCache, { [str]: new RegExp(`(${str})|${b0}`, 'g' ) });
+
+  return store.regexCache[str]
+}
+
+/**
+ * Create the javascript nodes
+ * @param {ParserStore} store  - Current parser store
+ * @param {number}  start   - Start position of the tag
+ * @param {number}  end     - Ending position (last char of the tag)
+ * @private
+ */
+function pushJavascript(store, start, end) {
+  const code = getChunk(store.data, start, end);
+  const push = store.builder.push.bind(store.builder);
+  const match = EXPORT_DEFAULT.exec(code);
   store.pos = end;
-  if (store.options.comments === true) {
-    store.last = { type: COMMENT, start, end };
+
+  // no export rules found
+  // skip the nodes creation
+  if (!match) return
+
+  // find the export default index
+  const publicJsIndex = EXPORT_DEFAULT.lastIndex;
+  // get the content of the export default tag
+  // the exprExtr was meant to be used for expressions but it works
+  // perfectly also in this case matching everything there is in { ... } block
+  const publicJs = exprExtr(getChunk(code, publicJsIndex, end), 0, ['{', '}']);
+
+  // dispatch syntax errors
+  if (!publicJs) {
+    panic(store.data, unableToParseExportDefault, start + publicJsIndex);
+  }
+
+  [
+    createPrivateJsNode(code, start, 0, match.index),
+    {
+      type: PUBLIC_JAVASCRIPT,
+      start: start + publicJsIndex,
+      end: start + publicJsIndex + publicJs.end,
+      code: publicJs.text
+    },
+    createPrivateJsNode(code, start, publicJsIndex + publicJs.end, code.length)
+  ].filter(n => n.code).forEach(push);
+}
+
+/**
+ * Create the private javascript chunks objects
+ * @param   {string} code - code chunk
+ * @param   {number} offset - offset from the top of the file
+ * @param   {number} start - inner offset from the <script> tag
+ * @param   {number} end - end offset
+ * @returns {object} private js node
+ * @private
+ */
+function createPrivateJsNode(code, offset, start, end) {
+  return {
+    type: PRIVATE_JAVASCRIPT,
+    start: start + offset,
+    end: end + offset,
+    code: getChunk(code, start, end)
   }
 }
 
@@ -937,6 +986,110 @@ function pushText(store, start, end, extra = {}) {
   }
 
   return TEXT
+}
+
+
+/**
+ * Parses regular text and script/style blocks ...scryle for short :-)
+ * (the content of script and style is text as well)
+ *
+ * @param   {ParserStore} store - Parser store
+ * @returns {number} New parser mode.
+ * @private
+ */
+function text(store) {
+  const { pos, data, scryle } = store;
+
+  switch (true) {
+  case typeof scryle === 'string': {
+    const name = scryle;
+    const re = RE_SCRYLE[name];
+    const match = execFromPos(re, pos, data);
+
+    if (!match) {
+      panic(data, unclosedNamedBlock.replace('%1', name), pos - 1);
+    }
+
+    const start = match.index;
+    const end = re.lastIndex;
+    store.scryle = null; // reset the script/style flag now
+    // write the tag content, if any
+    if (start > pos) {
+      parseSpecialTagsContent(store, name, match);
+    }
+    // now the closing tag, either </script> or </style>
+    pushTag(store, `/${name}`, start, end);
+    break
+  }
+  case data[pos] === '<':
+    store.pos++;
+    return TAG
+  default:
+    expr(store, null, '<', pos);
+  }
+
+  return TEXT
+}
+
+/**
+ * Parse the text content depending on the name
+ * @param   {ParserStore} store - Parser store
+ * @param   {string} data  - Buffer to parse
+ * @param   {string} name  - one of the tags matched by the RE_SCRYLE regex
+ * @returns {array}  match - result of the regex matching the content of the parsed tag
+ */
+function parseSpecialTagsContent(store, name, match) {
+  const { pos } = store;
+  const start = match.index;
+
+  switch (name) {
+  case TEXTAREA_TAG:
+    expr(store, null, match[0], pos);
+    break
+  case JAVASCRIPT_TAG:
+    pushText(store, pos, start);
+    pushJavascript(store, pos, start);
+    break
+  default:
+    pushText(store, pos, start);
+  }
+}
+
+/**
+ * Parses comments in long or short form
+ * (any DOCTYPE & CDATA blocks are parsed as comments).
+ *
+ * @param {ParserStore} store  - Parser store
+ * @param {string} data       - Buffer to parse
+ * @param {number} start      - Position of the '<!' sequence
+ * @private
+ */
+function comment(store, data, start) {
+  const pos = start + 2; // skip '<!'
+  const str = data.substr(pos, 2) === '--' ? '-->' : '>';
+  const end = data.indexOf(str, pos);
+  if (end < 0) {
+    panic(data, unclosedComment, start);
+  }
+  pushComment(store, start, end + str.length);
+
+  return TEXT
+}
+
+/**
+ * Stores a comment.
+ *
+ * @param {ParserStore}  store - Current parser store
+ * @param {number}  start - Start position of the tag
+ * @param {number}  end   - Ending position (last char of the tag)
+ * @private
+ */
+function pushComment(store, start, end) {
+  flush(store);
+  store.pos = end;
+  if (store.options.comments === true) {
+    store.last = { type: COMMENT, start, end };
+  }
 }
 
 /**
@@ -1008,27 +1161,6 @@ function parseTag(store, start) {
   if (!match[2]) {
     return ATTR
   }
-
-  return TEXT
-}
-
-/**
- * Parses comments in long or short form
- * (any DOCTYPE & CDATA blocks are parsed as comments).
- *
- * @param {ParserStore} store  - Parser store
- * @param {string} data       - Buffer to parse
- * @param {number} start      - Position of the '<!' sequence
- * @private
- */
-function comment(store, data, start) {
-  const pos = start + 2; // skip '<!'
-  const str = data.substr(pos, 2) === '--' ? '-->' : '>';
-  const end = data.indexOf(str, pos);
-  if (end < 0) {
-    panic(data, unclosedComment, start);
-  }
-  pushcomment(store, start, end + str.length);
 
   return TEXT
 }
@@ -1130,243 +1262,116 @@ function parseAttribute(store, match, start, end) {
     end = expr(store, attr, quote || '[>/\\s]', valueStart);
 
     // adjust the bounds of the value and save its content
-    attr.value = getChunk(data, valueStart, end);
-    attr.valueStart = valueStart;
-    attr.end = quote ? ++end : end;
+    Object.assign(attr, {
+      value: getChunk(data, valueStart, end),
+      valueStart,
+      end: quote ? ++end : end
+    });
   }
 
   return attr
 }
 
 /**
- * Parses regular text and script/style blocks ...scryle for short :-)
- * (the content of script and style is text as well)
+ * Factory for the Parser class, exposing only the `parse` method.
+ * The export adds the Parser class as property.
  *
- * @param   {ParserStore} store - Parser store
- * @returns {number} New parser mode.
- * @private
+ * @param   {Object}   options - User Options
+ * @param   {Function} customBuilder - Tree builder factory
+ * @returns {Function} Public Parser implementation.
  */
-function text(store) {
-  const { pos, data, scryle } = store;
-
-  switch (true) {
-  case typeof scryle === 'string': {
-    const name = scryle;
-    const re = RE_SCRYLE[name];
-    const match = execFromPos(re, pos, data);
-
-    if (!match) {
-      panic(data, unclosedNamedBlock.replace('%1', name), pos - 1);
-    }
-
-    const start = match.index;
-    const end = re.lastIndex;
-    store.scryle = null; // reset the script/style flag now
-    // write the tag content, if any
-    if (start > pos) {
-      parseSpecialTagsContent(store, name, match);
-    }
-    // now the closing tag, either </script> or </style>
-    pushTag(store, `/${name}`, start, end);
-    break
-  }
-  case data[pos] === '<':
-    store.pos++;
-    return TAG
-  default:
-    expr(store, null, '<', pos);
-  }
-
-  return TEXT
-}
-
-/**
- * Parse the text content depending on the name
- * @param   {ParserStore} store - Parser store
- * @param   {string} data  - Buffer to parse
- * @param   {string} name  - one of the tags matched by the RE_SCRYLE regex
- * @returns {array}  match - result of the regex matching the content of the parsed tag
- */
-function parseSpecialTagsContent(store, name, match) {
-  const { pos } = store;
-  const start = match.index;
-
-  switch (name) {
-  case TEXTAREA_TAG:
-    expr(store, null, match[0], pos);
-    break
-  case JAVASCRIPT_TAG:
-    pushText(store, pos, start);
-    pushJavascript(store, pos, start);
-    break
-  default:
-    pushText(store, pos, start);
-  }
-}
-
-/**
- * Create the javascript nodes
- * @param {ParserStore} store  - Current parser store
- * @param {number}  start   - Start position of the tag
- * @param {number}  end     - Ending position (last char of the tag)
- * @private
- */
-function pushJavascript(store, start, end) {
-  const code = getChunk(store.data, start, end);
-  const push = store.builder.push.bind(store.builder);
-  const match = EXPORT_DEFAULT.exec(code);
-  store.pos = end;
-
-  // no export rules found
-  // skip the nodes creation
-  if (!match) return
-
-  // find the export default index
-  const publicJsIndex = EXPORT_DEFAULT.lastIndex;
-  // get the content of the export default tag
-  // the exprExtr was meant to be used for expressions but it works
-  // perfectly also in this case matching everything there is in { ... } block
-  const publicJs = exprExtr(getChunk(code, publicJsIndex, end), 0, ['{', '}']);
-
-  // dispatch syntax errors
-  if (!publicJs) {
-    panic(store.data, unableToParseExportDefault, start + publicJsIndex);
-  }
-
-  [
-    createPrivateJsNode(code, start, 0, match.index),
-    {
-      type: PUBLIC_JAVASCRIPT,
-      start: start + publicJsIndex,
-      end: start + publicJsIndex + publicJs.end,
-      code: publicJs.text
-    },
-    createPrivateJsNode(code, start, publicJsIndex + publicJs.end, code.length)
-  ].filter(n => n.code).forEach(push);
-}
-
-/**
- * Create the private javascript chunks objects
- * @param   {string} code - code chunk
- * @param   {number} offset - offset from the top of the file
- * @param   {number} start - inner offset from the <script> tag
- * @param   {number} end - end offset
- * @returns {object} private js node
- * @private
- */
-function createPrivateJsNode(code, offset, start, end) {
+function parser$1(options, customBuilder) {
+  const store = curry(createStore)(options, customBuilder || createTreeBuilder);
   return {
-    type: PRIVATE_JAVASCRIPT,
-    start: start + offset,
-    end: end + offset,
-    code: getChunk(code, start, end)
+    parse: (data) => parse(store(data))
   }
 }
 
 /**
- * Find the end of the attribute value or text node
- * Extract expressions.
- * Detect if value have escaped brackets.
+ * Create a new store object
+ * @param   {object} userOptions - parser options
+ * @param   {Function} customBuilder - Tree builder factory
+ * @param   {string} data - data to parse
+ * @returns {ParserStore}
+ */
+function createStore(userOptions, builder, data) {
+  const options = Object.assign({
+    brackets: ['{', '}']
+  }, userOptions);
+
+  return {
+    options,
+    regexCache: {},
+    pos: 0,
+    count: -1,
+    root: null,
+    last: null,
+    scryle: null,
+    builder: builder(data, options),
+    data
+  }
+}
+
+/**
+ * It creates a raw output of pseudo-nodes with one of three different types,
+ * all of them having a start/end position:
  *
- * @param   {ParserStore} store  - Parser store
- * @param   {HasExpr} node      - Node if attr, info if text
- * @param   {string} endingChars - Ends the value or text
- * @param   {number} pos        - Starting position
- * @returns {number} Ending position
- * @private
+ * - TAG     -- Opening or closing tags
+ * - TEXT    -- Raw text
+ * - COMMENT -- Comments
+ *
+ * @param   {ParserStore}  store - Current parser store
+ * @returns {ParserResult} Result, contains data and output properties.
  */
-function expr(store, node, endingChars, start) {
-  const re = b0re(store, endingChars);
+function parse(store) {
+  const { data } = store;
 
-  re.lastIndex = start; // reset re position
+  walk(store);
+  flush(store);
 
-  const { unescape, expressions, end } = parseExpressions(store, re);
-
-  if (node) {
-    if (unescape) {
-      node.unescape = unescape;
-    }
-    if (expressions.length) {
-      node.expressions = expressions;
-    }
-  } else {
-    pushText(store, start, end, {expressions, unescape});
-  }
-
-  return end
-}
-
-/**
- * Parse a text chunk finding all the expressions in it
- * @param   {ParserStore} store  - Parser store
- * @param   {RegExp} re - regex to match the expressions contents
- * @returns {object} result containing the expression found, the string to unescape and the end position
- */
-function parseExpressions(store, re) {
-  const { data, options } = store;
-  const { brackets } = options;
-  const expressions = [];
-  let unescape, pos, match;
-
-  // Anything captured in $1 (closing quote or character) ends the loop...
-  while ((match = re.exec(data)) && !match[1]) {
-    // ...else, we have an opening bracket and maybe an expression.
-    pos = match.index;
-    if (data[pos - 1] === '\\') {
-      unescape = match[0]; // it is an escaped opening brace
-    } else {
-      const tmpExpr = exprExtr(data, pos, brackets);
-      if (tmpExpr) {
-        expressions.push(tmpExpr);
-        re.lastIndex = tmpExpr.end;
-      }
-    }
-  }
-
-  // Even for text, the parser needs match a closing char
-  if (!match) {
-    panic(data, unexpectedEndOfFile, pos);
+  if (store.count) {
+    panic(data, store.count > 0 ? unexpectedEndOfFile : rootTagNotFound, store.pos);
   }
 
   return {
-    unescape,
-    expressions,
-    end: match.index
+    data,
+    output: store.builder.get()
   }
 }
 
 /**
- * Get the code chunks from start and end range
- * @param   {string}  source  - source code
- * @param   {number}  start   - Start position of the chunk we want to extract
- * @param   {number}  end     - Ending position of the chunk we need
- * @returns {string}  chunk of code extracted from the source code received
- * @private
+ * Parser walking recursive function
+ * @param {ParserStore}  store - Current parser store
+ * @param   {string} type - current parsing context
  */
-function getChunk(source, start, end) {
-  return source.slice(start, end)
+function walk(store, type) {
+  const { data } = store;
+  // extend the store adding the tree builder instance and the initial data
+  const length = data.length;
+
+  // The "count" property is set to 1 when the first tag is found.
+  // This becomes the root and precedent text or comments are discarded.
+  // So, at the end of the parsing count must be zero.
+  if (store.pos < length && store.count) {
+    walk(store, eat(store, type));
+  }
 }
 
 /**
- * Creates a regex for the given string and the left bracket.
- * The string is captured in $1.
- *
- * @param   {ParserStore} store  - Parser store
- * @param   {string} str - String to search
- * @returns {RegExp} Resulting regex.
- * @private
+ * Function to help iterating on the current parser store
+ * @param {ParserStore}  store - Current parser store
+ * @param   {string} type - current parsing context
+ * @returns {string} parsing context
  */
-function b0re(store, str) {
-  const { brackets } = store.options;
-  const re = store.regexCache[str];
-
-  if (re) return re
-
-  const b0 = escapeStr(brackets[0]);
-  // cache the regex extending the regexCache object
-  Object.assign(store.regexCache, { [str]: new RegExp(`(${str})|${b0}`, 'g' ) });
-
-  return store.regexCache[str]
+function eat(store, type) {
+  switch (type) {
+  case TAG:
+    return tag(store)
+  case ATTR:
+    return attr(store)
+  default:
+    return text(store)
+  }
 }
 
 /**
