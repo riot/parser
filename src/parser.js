@@ -1,8 +1,9 @@
-import treeBuilder from './tree-builder'
 import escapeStr from './utils/escape-str'
 import addToCollection from './utils/add-to-collection'
 import exprExtr from './utils/expr-extr'
 import panic from './utils/panic'
+import execFromPos from './utils/exec-from-pos'
+import treeBuilder from './tree-builder'
 import * as MSG from './messages'
 import curry from 'curri'
 import { TEXT, ATTR, TAG, COMMENT, PRIVATE_JAVASCRIPT, PUBLIC_JAVASCRIPT } from './node-types'
@@ -175,6 +176,8 @@ function pushText(store, start, end, extra = {}) {
   if (unescape) {
     q.unescape = unescape
   }
+
+  return TEXT
 }
 
 /**
@@ -221,29 +224,30 @@ function tag(store) {
 
   switch (true) {
   case str[0] === '!':
-    comment(store, data, start)
-    break
-  case TAG_2C.test(str): {
-    const re = TAG_NAME // (\/?[^\s>/]+)\s*(>)? g
-    re.lastIndex = pos
-    const match = re.exec(data)
-    const end = re.lastIndex
-    const name = match[1].toLowerCase() // $1: tag name including any '/'
-    // script/style block is parsed as another tag to extract attributes
-    if (name in RE_SCRYLE) {
-      store.scryle = name // used by parseText
-    }
-
-    pushTag(store, name, start, end)
-    // only '>' can ends the tag here, the '/' is handled in parseAttribute
-    if (!match[2]) {
-      return ATTR
-    }
-
-    break
-  }
+    return comment(store, data, start)
+  case TAG_2C.test(str):
+    return parseTag(store, start)
   default:
-    pushText(store, start, pos) // pushes the '<' as text
+    return pushText(store, start, pos) // pushes the '<' as text
+  }
+}
+
+
+function parseTag(store, start) {
+  const { data, pos } = store
+  const re = TAG_NAME // (\/?[^\s>/]+)\s*(>)? g
+  const match = execFromPos(re, pos, data)
+  const end = re.lastIndex
+  const name = match[1].toLowerCase() // $1: tag name including any '/'
+  // script/style block is parsed as another tag to extract attributes
+  if (name in RE_SCRYLE) {
+    store.scryle = name // used by parseText
+  }
+
+  pushTag(store, name, start, end)
+  // only '>' can ends the tag here, the '/' is handled in parseAttribute
+  if (!match[2]) {
+    return ATTR
   }
 
   return TEXT
@@ -266,6 +270,8 @@ function comment(store, data, start) {
     panic(data, MSG.unclosedComment, start)
   }
   pushcomment(store, start, end + str.length)
+
+  return TEXT
 }
 
 /**
@@ -280,8 +286,7 @@ function attr(store) {
   const { data, last, pos, root } = store
   const tag = last // the last (current) tag in the output
   const _CH = /\S/g // matches the first non-space char
-  _CH.lastIndex = pos // first char of attribute's name
-  const ch = _CH.exec(data)
+  const ch = execFromPos(_CH, pos, data)
 
   switch (true) {
   case !ch:
@@ -389,11 +394,12 @@ function text(store) {
   case typeof scryle === 'string': {
     const name = scryle
     const re = RE_SCRYLE[name]
-    re.lastIndex = pos
-    const match = re.exec(data)
+    const match = execFromPos(re, pos, data)
+
     if (!match) {
       panic(data, MSG.unclosedNamedBlock.replace('%1', name), pos - 1)
     }
+
     const start = match.index
     const end = re.lastIndex
     store.scryle = null // reset the script/style flag now
