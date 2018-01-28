@@ -148,6 +148,17 @@ module.exports = {
     ]
   },
 
+  'tricky regex': {
+    data: '<a>{ .../5./2/ }</a>',
+    expected: [
+      { type: _T.TAG, name: 'a', start: 0, end: 3 },
+      { type: _T.TEXT, text: '{ .../5./2/ }', start: 3, end: 16, expressions: [
+        { text: ' .../5./2/ ', start: 3, end: 16 }
+      ] },
+      { type: _T.TAG, name: '/a', start: 16, end: 20 }
+    ]
+  },
+
   'text inside tag, regex with tags inside': {
     data: '<a> { a + /<g></g> b } </a>',
     expected: [

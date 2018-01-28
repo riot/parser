@@ -45,6 +45,7 @@ function flush(store) {
 }
 
 const rootTagNotFound = 'Root tag not found.';
+const unclosedTemplateLiteral = 'Unclosed ES6 template literal';
 const emptyStack = 'Stack is empty.';
 const unexpectedEndOfFile = 'Unexpected end of file.';
 
@@ -630,6 +631,7 @@ var skipRegex = (function () {
 var escapeStr = (str) => str.replace(/(?=[-[\](){^*+?.$|\\])/g, '\\')
 
 const $_ES6_BQ = '`';
+
 /**
  * Searches the next backquote that signals the end of the ES6 Template Literal
  * or the "${" sequence that starts a JS expression, skipping any escaped
@@ -657,7 +659,7 @@ function skipES6TL(code, pos, stack) {
     }
     // else this is an escaped char
   }
-  throw new Error('Unclosed ES6 template')
+  throw formatError(code, unclosedTemplateLiteral, pos)
 }
 
 /*

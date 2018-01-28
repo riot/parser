@@ -121,11 +121,6 @@ module.exports = {
     throws: /expected/
   },
 
-  'throws no root': {
-    data: '',
-    throws: /Root/
-  },
-
   'throws on closing tags with no parent': {
     data: '<div>One <div>Two </font>Three </div></div>',
     throws: /expected/

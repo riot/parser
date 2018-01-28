@@ -1,4 +1,5 @@
 export const rootTagNotFound = 'Root tag not found.'
+export const unclosedTemplateLiteral = 'Unclosed ES6 template literal'
 export const emptyStack = 'Stack is empty.'
 export const unexpectedEndOfFile = 'Unexpected end of file.'
 export const unexpectedNamedTag = 'Unexpected tag <%1>'

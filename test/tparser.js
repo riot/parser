@@ -411,6 +411,16 @@ module.exports = {
     throws: /Unexpected/i
   },
 
+  'unclosed literal': {
+    data: '<div>{ `foo }</div>',
+    throws: /Unclosed/i
+  },
+
+  'unfinished simple tag #1': {
+    data: '<script>\n const foo',
+    throws: /Unclosed/i
+  },
+
   'unfinished simple tag #2': {
     data: '<div ',
     throws: /Unexpected/i

@@ -1,4 +1,7 @@
+import formatError from './format-error'
+import { unclosedTemplateLiteral } from '../messages'
 export const $_ES6_BQ = '`'
+
 /**
  * Searches the next backquote that signals the end of the ES6 Template Literal
  * or the "${" sequence that starts a JS expression, skipping any escaped
@@ -26,5 +29,5 @@ export default function skipES6TL(code, pos, stack) {
     }
     // else this is an escaped char
   }
-  throw new Error('Unclosed ES6 template')
+  throw formatError(code, unclosedTemplateLiteral, pos)
 }
