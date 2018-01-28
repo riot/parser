@@ -1,5 +1,10 @@
 # Changes for riot-parser
 
+### v0.3.0
+- Fix treeBuilder issues
+- Improve coverage
+- Improve code maintainability
+
 ### v0.2.0
 - Add `voidTags` to the exports
 
