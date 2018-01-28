@@ -18,36 +18,21 @@
  * Throws on unclosed tags or closing tags without start tag.
  * Selfclosing and void tags has no nodes[] property.
  */
-import formatError from './format-error'
+import panic from './utils/panic'
 import * as MSG from './messages'
 import voidTags from './void-tags'
 import { TEXT, TAG, PRIVATE_JAVASCRIPT, PUBLIC_JAVASCRIPT } from './node-types'
-
-// TODO: clean up this file
-
-const SVG_NS = 'http://www.w3.org/2000/svg'
-// Do not touch text content inside this tags
-const RAW_TAGS = /^\/?(?:pre|textarea)$/
-
-const JAVASCRIPT_OUTPUT_NAME = 'javascript'
-const CSS_OUTPUT_NAME = 'css'
-const TEMPLATE_OUTPUT_NAME = 'template'
-
-const JAVASCRIPT_TAG = 'script'
-const STYLE_TAG = 'style'
-
-/**
- * Custom error handler can be implemented replacing this method.
- * The `state` object includes the buffer (`data`)
- * The error position (`loc`) contains line (base 1) and col (base 0).
- *
- * @param {string} msg   - Error message
- * @param {pos} [number] - Position of the error
- */
-function err(msg, pos, data) {
-  const message = formatError(data, msg, pos)
-  throw new Error(message)
-}
+import { RAW_TAGS } from './regex'
+import {
+  SVG_NS,
+  JAVASCRIPT_OUTPUT_NAME,
+  CSS_OUTPUT_NAME,
+  TEMPLATE_OUTPUT_NAME,
+  JAVASCRIPT_TAG,
+  STYLE_TAG,
+  SVG_TAG,
+  DEFER_ATTR
+} from './constants'
 
 /**
  * Escape the carriage return and the line feed from a string
@@ -117,7 +102,7 @@ const TREE_BUILDER_STRUCT = Object.seal({
       state.scryle = null
     } else {
       if (!state.stack[0]) {
-        err('Stack is empty.', last.start, this.state.data)
+        panic(this.state.data, MSG.emptyStack, last.start)
       }
       state.last = state.stack.pop()
     }
@@ -125,7 +110,7 @@ const TREE_BUILDER_STRUCT = Object.seal({
 
   openTag(state, node) {
     const name = node.name
-    const ns = state.last.ns || (name === 'svg' ? SVG_NS : '')
+    const ns = state.last.ns || (name === SVG_TAG ? SVG_NS : '')
     const attrs = node.attr
     if (attrs && !ns) {
       attrs.forEach(a => { a.name = a.name.toLowerCase() })
@@ -133,7 +118,7 @@ const TREE_BUILDER_STRUCT = Object.seal({
     if ([JAVASCRIPT_TAG, STYLE_TAG].includes(name) && !this.deferred(node, attrs)) {
       // Only accept one of each
       if (state[name]) {
-        err(MSG.duplicatedNamedTag.replace('%1', name), node.start, this.state.data)
+        panic(this.state.data, MSG.duplicatedNamedTag.replace('%1', name), node.start)
       }
       state[name] = node
       // support selfclosing script (w/o text content)
@@ -174,7 +159,7 @@ const TREE_BUILDER_STRUCT = Object.seal({
   deferred(node, attributes) {
     if (attributes) {
       for (let i = 0; i < attributes.length; i++) {
-        if (attributes[i].name === 'defer') {
+        if (attributes[i].name === DEFER_ATTR) {
           attributes.splice(i, 1)
           return true
         }

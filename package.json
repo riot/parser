@@ -13,7 +13,8 @@
   "scripts": {
     "test": "nyc mocha ./test",
     "test-debug": "mocha --inspect-brk ./test",
-    "coverage": "nyc report --reporter=text-lcov | coveralls",
+    "cov": "nyc report --reporter=text-lcov | coveralls",
+    "cov-html": "nyc report --reporter=html",
     "pretest": "npm run build",
     "lint": "eslint src test",
     "build": "rollup -c",
@@ -55,5 +56,8 @@
     "rollup": "^0.52.1",
     "rollup-plugin-node-resolve": "^3.0.0",
     "skip-regex": "^0.3.1"
+  },
+  "dependencies": {
+    "curri": "^1.0.0"
   }
 }

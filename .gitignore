@@ -58,5 +58,6 @@ out/
 node_modules
 npm-debug.log
 .nyc_output
+coverage
 
 *_out.json

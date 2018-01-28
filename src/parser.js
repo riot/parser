@@ -1,48 +1,12 @@
 import treeBuilder from './tree-builder'
-import escapeStr from './escape-str'
-import exprExtr from './expr-extr'
-import formatError from './format-error'
+import escapeStr from './utils/escape-str'
+import exprExtr from './utils/expr-extr'
+import panic from './utils/panic'
 import * as MSG from './messages'
+import curry from 'curri'
 import { TEXT, ATTR, TAG, COMMENT, PRIVATE_JAVASCRIPT, PUBLIC_JAVASCRIPT } from './node-types'
-
-/**
- * Matches the start of valid tags names; used with the first 2 chars after the `'<'`.
- * @const
- * @private
- */
-const TAG_2C = /^(?:\/[a-zA-Z]|[a-zA-Z][^\s>/]?)/
-/**
- * Matches valid tags names AFTER the validation with `TAG_2C`.
- * $1: tag name including any `'/'`, $2: non self-closing brace (`>`) w/o attributes.
- * @const
- * @private
- */
-const TAG_NAME = /(\/?[^\s>/]+)\s*(>)?/g
-/**
- * Matches an attribute name-value pair (both can be empty).
- * $1: attribute name, $2: value including any quotes.
- * @const
- * @private
- */
-const ATTR_START = /(\S[^>/=\s]*)(?:\s*=\s*([^>/])?)?/g
-/**
- * Matches the closing tag of a `script` and `style` block.
- * Used by parseText fo find the end of the block.
- * @const
- * @private
- */
-const RE_SCRYLE = {
-  script: /<\/script\s*>/gi,
-  style: /<\/style\s*>/gi,
-  textarea: /<\/textarea\s*>/gi,
-}
-
-/**
- * Matches the beginning of an `export default {}` expression
- * @const
- * @private
- */
-const EXPORT_DEFAULT = /export(?:\W)+default(?:\s+)?{/g
+import { TAG_2C, TAG_NAME, ATTR_START, RE_SCRYLE, EXPORT_DEFAULT } from './regex'
+import { JAVASCRIPT_TAG, TEXTAREA_TAG, PRE_TAG } from './constants'
 
 /**
  * Factory for the Parser class, exposing only the `parse` method.
@@ -53,14 +17,34 @@ const EXPORT_DEFAULT = /export(?:\W)+default(?:\s+)?{/g
  * @returns {Function} Public Parser implementation.
  */
 export default function parser(options, customBuilder) {
-  const store = {
-    options: Object.assign({
-      brackets: ['{', '}']
-    }, options)
+  const store = curry(createStore)(options, customBuilder || treeBuilder)
+  return {
+    parse: (data) => parse(store(data))
   }
+}
+
+/**
+ * Create a new store object
+ * @param   {object} userOptions - parser options
+ * @param   {Function} customBuilder - Tree builder factory
+ * @param   {string} data - data to parse
+ * @returns {ParserStore}
+ */
+function createStore(userOptions, builder, data) {
+  const options = Object.assign({
+    brackets: ['{', '}']
+  }, userOptions)
 
   return {
-    parse: (data) => parse(data, store, customBuilder || treeBuilder)
+    options,
+    regexCache: {},
+    pos: 0,
+    count: -1,
+    root: null,
+    last: null,
+    scryle: null,
+    builder: builder(data, options),
+    data
   }
 }
 
@@ -72,24 +56,12 @@ export default function parser(options, customBuilder) {
  * - TEXT    -- Raw text
  * - COMMENT -- Comments
  *
- * @param   {string} data - HTML markup
  * @param   {ParserStore}  store - Current parser store
- * @param   {function}  builder - Tree builder factory function
  * @returns {ParserResult} Result, contains data and output properties.
  */
-function parse(data, store, builder) {
+function parse(store) {
+  const { data } = store
   // extend the store adding the tree builder instance and the initial data
-  Object.assign(store, {
-    regexCache: {},
-    pos: 0,
-    count: -1,
-    root: null,
-    last: null,
-    scryle: null,
-    builder: builder(data, store.options),
-    data
-  })
-
   const length = data.length
   let type
 
@@ -112,7 +84,7 @@ function parse(data, store, builder) {
   flush(store)
 
   if (store.count) {
-    err(data, store.count > 0
+    panic(data, store.count > 0
       ? MSG.unexpectedEndOfFile : MSG.rootTagNotFound, store.pos)
   }
 
@@ -120,21 +92,6 @@ function parse(data, store, builder) {
     data,
     output: store.builder.get()
   }
-}
-
-/**
- * Custom error handler can replace this method.
- * The `store` object includes the buffer (`data`)
- * The error position (`loc`) contains line (base 1) and col (base 0).
- *
- * @param {string} source   - Processing buffer
- * @param {string} message  - Error message
- * @param {number} pos    - Error position
- * @private
- */
-function err(data, msg, pos) {
-  const message = formatError(data, msg, pos)
-  throw new Error(message)
 }
 
 /**
@@ -282,7 +239,7 @@ function comment(store, data, start) {
   const str = data.substr(pos, 2) === '--' ? '-->' : '>'
   const end = data.indexOf(str, pos)
   if (end < 0) {
-    err(data, MSG.unclosedComment, start)
+    panic(data, MSG.unclosedComment, start)
   }
   pushcomment(store, start, end + str.length)
 }
@@ -385,7 +342,7 @@ function setAttr(store, data, pos, tag) {
  * @private
  */
 function text(store, data) {
-  const pos = store.pos // start of the text
+  const { pos } = store // start of the text
 
   if (store.scryle) {
     const name = store.scryle
@@ -393,24 +350,14 @@ function text(store, data) {
     re.lastIndex = pos
     const match = re.exec(data)
     if (!match) {
-      err(data, MSG.unclosedNamedBlock.replace('%1', name), pos - 1)
+      panic(data, MSG.unclosedNamedBlock.replace('%1', name), pos - 1)
     }
     const start = match.index
     const end = re.lastIndex
     store.scryle = null // reset the script/style flag now
     // write the tag content, if any
     if (start > pos) {
-      switch (name) {
-      case 'textarea':
-        expr(store, data, null, match[0], pos)
-        break
-      case 'script':
-        pushText(store, pos, start)
-        pushJavascript(store, pos, start)
-        break
-      default:
-        pushText(store, pos, start)
-      }
+      parseSpecialTagContent(store, data, name, match)
     }
     // now the closing tag, either </script> or </style>
     pushTag(store, `/${name}`, start, end)
@@ -422,6 +369,31 @@ function text(store, data) {
   }
 
   return TEXT
+}
+
+/**
+ * Parse the text content depending on the name
+ * @param   {ParserStore} store - Parser store
+ * @param   {string} data  - Buffer to parse
+ * @param   {string} name  - one of the tags matched by the RE_SCRYLE regex
+ * @returns {array}  match - result of the regex matching the content of the parsed tag
+ */
+function parseSpecialTagContent(store, data, name, match) {
+  const { pos } = store
+  const start = match.index
+
+  switch (name) {
+  case TEXTAREA_TAG:
+  case PRE_TAG:
+    expr(store, data, null, match[0], pos)
+    break
+  case JAVASCRIPT_TAG:
+    pushText(store, pos, start)
+    pushJavascript(store, pos, start)
+    break
+  default:
+    pushText(store, pos, start)
+  }
 }
 
 /**
@@ -449,10 +421,11 @@ function pushJavascript(store, start, end) {
   const publicJs = exprExtr(getChunk(code, publicJsIndex, end), 0, ['{', '}'])
 
   // dispatch syntax errors
-  if (!publicJs)
-    err(store.data, MSG.unableToParseExportDefault, start + publicJsIndex)
+  if (!publicJs) {
+    panic(store.data, MSG.unableToParseExportDefault, start + publicJsIndex)
+  }
 
-  ;[
+  [
     createPrivateJsNode(code, start, 0, match.index),
     {
       type: PUBLIC_JAVASCRIPT,
@@ -461,7 +434,7 @@ function pushJavascript(store, start, end) {
       code: publicJs.text
     },
     createPrivateJsNode(code, start, publicJsIndex + publicJs.end, code.length)
-  ].forEach(push)
+  ].filter(n => n.code).forEach(push)
 }
 
 /**
@@ -523,7 +496,7 @@ function expr(store, data, node, endingChars, pos) {
 
   // Even for text, the parser needs match a closing char
   if (!match) {
-    err(data, MSG.unexpectedEndOfFile, pos)
+    panic(data, MSG.unexpectedEndOfFile, pos)
   }
   const end = match.index
   if (node) {
