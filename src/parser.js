@@ -1,7 +1,7 @@
 import panic from './utils/panic'
 import flush from './utils/flush-parser-store'
 import treeBuilder from './tree-builder'
-import * as MSG from './messages'
+import { unexpectedEndOfFile, rootTagNotFound } from './messages'
 import curry from 'curri'
 import { ATTR, TAG } from './node-types'
 import { tag } from './parsers/tag'
@@ -66,7 +66,7 @@ function parse(store) {
   flush(store)
 
   if (store.count) {
-    panic(data, store.count > 0 ? MSG.unexpectedEndOfFile : MSG.rootTagNotFound, store.pos)
+    panic(data, store.count > 0 ? unexpectedEndOfFile : rootTagNotFound, store.pos)
   }
 
   return {

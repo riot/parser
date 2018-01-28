@@ -19,7 +19,7 @@
  * Selfclosing and void tags has no nodes[] property.
  */
 import panic from './utils/panic'
-import * as MSG from './messages'
+import { emptyStack, duplicatedNamedTag } from './messages'
 import voidTags from './void-tags'
 import addToCollection from './utils/add-to-collection'
 import { TEXT, TAG, PRIVATE_JAVASCRIPT, PUBLIC_JAVASCRIPT } from './node-types'
@@ -110,7 +110,7 @@ const TREE_BUILDER_STRUCT = Object.seal({
       state.scryle = null
     } else {
       if (!state.stack[0]) {
-        panic(this.state.data, MSG.emptyStack, last.start)
+        panic(this.state.data, emptyStack, last.start)
       }
       state.last = state.stack.pop()
     }
@@ -119,14 +119,14 @@ const TREE_BUILDER_STRUCT = Object.seal({
   openTag(state, node) {
     const name = node.name
     const ns = state.last.ns || (name === SVG_TAG ? SVG_NS : '')
-    const attrs = node.attr
+    const attrs = node.attributes
     if (attrs && !ns) {
       attrs.forEach(a => { a.name = a.name.toLowerCase() })
     }
     if ([JAVASCRIPT_TAG, STYLE_TAG].includes(name) && !this.deferred(node, attrs)) {
       // Only accept one of each
       if (state[name]) {
-        panic(this.state.data, MSG.duplicatedNamedTag.replace('%1', name), node.start)
+        panic(this.state.data, duplicatedNamedTag.replace('%1', name), node.start)
       }
       state[name] = node
       // support selfclosing script (w/o text content)
@@ -147,14 +147,12 @@ const TREE_BUILDER_STRUCT = Object.seal({
       if (ns) {
         newNode.ns = ns
         voids = voidTags.svg
-      }
-      else {
+      } else {
         voids = voidTags.html
       }
       if (voids.indexOf(name) !== -1) {
         newNode.void = true
-      }
-      else if (!node.selfclose) {
+      } else if (!node.selfclose) {
         state.stack.push(lastTag)
         newNode.nodes = []
         state.last = newNode
@@ -201,7 +199,7 @@ const TREE_BUILDER_STRUCT = Object.seal({
     }
   },
   split(node, source, start, pack) {
-    const expressions = node.expr
+    const expressions = node.expressions
     const parts = []
 
     if (expressions) {

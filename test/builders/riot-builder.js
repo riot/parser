@@ -18,8 +18,9 @@
  *
  * @class RiotBuilder
  */
-const VOID_TAGS = require('./void-tags')
-const T = require('./node-types')
+const parser = require('../../')
+const VOID_TAGS = parser.voidTags.regex
+const T = parser.nodeTypes
 
 // Do not touch text content inside this tags
 const RE_PRE = /^\/?(?:pre|script|style|textarea)$/

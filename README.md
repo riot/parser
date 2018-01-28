@@ -88,19 +88,19 @@ Output
     "end": 112,
     "nodes": [
       {
-        "type": NodeTypes.JAVASCRIPT_PRIVATE,
+        "type": nodeTypes.JAVASCRIPT_PRIVATE,
         "start": 53,
         "end": 75,
         "code": "\n    function foo() {}"
       },
       {
-        "type": NodeTypes.JAVASCRIPT_PUBLIC,
+        "type": nodeTypes.JAVASCRIPT_PUBLIC,
         "start": 62,
         "end": 86,
         "code": "\n    onMount() {}"
       },
       {
-        "type": NodeTypes.JAVASCRIPT_PRIVATE,
+        "type": nodeTypes.JAVASCRIPT_PRIVATE,
         "start": 86,
         "end": 112,
         "code": "\n    function bar() {}"

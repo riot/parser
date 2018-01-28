@@ -4,6 +4,7 @@ const compareObject = require('./utils/compare-objects')
 const echoBuilder = require('./builders/echo-builder')
 const parser = require('../').default
 const expect = require('chai').expect
+const path = require('path')
 const fs = require('fs')
 
 process.chdir(__dirname)
@@ -12,20 +13,16 @@ function getOpts(test) {
   return Object.assign({ brackets: ['{', '}'] }, test && test.options)
 }
 
+function cat(dir, name) {
+  return fs.readFileSync(path.join('.', dir, name), 'utf8')
+}
 
 describe('The Parser', function () {
-  const theTests = require('./tparser')
-  const titles = Object.keys(theTests)
+  const tests = require('./tparser')
 
-  const _TDEBUG = 0
-
-  for (let i = 0; i < titles.length; i++) {
-    const title = titles[i]
-
+  Object.keys(tests).forEach(title => {
     it(title, function () {
-      const test = theTests[title]
-
-      if (_TDEBUG && title === _TDEBUG) debugger
+      const test = tests[title]
       const _p = parser(getOpts(test), echoBuilder)
 
       if (test.throws) {
@@ -43,28 +40,15 @@ describe('The Parser', function () {
         expect(result).to.be.equal(expected)
       }
     })
-
-    if (_TDEBUG && title === _TDEBUG) break
-  }
-
+  })
 })
 
-
 describe('Expressions', function () {
-
-  const theTests = require('./texpr')
-  const titles = Object.keys(theTests)
-
-  const _TDEBUG = 0
-
-  for (let i = 0; i < titles.length; i++) {
-    const title = titles[i]
-
+  const tests = require('./texpr')
+  Object.keys(tests).forEach(title => {
     it(title, function () {
-      const test = theTests[title]
+      const test = tests[title]
       const _p = parser(getOpts(test), echoBuilder)
-
-      if (_TDEBUG && title === _TDEBUG) debugger
 
       if (test.throws) {
         expect(function () { _p.parse(test.data) }).throw(test.throws)
@@ -81,20 +65,11 @@ describe('Expressions', function () {
         expect(result).to.be.equal(expected)
       }
     })
-
-    if (_TDEBUG && title === _TDEBUG) break
-  }
-
+  })
 })
 
 
 describe('Tree Builder', function () {
-  const path = require('path')
-
-  function cat(dir, name) {
-    return fs.readFileSync(path.join('.', dir, name), 'utf8')
-  }
-
   const titles = fs.readdirSync('./fixtures')
   const _p = parser(getOpts())
 
@@ -138,7 +113,6 @@ describe('Tree Builder', function () {
 
 
 describe('HTML Builder', function () {
-
   const htmlBuilder = require('./builders/html-builder')
   const theTests = require('./thtmlbuilder')
   const titles = Object.keys(theTests)
@@ -191,5 +165,4 @@ describe('HTML Builder', function () {
     const result = builder.build(_p.parse(source))
     expect(result).to.be.equal(expected)
   })
-
 })

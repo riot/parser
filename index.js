@@ -54,6 +54,35 @@ const duplicatedNamedTag = 'Duplicate tag "<%1>".';
 
 const unableToParseExportDefault = 'Unable to parse your tag \'export default\' contents.';
 
+const html = [
+  'area',
+  'base',
+  'br',
+  'col',
+  'embed',
+  'hr',
+  'img',
+  'input',
+  'keygen',
+  'link',
+  'menuitem',
+  'meta',
+  'param',
+  'source',
+  'track',
+  'wbr'
+];
+const svg = [
+  'circle',
+  'ellipse',
+  'line',
+  'path',
+  'polygon',
+  'polyline',
+  'rect',
+  'stop',
+  'use'
+];
 var voidTags = {
   /**
    * HTML void elements that cannot be auto-closed and shouldn't contain child nodes.
@@ -64,40 +93,15 @@ var voidTags = {
    * @see   {@link http://www.w3.org/TR/html-markup/syntax.html#syntax-elements}
    * @see   {@link http://www.w3.org/TR/html5/syntax.html#void-elements}
    */
-  html: [
-    'area',
-    'base',
-    'br',
-    'col',
-    'embed',
-    'hr',
-    'img',
-    'input',
-    'keygen',
-    'link',
-    'menuitem',
-    'meta',
-    'param',
-    'source',
-    'track',
-    'wbr'
-  ],
+  html,
   /**
    * SVG void elements that cannot be auto-closed and shouldn't contain child nodes.
    *
    * @const {Array.<string>}
    */
-  svg: [
-    'circle',
-    'ellipse',
-    'line',
-    'path',
-    'polygon',
-    'polyline',
-    'rect',
-    'stop',
-    'use'
-  ]
+  svg,
+  // Regex to match all of them
+  regex: new RegExp(`^/?(?:${html.join('|')}|${svg.join('|')})$`, 'i')
 }
 
 /**
@@ -308,7 +312,7 @@ const TREE_BUILDER_STRUCT = Object.seal({
   openTag(state, node) {
     const name = node.name;
     const ns = state.last.ns || (name === SVG_TAG ? SVG_NS : '');
-    const attrs = node.attr;
+    const attrs = node.attributes;
     if (attrs && !ns) {
       attrs.forEach(a => { a.name = a.name.toLowerCase(); });
     }
@@ -336,14 +340,12 @@ const TREE_BUILDER_STRUCT = Object.seal({
       if (ns) {
         newNode.ns = ns;
         voids = voidTags.svg;
-      }
-      else {
+      } else {
         voids = voidTags.html;
       }
       if (voids.indexOf(name) !== -1) {
         newNode.void = true;
-      }
-      else if (!node.selfclose) {
+      } else if (!node.selfclose) {
         state.stack.push(lastTag);
         newNode.nodes = [];
         state.last = newNode;
@@ -390,7 +392,7 @@ const TREE_BUILDER_STRUCT = Object.seal({
     }
   },
   split(node, source, start, pack) {
-    const expressions = node.expr;
+    const expressions = node.expressions;
     const parts = [];
 
     if (expressions) {
@@ -476,14 +478,14 @@ function curry(fn, ...acc) {
 
 /**
  * Run RegExp.exec starting from a specific position
- * @param   {[type]} re   [description]
- * @param   {[type]} pos  [description]
- * @param   {[type]} data [description]
- * @returns {[type]}      [description]
+ * @param   {RegExp} re - regex
+ * @param   {number} pos - last index position
+ * @param   {string} string - regex target
+ * @returns {array} regex result
  */
-function execFromPos(re, pos, data) {
+function execFromPos(re, pos, string) {
   re.lastIndex = pos;
-  return re.exec(data)
+  return re.exec(string)
 }
 
 /**
@@ -1093,6 +1095,30 @@ function pushComment(store, start, end) {
 }
 
 /**
+ * Parse the tag following a '<' character, or delegate to other parser
+ * if an invalid tag name is found.
+ *
+ * @param   {ParserStore} store  - Parser store
+ * @returns {number} New parser mode
+ * @private
+ */
+function tag(store) {
+  const { pos, data } = store; // pos of the char following '<'
+  const start = pos - 1; // pos of '<'
+  const str = data.substr(pos, 2); // first two chars following '<'
+
+  switch (true) {
+  case str[0] === '!':
+    return comment(store, data, start)
+  case TAG_2C.test(str):
+    return parseTag(store, start)
+  default:
+    return pushText(store, start, pos) // pushes the '<' as text
+  }
+}
+
+
+/**
  * Pushes a new *tag* and set `last` to this, so any attributes
  * will be included on this and shifts the `end`.
  *
@@ -1120,30 +1146,6 @@ function pushTag(store, name, start, end) {
   }
   store.last = last;
 }
-
-/**
- * Parse the tag following a '<' character, or delegate to other parser
- * if an invalid tag name is found.
- *
- * @param   {ParserStore} store  - Parser store
- * @returns {number} New parser mode
- * @private
- */
-function tag(store) {
-  const { pos, data } = store; // pos of the char following '<'
-  const start = pos - 1; // pos of '<'
-  const str = data.substr(pos, 2); // first two chars following '<'
-
-  switch (true) {
-  case str[0] === '!':
-    return comment(store, data, start)
-  case TAG_2C.test(str):
-    return parseTag(store, start)
-  default:
-    return pushText(store, start, pos) // pushes the '<' as text
-  }
-}
-
 
 function parseTag(store, start) {
   const { data, pos } = store;

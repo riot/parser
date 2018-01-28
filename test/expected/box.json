@@ -10,7 +10,10 @@
         "value": "container",
         "start": 9,
         "end": 26,
-        "valueStart": 16
+        "valueStart": 16,
+        "parts": [
+          "container"
+        ]
       }
     ],
     "nodes": [
@@ -25,14 +28,20 @@
             "value": "box",
             "start": 35,
             "end": 46,
-            "valueStart": 42
+            "valueStart": 42,
+            "parts": [
+              "box"
+            ]
           },
           {
-            "name": "Align",
+            "name": "align",
             "value": "center",
             "start": 47,
             "end": 61,
-            "valueStart": 54
+            "valueStart": 54,
+            "parts": [
+              "center"
+            ]
           }
         ],
         "nodes": [
@@ -55,7 +64,7 @@
                   }
                 ],
                 "parts": [
-                  "{box.title}"
+                  "box.title"
                 ]
               }
             ]
@@ -67,7 +76,7 @@
             "end": 127,
             "attributes": [
               {
-                "name": "Src",
+                "name": "src",
                 "value": "{box.image}",
                 "start": 97,
                 "end": 112,
@@ -78,14 +87,20 @@
                     "end": 112
                   }
                 ],
-                "valueStart": 101
+                "valueStart": 101,
+                "parts": [
+                  "box.image"
+                ]
               },
               {
                 "name": "width",
                 "value": "480",
                 "start": 113,
                 "end": 124,
-                "valueStart": 120
+                "valueStart": 120,
+                "parts": [
+                  "480"
+                ]
               }
             ],
             "selfclose": true,
@@ -102,7 +117,10 @@
                 "value": "body",
                 "start": 137,
                 "end": 149,
-                "valueStart": 144
+                "valueStart": 144,
+                "parts": [
+                  "body"
+                ]
               }
             ],
             "nodes": [
@@ -143,7 +161,8 @@
                       }
                     ],
                     "parts": [
-                      "Body: {box.body}"
+                      "Body: ",
+                      "box.body"
                     ]
                   }
                 ]
@@ -217,7 +236,10 @@
         "value": "less",
         "start": 309,
         "end": 320,
-        "valueStart": 315
+        "valueStart": 315,
+        "parts": [
+          "less"
+        ]
       }
     ],
     "text": {

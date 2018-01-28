@@ -6,6 +6,30 @@ import { pushText } from './text'
 import { comment } from './comment'
 
 /**
+ * Parse the tag following a '<' character, or delegate to other parser
+ * if an invalid tag name is found.
+ *
+ * @param   {ParserStore} store  - Parser store
+ * @returns {number} New parser mode
+ * @private
+ */
+export function tag(store) {
+  const { pos, data } = store // pos of the char following '<'
+  const start = pos - 1 // pos of '<'
+  const str = data.substr(pos, 2) // first two chars following '<'
+
+  switch (true) {
+  case str[0] === '!':
+    return comment(store, data, start)
+  case TAG_2C.test(str):
+    return parseTag(store, start)
+  default:
+    return pushText(store, start, pos) // pushes the '<' as text
+  }
+}
+
+
+/**
  * Pushes a new *tag* and set `last` to this, so any attributes
  * will be included on this and shifts the `end`.
  *
@@ -33,30 +57,6 @@ export function pushTag(store, name, start, end) {
   }
   store.last = last
 }
-
-/**
- * Parse the tag following a '<' character, or delegate to other parser
- * if an invalid tag name is found.
- *
- * @param   {ParserStore} store  - Parser store
- * @returns {number} New parser mode
- * @private
- */
-export function tag(store) {
-  const { pos, data } = store // pos of the char following '<'
-  const start = pos - 1 // pos of '<'
-  const str = data.substr(pos, 2) // first two chars following '<'
-
-  switch (true) {
-  case str[0] === '!':
-    return comment(store, data, start)
-  case TAG_2C.test(str):
-    return parseTag(store, start)
-  default:
-    return pushText(store, start, pos) // pushes the '<' as text
-  }
-}
-
 
 function parseTag(store, start) {
   const { data, pos } = store

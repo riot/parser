@@ -3,9 +3,9 @@
  * Throws on unclosed tags or closing tags without start tag.
  */
 
-const VOID_TAGS = require('./void-tags')
-const T = require('./node-types')
-
+const parser = require('../../')
+const VOID_TAGS = parser.voidTags
+const T = parser.nodeTypes
 // Do not touch text content inside this tags
 const R_PRE = /^\/?(?:pre|textarea|script|style)$/
 
@@ -87,8 +87,8 @@ Object.assign(HtmlBuilder.prototype, {
   openTag(node) {
     const name   = node.name
     const allTag = [name]
-    const isVoid = VOID_TAGS.test(name)
-    const slash  = isVoid && VOID_TAGS.svgTags.includes(name) ? '/' : ''
+    const isVoid = VOID_TAGS.regex.test(name)
+    const slash  = isVoid && VOID_TAGS.svg.includes(name) ? '/' : ''
 
     if (node.attributes) {
       node.attributes.forEach(a => {

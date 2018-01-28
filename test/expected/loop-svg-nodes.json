@@ -30,7 +30,10 @@
                     "end": 52
                   }
                 ],
-                "valueStart": 42
+                "valueStart": 42,
+                "parts": [
+                  "points"
+                ]
               },
               {
                 "name": "riot-cx",
@@ -44,7 +47,10 @@
                     "end": 76
                   }
                 ],
-                "valueStart": 62
+                "valueStart": 62,
+                "parts": [
+                  "x * 10 + 5"
+                ]
               },
               {
                 "name": "riot-cy",
@@ -58,21 +64,30 @@
                     "end": 100
                   }
                 ],
-                "valueStart": 86
+                "valueStart": 86,
+                "parts": [
+                  "y * 10 + 5"
+                ]
               },
               {
                 "name": "r",
                 "value": "2",
                 "start": 101,
                 "end": 104,
-                "valueStart": 103
+                "valueStart": 103,
+                "parts": [
+                  "2"
+                ]
               },
               {
                 "name": "fill",
                 "value": "black",
                 "start": 105,
                 "end": 117,
-                "valueStart": 111
+                "valueStart": 111,
+                "parts": [
+                  "black"
+                ]
               }
             ],
             "selfclose": true,

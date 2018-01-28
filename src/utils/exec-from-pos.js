@@ -1,11 +1,11 @@
 /**
  * Run RegExp.exec starting from a specific position
- * @param   {[type]} re   [description]
- * @param   {[type]} pos  [description]
- * @param   {[type]} data [description]
- * @returns {[type]}      [description]
+ * @param   {RegExp} re - regex
+ * @param   {number} pos - last index position
+ * @param   {string} string - regex target
+ * @returns {array} regex result
  */
-export default function execFromPos(re, pos, data) {
+export default function execFromPos(re, pos, string) {
   re.lastIndex = pos
-  return re.exec(data)
+  return re.exec(string)
 }
