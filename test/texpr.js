@@ -196,7 +196,7 @@ module.exports = {
     data: '<a foo="{e}"/>',
     expected: [
       {
-        type: _T.TAG, name: 'a', start: 0, end: 14, selfclose: true, attributes: [
+        type: _T.TAG, name: 'a', start: 0, end: 14, isSelfClosing: true, attributes: [
           { name: 'foo', value: '{e}', start: 3, end: 12, valueStart: 8, expressions: [
             { text: 'e', start: 8, end: 11 }
           ] }
@@ -209,7 +209,7 @@ module.exports = {
     data: '<a foo={ e }/>',
     expected: [
       {
-        type: _T.TAG, name: 'a', start: 0, end: 14, selfclose: true, attributes: [
+        type: _T.TAG, name: 'a', start: 0, end: 14, isSelfClosing: true, attributes: [
           { name: 'foo', value: '{ e }', start: 3, end: 12, valueStart: 7, expressions: [
             { text: ' e ', start: 7, end: 12 }
           ] }
@@ -218,11 +218,22 @@ module.exports = {
     ]
   },
 
+  'attributes: boolean attribute ': {
+    data: '<a selected={ e }/>',
+    expected: [
+      {
+        'type': _T.TAG,'name':'a','start':0,'end':19,'attributes': [
+          {'name':'selected', isBoolean: true, 'value':'{ e }','start':3,'end':17,'expressions': [
+            {'text':' e ','start':12,'end':17
+            } ],'valueStart':12}],'isSelfClosing':true
+      }]
+  },
+
   'Shortcuts in attributes': {
     data: '<div foo= "{ s: "}", c: \'{\', d: /}/ }"/>',
     expected: [
       {
-        type: _T.TAG, name: 'div', start: 0, end: 40, selfclose: true, attributes: [
+        type: _T.TAG, name: 'div', start: 0, end: 40, isSelfClosing: true, attributes: [
           { name: 'foo', value: '{ s: "}", c: \'{\', d: /}/ }', start: 5, end: 38, valueStart: 11, expressions: [
             { text: ' s: "}", c: \'{\', d: /}/ ', start: 11, end: 37 }
           ] }
@@ -235,7 +246,7 @@ module.exports = {
     data: '<a foo="{\'e\'}"/>',
     expected: [
       {
-        type: _T.TAG, name: 'a', start: 0, end: 16, selfclose: true, attributes: [
+        type: _T.TAG, name: 'a', start: 0, end: 16, isSelfClosing: true, attributes: [
           { name: 'foo', value: "{'e'}", start: 3, end: 14, valueStart: 8, expressions: [
             { text: "'e'", start: 8, end: 13 }
           ] }
@@ -248,7 +259,7 @@ module.exports = {
     data: "<a foo='{'e'}'/>",
     expected: [
       {
-        type: _T.TAG, name: 'a', start: 0, end: 16, selfclose: true, attributes: [
+        type: _T.TAG, name: 'a', start: 0, end: 16, isSelfClosing: true, attributes: [
           { name: 'foo', value: "{'e'}", start: 3, end: 14, valueStart: 8, expressions: [
             { text: "'e'", start: 8, end: 13 }
           ] }
@@ -261,7 +272,7 @@ module.exports = {
     data: '<a foo=\'{"e"}\'/>',
     expected: [
       {
-        type: _T.TAG, name: 'a', start: 0, end: 16, selfclose: true, attributes: [
+        type: _T.TAG, name: 'a', start: 0, end: 16, isSelfClosing: true, attributes: [
           { name: 'foo', value: '{"e"}', start: 3, end: 14, valueStart: 8, expressions: [
             { text: '"e"', start: 8, end: 13 }
           ] }
@@ -274,7 +285,7 @@ module.exports = {
     data: '<a foo="{"e"}"/>',
     expected: [
       {
-        type: _T.TAG, name: 'a', start: 0, end: 16, selfclose: true, attributes: [
+        type: _T.TAG, name: 'a', start: 0, end: 16, isSelfClosing: true, attributes: [
           { name: 'foo', value: '{"e"}', start: 3, end: 14, valueStart: 8, expressions: [
             { text: '"e"', start: 8, end: 13 }
           ] }
@@ -287,7 +298,7 @@ module.exports = {
     data: '<a data-templ={\n"<div>\\\n\t<a></a>\\\n</div>"\n}/>',
     expected: [
       {
-        type: _T.TAG, name: 'a', start: 0, end: 45, selfclose: true, attributes: [
+        type: _T.TAG, name: 'a', start: 0, end: 45, isSelfClosing: true, attributes: [
           { name: 'data-templ', value: '{\n"<div>\\\n\t<a></a>\\\n</div>"\n}', start: 3, end: 43, valueStart: 14,
             expressions: [{ text: '\n"<div>\\\n\t<a></a>\\\n</div>"\n', start: 14, end: 43 }]
           }
@@ -311,7 +322,7 @@ module.exports = {
     data: '<a foo="\\{{e}"/>',
     expected: [
       {
-        type: _T.TAG, name: 'a', start: 0, end: 16, selfclose: true, attributes: [
+        type: _T.TAG, name: 'a', start: 0, end: 16, isSelfClosing: true, attributes: [
           {
             name: 'foo', value: '\\{{e}', start: 3, end: 14, valueStart: 8,
             expressions: [
@@ -328,7 +339,7 @@ module.exports = {
     data: '<a foo="\\{\\{}"/>',
     expected: [
       {
-        type: _T.TAG, name: 'a', start: 0, end: 16, selfclose: true, attributes: [
+        type: _T.TAG, name: 'a', start: 0, end: 16, isSelfClosing: true, attributes: [
           {
             name: 'foo', value: '\\{\\{}', start: 3, end: 14, valueStart: 8,
             unescape: '{'
@@ -585,7 +596,7 @@ module.exports = {
             { text: ' `a${0}` ', start: 6, end: 18 }
           ]
         }
-      ], selfclose: true }
+      ], isSelfClosing: true }
     ]
   },
 
@@ -599,7 +610,7 @@ module.exports = {
             { text: ' `a${0}` ', start: 5, end: 17 }
           ]
         }
-      ], selfclose: true }
+      ], isSelfClosing: true }
     ]
   },
 
@@ -625,7 +636,7 @@ module.exports = {
             ]
           }
         ],
-        selfclose: true
+        isSelfClosing: true
       }
     ]
   },

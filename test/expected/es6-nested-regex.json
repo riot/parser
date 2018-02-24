@@ -4,6 +4,7 @@
     "name": "es6-nested-regex",
     "start": 0,
     "end": 450,
+    "isCustom": true,
     "nodes": [
       {
         "type": 1,

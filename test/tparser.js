@@ -19,21 +19,21 @@ module.exports = {
   'simple self-closing tag': {
     data: '<div/>',
     expected: [
-      { type: _T.TAG, name: 'div', start: 0, end: 6, selfclose: true }
+      { type: _T.TAG, name: 'div', start: 0, end: 6, isSelfClosing: true }
     ]
   },
 
   'text before root tag is discarted': {
     data: 'xxx<div/>',
     expected: [
-      { type: _T.TAG, name: 'div', start: 3, end: 9, selfclose: true }
+      { type: _T.TAG, name: 'div', start: 3, end: 9, isSelfClosing: true }
     ]
   },
 
   'text after root tag is discarted': {
     data: '<div/>xxx',
     expected: [
-      { type: _T.TAG, name: 'div', start: 0, end: 6, selfclose: true }
+      { type: _T.TAG, name: 'div', start: 0, end: 6, isSelfClosing: true }
     ]
   },
 
@@ -49,7 +49,7 @@ module.exports = {
   'tag with multiple attributes': {
     data: '<div a="1" b=2/>',
     expected: [
-      { type: _T.TAG, name: 'div', start: 0, end: 16, selfclose: true, attributes: [
+      { type: _T.TAG, name: 'div', start: 0, end: 16, isSelfClosing: true, attributes: [
         { name: 'a', value: '1', start: 5, end: 10, valueStart: 8 },
         { name: 'b', value: '2', start: 11, end: 14, valueStart: 13 }
       ] },
@@ -59,7 +59,7 @@ module.exports = {
   'root with multiple attributes, trailing text': {
     data: '<div a=1 b="2"/>xxx',
     expected: [
-      { type: _T.TAG, name: 'div', start: 0, end: 16, selfclose: true, attributes: [
+      { type: _T.TAG, name: 'div', start: 0, end: 16, isSelfClosing: true, attributes: [
         { name: 'a', value: '1', start: 5, end: 8, valueStart: 7 },
         { name: 'b', value: '2', start: 9, end: 14, valueStart: 12 }
       ] }
@@ -81,7 +81,7 @@ module.exports = {
   'tag with mixed attributes #2': {
     data: '<div a=1 b="2" c=\'3\' />',
     expected: [
-      { type: _T.TAG, name: 'div', start: 0, end: 23, selfclose: true, attributes: [
+      { type: _T.TAG, name: 'div', start: 0, end: 23, isSelfClosing: true, attributes: [
         { name: 'a', value: '1', start: 5, end: 8, valueStart: 7 },
         { name: 'b', value: '2', start: 9, end: 14, valueStart: 12 },
         { name: 'c', value: '3', start: 15, end: 20, valueStart: 18 }
@@ -92,7 +92,7 @@ module.exports = {
   'tag with mixed attributes #3': {
     data: '<div a=\'1\' b=2 data-c = "3"/>',
     expected: [
-      { type: _T.TAG, name: 'div', start: 0, end: 29, selfclose: true, attributes: [
+      { type: _T.TAG, name: 'div', start: 0, end: 29, isSelfClosing: true, attributes: [
         { name: 'a', value: '1', start: 5, end: 10, valueStart: 8 },
         { name: 'b', value: '2', start: 11, end: 14, valueStart: 13 },
         { name: 'data-c', value: '3', start: 15, end: 27, valueStart: 25 }
@@ -103,7 +103,7 @@ module.exports = {
   'tag with mixed attributes #4': {
     data: '<div a=\'1\' b="2" c=3/>',
     expected: [
-      { type: _T.TAG, name: 'div', start: 0, end: 22, selfclose: true, attributes: [
+      { type: _T.TAG, name: 'div', start: 0, end: 22, isSelfClosing: true, attributes: [
         { name: 'a', value: '1', start: 5, end: 10, valueStart: 8 },
         { name: 'b', value: '2', start: 11, end: 16, valueStart: 14 },
         { name: 'c', value: '3', start: 17, end: 20, valueStart: 19 }
@@ -114,7 +114,7 @@ module.exports = {
   'tag with mixed attributes #6': {
     data: '<div a="1" b=\'2\' c="3"/>',
     expected: [
-      { type: _T.TAG, name: 'div', start: 0, end: 24, selfclose: true, attributes: [
+      { type: _T.TAG, name: 'div', start: 0, end: 24, isSelfClosing: true, attributes: [
         { name: 'a', value: '1', start: 5, end: 10, valueStart: 8 },
         { name: 'b', value: '2', start: 11, end: 16, valueStart: 14 },
         { name: 'c', value: '3', start: 17, end: 22, valueStart: 20 }
@@ -126,7 +126,7 @@ module.exports = {
     data: '<a><br <!-- comment -->></a>',
     expected: [
       { type: _T.TAG,  name: 'a', start: 0, end: 3 },
-      { type: _T.TAG,  name: 'br', start: 3, end: 23, attributes: [
+      { type: _T.TAG,  name: 'br', isVoid: true, start: 3, end: 23, attributes: [
         { name: '<!--', value: '', start: 7, end: 11 },
         { name: 'comment', value: '', start: 12, end: 19 },
         { name: '--', value: '', start: 20, end: 22 }
@@ -139,7 +139,7 @@ module.exports = {
   'root tag with mixed attributes': {
     data: '<div a=1 b=\'2\' c="3"/>',
     expected: [
-      { type: _T.TAG, name: 'div', start: 0, end: 22, selfclose: true, attributes: [
+      { type: _T.TAG, name: 'div', start: 0, end: 22, isSelfClosing: true, attributes: [
         { name: 'a', value: '1', start: 5, end: 8, valueStart: 7 },
         { name: 'b', value: '2', start: 9, end: 14, valueStart: 12 },
         { name: 'c', value: '3', start: 15, end: 20, valueStart: 18 }
@@ -150,7 +150,7 @@ module.exports = {
   'multiline attribute #1': {
     data: "<div id='\nxxx\nyyy\n'/>",
     expected: [
-      { type: _T.TAG,  name: 'div', start: 0, end: 21, selfclose: true, attributes: [
+      { type: _T.TAG,  name: 'div', start: 0, end: 21, isSelfClosing: true, attributes: [
         { name: 'id', value: '\nxxx\nyyy\n', start: 5, end: 19, valueStart: 9 }
       ] }
     ]
@@ -159,7 +159,7 @@ module.exports = {
   'multiline attribute #2': {
     data: '<div id="\nxxx\nyyy\n"/>',
     expected: [
-      { type: _T.TAG, name: 'div', start: 0, end: 21, selfclose: true, attributes: [
+      { type: _T.TAG, name: 'div', start: 0, end: 21, isSelfClosing: true, attributes: [
         { name: 'id', value: '\nxxx\nyyy\n', start: 5, end: 19, valueStart: 9 }
       ] }
     ]
@@ -168,49 +168,49 @@ module.exports = {
   'self closing tag': {
     data: '<div/>',
     expected: [
-      { type: _T.TAG, name: 'div', start: 0, end: 6, selfclose: true }
+      { type: _T.TAG, name: 'div', start: 0, end: 6, isSelfClosing: true }
     ]
   },
 
   'self closing tag, trailing text ignored': {
     data: '<div/>xxx',
     expected: [
-      { type: _T.TAG, name: 'div', start: 0, end: 6, selfclose: true }
+      { type: _T.TAG, name: 'div', start: 0, end: 6, isSelfClosing: true }
     ]
   },
 
   'self closing tag with spaces #1': {
     data: '<div />',
     expected: [
-      { type: _T.TAG, name: 'div', start: 0, end: 7, selfclose: true }
+      { type: _T.TAG, name: 'div', start: 0, end: 7, isSelfClosing: true }
     ]
   },
 
   'self closing tag with spaces #2': {
     data: '<div/ >',
     expected: [
-      { type: _T.TAG, name: 'div', start: 0, end: 7, selfclose: true }
+      { type: _T.TAG, name: 'div', start: 0, end: 7, isSelfClosing: true }
     ]
   },
 
   'self closing tag with spaces #3': {
     data: '<div\n / >',
     expected: [
-      { type: _T.TAG, name: 'div', start: 0, end: 9, selfclose: true }
+      { type: _T.TAG, name: 'div', start: 0, end: 9, isSelfClosing: true }
     ]
   },
 
   'self closing tag with spaces, trailing text ignored': {
     data: '<div / >xxx',
     expected: [
-      { type: _T.TAG, name: 'div', start: 0, end: 8, selfclose: true }
+      { type: _T.TAG, name: 'div', start: 0, end: 8, isSelfClosing: true }
     ]
   },
 
   'self closing tag with unquoted attribute': {
     data: '<div a=b/>',
     expected: [
-      { type: _T.TAG, name: 'div', start: 0, end: 10, selfclose: true, attributes: [
+      { type: _T.TAG, name: 'div', start: 0, end: 10, isSelfClosing: true, attributes: [
         { name: 'a', value: 'b', start: 5, end: 8, valueStart: 7 }
       ] }
     ]
@@ -219,7 +219,7 @@ module.exports = {
   'self closing tag with space after unquoted attribute value': {
     data: '<div a=b />',
     expected: [
-      { type: _T.TAG, name: 'div', start: 0, end: 11, selfclose: true, attributes: [
+      { type: _T.TAG, name: 'div', start: 0, end: 11, isSelfClosing: true, attributes: [
         { name: 'a', value: 'b', start: 5, end: 8, valueStart: 7 }
       ] }
     ]
@@ -228,7 +228,7 @@ module.exports = {
   'self closing tag with quoted attribute': {
     data: '<div a="b"/>',
     expected: [
-      { type: _T.TAG, name: 'div', start: 0, end: 12, selfclose: true, attributes: [
+      { type: _T.TAG, name: 'div', start: 0, end: 12, isSelfClosing: true, attributes: [
         { name: 'a', value: 'b', start: 5, end: 10, valueStart: 8 }
       ] }
     ]
@@ -237,7 +237,7 @@ module.exports = {
   'self closing tag with new line after quoted attribute value': {
     data: "<div a='b'\n/>",
     expected: [
-      { type: _T.TAG, name: 'div', start: 0, end: 13, selfclose: true, attributes: [
+      { type: _T.TAG, name: 'div', start: 0, end: 13, isSelfClosing: true, attributes: [
         { name: 'a', value: 'b', start: 5, end: 10, valueStart: 8 }
       ] }
     ]
@@ -257,7 +257,7 @@ module.exports = {
     data: '<div><a a=b/></div>',
     expected: [
       { type: _T.TAG, name: 'div', start: 0, end: 5 },
-      { type: _T.TAG, name: 'a', start: 5, end: 13, selfclose: true, attributes: [
+      { type: _T.TAG, name: 'a', start: 5, end: 13, isSelfClosing: true, attributes: [
         { name: 'a', value: 'b', start: 8, end: 11, valueStart: 10 }
       ] },
       { type: _T.TAG, name: '/div', start: 13, end: 19 }
@@ -267,7 +267,7 @@ module.exports = {
   'attribute missing closing quote ignoring tags': {
     data: '<div a="1><span id="foo"/></div>',
     expected: [
-      { type: _T.TAG, name: 'div', start: 0, end: 26, selfclose: true, attributes: [
+      { type: _T.TAG, name: 'div', start: 0, end: 26, isSelfClosing: true, attributes: [
         { name: 'a', value: '1><span id=', start: 5, end: 20, valueStart: 8 },
         { name: 'foo"', value: '', start: 20, end: 24 }
       ] }
@@ -382,7 +382,7 @@ module.exports = {
   'quotes inside attribute value #1': {
     data: '<div xxx=\'a"b\'/>',
     expected: [
-      { type: _T.TAG, name: 'div', start: 0, end: 16, selfclose: true, attributes: [
+      { type: _T.TAG, name: 'div', start: 0, end: 16, isSelfClosing: true, attributes: [
         { name: 'xxx', value: 'a"b', start: 5, end: 14, valueStart: 10 }
       ] }
     ]
@@ -391,7 +391,7 @@ module.exports = {
   'quotes inside attribute value #2': {
     data: '<div xxx="a\'b"\n/>',
     expected: [
-      { type: _T.TAG, name: 'div', start: 0, end: 17, selfclose: true, attributes: [
+      { type: _T.TAG, name: 'div', start: 0, end: 17, isSelfClosing: true, attributes: [
         { name: 'xxx', value: 'a\'b', start: 5, end: 14, valueStart: 10 }
       ] }
     ]
@@ -400,7 +400,7 @@ module.exports = {
   'brackets inside attribute value': {
     data: '<div xxx="</div>"/>',
     expected: [
-      { type: _T.TAG, name: 'div', start: 0, end: 19, selfclose: true, attributes: [
+      { type: _T.TAG, name: 'div', start: 0, end: 19, isSelfClosing: true, attributes: [
         { name: 'xxx', value: '</div>', start: 5, end: 17, valueStart: 10 }
       ] }
     ]
@@ -480,7 +480,7 @@ module.exports = {
 
   'whitespace after the tag name is ignored #1': {
     data: '<div\t\n\n  \n\t/>',
-    expected: [{ type: _T.TAG, name: 'div', end: 13, selfclose: true }]
+    expected: [{ type: _T.TAG, name: 'div', end: 13, isSelfClosing: true }]
   },
 
   'whitespace after the tag name is ignored #2': {
@@ -507,7 +507,7 @@ module.exports = {
     data: "<div a='1'/>",
     expected: [
       {
-        type: _T.TAG, name: 'div', start: 0, end: 12, selfclose: true, attributes: [
+        type: _T.TAG, name: 'div', start: 0, end: 12, isSelfClosing: true, attributes: [
           { name: 'a', value: '1', start: 5, end: 10, valueStart: 8 }
         ]
       },
@@ -518,7 +518,7 @@ module.exports = {
     data: '<div a="\'"/>',
     expected: [
       {
-        type: _T.TAG, name: 'div', start: 0, end: 12, selfclose: true, attributes: [
+        type: _T.TAG, name: 'div', start: 0, end: 12, isSelfClosing: true, attributes: [
           { name: 'a', value: "'", start: 5, end: 10, valueStart: 8 }
         ]
       }
@@ -529,7 +529,7 @@ module.exports = {
     data: '<div  a=1/>',
     expected: [
       {
-        type: _T.TAG, name: 'div', start: 0, end: 11, selfclose: true, attributes: [
+        type: _T.TAG, name: 'div', start: 0, end: 11, isSelfClosing: true, attributes: [
           { name: 'a', value: '1', start: 6, end: 9, valueStart: 8 }
         ]
       }
@@ -539,7 +539,7 @@ module.exports = {
   'attribute with no value must not include `startValue`': {
     data: '<div wierd/>',
     expected: [
-      { type: _T.TAG, name: 'div', start: 0, end: 12, selfclose: true, attributes: [
+      { type: _T.TAG, name: 'div', start: 0, end: 12, isSelfClosing: true, attributes: [
         { name: 'wierd', value: '', start: 5, end: 10 }
       ] }
     ]
@@ -579,7 +579,7 @@ module.exports = {
   'attributes with equal sign and no value #2': {
     data: '<div foo= />',
     expected: [
-      { type: _T.TAG, name: 'div', start: 0, end: 12, selfclose: true, attributes: [
+      { type: _T.TAG, name: 'div', start: 0, end: 12, isSelfClosing: true, attributes: [
         { name: 'foo', value: '', start: 5, end: 10 }
       ] }
     ]
@@ -588,7 +588,7 @@ module.exports = {
   'attributes with equal sign and no value #3': {
     data: '<div foo= bar=2 =baz=3 />',
     expected: [
-      { type: _T.TAG, name: 'div', start: 0, end: 25, selfclose: true, attributes: [
+      { type: _T.TAG, name: 'div', start: 0, end: 25, isSelfClosing: true, attributes: [
         { name: 'foo', value: 'bar=2', start: 5, end: 15, valueStart: 10 },
         { name: '=baz', value: '3', start: 16, end: 22, valueStart: 21 }
       ] }
@@ -609,7 +609,7 @@ module.exports = {
   'whitespace around unquoted attribute values is ignored': {
     data: '<div foo = bar />',
     expected: [
-      { type: _T.TAG, name: 'div', end: 17, selfclose: true, attributes: [
+      { type: _T.TAG, name: 'div', end: 17, isSelfClosing: true, attributes: [
         { name: 'foo', value: 'bar', start: 5, end: 14, valueStart: 11 }
       ] }
     ]
@@ -618,7 +618,7 @@ module.exports = {
   'whitespace after attributes with no value is ignored': {
     data: '<div bar\n />',
     expected: [
-      { type: _T.TAG, name: 'div', end: 12, selfclose: true, attributes: [
+      { type: _T.TAG, name: 'div', end: 12, isSelfClosing: true, attributes: [
         { name: 'bar', value: '', start: 5, end: 8 }
       ] }
     ]
@@ -627,7 +627,7 @@ module.exports = {
   'whitespace inside attribute values is preserved': {
     data: '<div bar="\n"/>',
     expected: [
-      { type: _T.TAG, name: 'div', end: 14, selfclose: true, attributes: [
+      { type: _T.TAG, name: 'div', end: 14, isSelfClosing: true, attributes: [
         { name: 'bar', value: '\n', start: 5, end: 12, valueStart: 10 }
       ] }
     ]
@@ -651,7 +651,7 @@ module.exports = {
   'attributes with invalid or non-standard names': {
     data: '<div ~a="" /b --c __d=""/>',
     expected: [
-      { type: _T.TAG, name: 'div', start: 0, end: 26, selfclose: true, attributes: [
+      { type: _T.TAG, name: 'div', start: 0, end: 26, isSelfClosing: true, attributes: [
         { name: '~a', value: '', start: 5, end: 10, valueStart: 9 },
         { name: 'b', value: '', start: 12, end: 13 },
         { name: '--c', value: '', start: 14, end: 17 },
@@ -696,7 +696,7 @@ module.exports = {
   'attributes with multiple "/" in the name': {
     data: '<div so////me/>',
     expected: [
-      { type: _T.TAG,  name: 'div', end: 15, selfclose: true, attributes: [
+      { type: _T.TAG,  name: 'div', end: 15, isSelfClosing: true, attributes: [
         { name: 'so', value: '', start: 5, end: 7 },
         { name: 'me', value: '', start: 11, end: 13 }
       ] }
@@ -717,7 +717,7 @@ module.exports = {
   'attributes with "/" in the value': {
     data: '<div/ some="/"/>',
     expected: [
-      { type: _T.TAG,  name: 'div', end: 16, selfclose: true, attributes: [
+      { type: _T.TAG,  name: 'div', end: 16, isSelfClosing: true, attributes: [
         { name: 'some', value: '/', start: 6, end: 14, valueStart: 12 }
       ] }
     ]
@@ -929,7 +929,7 @@ module.exports = {
   'self-closing script tag is recognized': {
     data: '<script src="foo.js" defer/>',
     expected: [
-      { type: _T.TAG,  name: 'script', start: 0, end: 28, selfclose: true, attributes: [
+      { type: _T.TAG,  name: 'script', start: 0, end: 28, isSelfClosing: true, attributes: [
         { name: 'src', value: 'foo.js', start: 8, end: 20, valueStart: 13 },
         { name: 'defer', value: '', start: 21, end: 26 }
       ] }
@@ -996,7 +996,7 @@ module.exports = {
   'self-closing style tags are recognized': {
     data: '<style type="text/css" />',
     expected: [
-      { type: _T.TAG,  name: 'style', start: 0, end: 25, selfclose: true, attributes: [
+      { type: _T.TAG,  name: 'style', start: 0, end: 25, isSelfClosing: true, attributes: [
         { name: 'type', value: 'text/css', start: 7, end: 22, valueStart: 13 }
       ] }
     ]
@@ -1006,7 +1006,7 @@ module.exports = {
     data: '<div><style />foo{top:0}</div>',
     expected: [
       { type: _T.TAG,  name: 'div', start: 0, end: 5 },
-      { type: _T.TAG,  name: 'style', start: 5, end: 14, selfclose: true },
+      { type: _T.TAG,  name: 'style', start: 5, end: 14, isSelfClosing: true },
       { type: _T.TEXT, text: 'foo{top:0}', start: 14, end: 24, expressions: [
         { text: 'top:0', start: 17, end: 24 }
       ] },
@@ -1069,7 +1069,7 @@ module.exports = {
 
   'tag names must be lowercased': {
     data: '<diV/>',
-    expected: [{ type: _T.TAG, name: 'div', start: 0, end: 6, selfclose: true }]
+    expected: [{ type: _T.TAG, name: 'div', start: 0, end: 6, isSelfClosing: true }]
   },
 
   'tag names must be lowercased #2': {
@@ -1083,7 +1083,7 @@ module.exports = {
   'preserves the case of attribute': {
     data: '<div dAta-xX="Yyy"/>',
     expected: [
-      { type: _T.TAG, name: 'div', start: 0, end: 20, selfclose: true, attributes: [
+      { type: _T.TAG, name: 'div', start: 0, end: 20, isSelfClosing: true, attributes: [
         { name: 'dAta-xX', value: 'Yyy', start: 5, end: 18, valueStart: 14 }
       ] }
     ]
@@ -1092,7 +1092,7 @@ module.exports = {
   'preserves the case of attribute #2': {
     data: '<div xXx="Yyy" XXX=yyY/>',
     expected: [
-      { type: _T.TAG, name: 'div', start: 0, end: 24, selfclose: true, attributes: [
+      { type: _T.TAG, name: 'div', start: 0, end: 24, isSelfClosing: true, attributes: [
         { name: 'xXx', value: 'Yyy', start: 5, end: 14, valueStart: 10 },
         { name: 'XXX', value: 'yyY', start: 15, end: 22, valueStart: 19 }
       ] }

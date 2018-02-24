@@ -145,7 +145,7 @@ Object.assign(RiotBuilder.prototype, {
 
     if (domNodes.isVoid(name)) return
 
-    if (node.selfclose) {
+    if (node.isSelfClosing) {
       this._output.push(`</${name}>`)
     } else {
       this._stack.push(name)
