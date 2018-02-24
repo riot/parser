@@ -20,18 +20,15 @@
  */
 import panic from './utils/panic'
 import { emptyStack, duplicatedNamedTag, unableToNestNamedTag } from './messages'
-import {isVoid} from 'dom-nodes'
 import addToCollection from './utils/add-to-collection'
-import { TEXT, TAG, PRIVATE_JAVASCRIPT, PUBLIC_JAVASCRIPT } from './node-types'
 import { RAW_TAGS } from './regex'
+import { TEXT, TAG, PRIVATE_JAVASCRIPT, PUBLIC_JAVASCRIPT } from './node-types'
 import {
-  SVG_NS,
   JAVASCRIPT_OUTPUT_NAME,
   CSS_OUTPUT_NAME,
   TEMPLATE_OUTPUT_NAME,
   JAVASCRIPT_TAG,
   STYLE_TAG,
-  SVG_TAG,
   DEFER_ATTR
 } from './constants'
 
@@ -118,12 +115,7 @@ const TREE_BUILDER_STRUCT = Object.seal({
 
   openTag(state, node) {
     const name = node.name
-    const ns = state.last.ns || (name === SVG_TAG ? SVG_NS : '')
     const attrs = node.attributes
-
-    if (attrs && !ns) {
-      attrs.forEach(a => { a.name = a.name.toLowerCase() })
-    }
 
     if (state.scryle) {
       panic(this.state.data, unableToNestNamedTag, node.start)
@@ -137,7 +129,7 @@ const TREE_BUILDER_STRUCT = Object.seal({
 
       state[name] = node
       // support selfclosing script (w/o text content)
-      if (!node.selfclose) {
+      if (!node.isSelfClosing) {
         state.scryle = state[name]
       }
     } else {
@@ -146,23 +138,20 @@ const TREE_BUILDER_STRUCT = Object.seal({
       // have a `nodes` property.
       const lastTag = state.last
       const newNode = node
+
       lastTag.nodes.push(newNode)
-      if (lastTag.raw || RAW_TAGS.test(name)) {
-        newNode.raw = true
+
+      if (lastTag.isRaw || RAW_TAGS.test(name)) {
+        node.isRaw = true
       }
 
-      if (ns) {
-        newNode.ns = ns
-      }
-
-      if (isVoid(name)) {
-        newNode.void = true
-      } else if (!node.selfclose) {
+      if (!node.isSelfClosing && !node.isVoid) {
         state.stack.push(lastTag)
         newNode.nodes = []
         state.last = newNode
       }
     }
+
     if (attrs) {
       this.attrs(attrs)
     }
@@ -193,7 +182,7 @@ const TREE_BUILDER_STRUCT = Object.seal({
     if (!scryle) {
       // state.last always have a nodes property
       const parent = state.last
-      const pack = this.compact && !parent.raw
+      const pack = this.compact && !parent.isRaw
       if (pack && empty) {
         return
       }
@@ -217,20 +206,20 @@ const TREE_BUILDER_STRUCT = Object.seal({
           expr.prefix = code[0]
           code = code.substr(1)
         }
-        parts.push(this._tt(node, text, pack), escapeReturn(escapeSlashes(code).trim()))
+        parts.push(this.sanitise(node, text, pack), escapeReturn(escapeSlashes(code).trim()))
         pos = expr.end - start
       }
       if ((pos += start) < node.end) {
-        parts.push(this._tt(node, source.slice(pos), pack))
+        parts.push(this.sanitise(node, source.slice(pos), pack))
       }
     } else {
-      parts[0] = this._tt(node, source, pack)
+      parts[0] = this.sanitise(node, source, pack)
     }
 
     node.parts = parts.filter(p => p) // remove the empty strings
   },
   // unescape escaped brackets and split prefixes of expressions
-  _tt(node, text, pack) {
+  sanitise(node, text, pack) {
     let rep = node.unescape
     if (rep) {
       let idx = 0

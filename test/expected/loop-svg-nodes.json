@@ -4,19 +4,20 @@
     "name": "loop-svg-nodes",
     "start": 0,
     "end": 318,
+    "isCustom": true,
     "nodes": [
       {
         "type": 1,
         "name": "svg",
         "start": 19,
         "end": 128,
-        "ns": "http://www.w3.org/2000/svg",
         "nodes": [
           {
             "type": 1,
             "name": "circle",
             "start": 29,
             "end": 119,
+            "isVoid": true,
             "attributes": [
               {
                 "name": "each",
@@ -90,9 +91,7 @@
                 ]
               }
             ],
-            "selfclose": true,
-            "ns": "http://www.w3.org/2000/svg",
-            "void": true
+            "isSelfClosing": true
           }
         ]
       },
@@ -125,7 +124,7 @@
         "name": "loop-svg-nodes",
         "start": 188,
         "end": 205,
-        "selfclose": true
+        "isSelfClosing": true
       }
     ]
   },

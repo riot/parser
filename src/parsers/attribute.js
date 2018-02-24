@@ -1,5 +1,6 @@
 import execFromPos from '../utils/exec-from-pos'
 import getChunk from '../utils/get-chunk'
+import { isBoolAttribute } from 'dom-nodes'
 import addToCollection from '../utils/add-to-collection'
 import { TEXT, ATTR } from '../node-types'
 import { ATTR_START } from '../regex'
@@ -27,7 +28,7 @@ export function attr(store) {
     // closing char found. If this is a self-closing tag with the name of the
     // Root tag, we need decrement the counter as we are changing mode.
     store.pos = tag.end = _CH.lastIndex
-    if (tag.selfclose) {
+    if (tag.isSelfClosing) {
       store.scryle = null // allow selfClosing script/style tags
       if (root && root.name === tag.name) {
         store.count-- // "pop" root tag
@@ -36,10 +37,10 @@ export function attr(store) {
     return TEXT
   case ch[0] === '/':
     store.pos = _CH.lastIndex // maybe. delegate the validation
-    tag.selfclose = true // the next loop
+    tag.isSelfClosing = true // the next loop
     break
   default:
-    delete tag.selfclose // ensure unmark as selfclosing tag
+    delete tag.isSelfClosing // ensure unmark as selfclosing tag
     setAttribute(store, ch.index, tag)
   }
 
@@ -83,7 +84,16 @@ function setAttribute(store, pos, tag) {
  */
 function parseAttribute(store, match, start, end) {
   const { data } = store
-  const attr = { name: match[1], value: '', start, end }
+  const attr = {
+    name: match[1],
+    value: '',
+    start,
+    end
+  }
+
+  if (isBoolAttribute(attr.name)) {
+    attr.isBoolean = true
+  }
 
   let quote = match[2] // first letter of value or nothing
 

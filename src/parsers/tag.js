@@ -1,6 +1,7 @@
 import execFromPos from '../utils/exec-from-pos'
 import flush from '../utils/flush-parser-store'
 import { TEXT, ATTR, TAG } from '../node-types'
+import { isVoid, isCustom } from 'dom-nodes'
 import { TAG_2C, TAG_NAME, RE_SCRYLE } from '../regex'
 import { pushText } from './text'
 import { comment } from './comment'
@@ -42,7 +43,17 @@ export function tag(store) {
 export function pushTag(store, name, start, end) {
   const root = store.root
   const last = { type: TAG, name, start, end }
+
+  if (isCustom(name) && !root) {
+    last.isCustom = true
+  }
+
+  if (isVoid(name)) {
+    last.isVoid = true
+  }
+
   store.pos = end
+
   if (root) {
     if (name === root.name) {
       store.count++

@@ -4,6 +4,7 @@
     "name": "content",
     "start": 0,
     "end": 559,
+    "isCustom": true,
     "attributes": [
       {
         "name": "class",
@@ -34,7 +35,7 @@
             ]
           },
           {
-            "name": "align",
+            "name": "Align",
             "value": "center",
             "start": 47,
             "end": 61,
@@ -74,9 +75,10 @@
             "name": "img",
             "start": 92,
             "end": 127,
+            "isVoid": true,
             "attributes": [
               {
-                "name": "src",
+                "name": "Src",
                 "value": "{box.image}",
                 "start": 97,
                 "end": 112,
@@ -103,8 +105,7 @@
                 ]
               }
             ],
-            "selfclose": true,
-            "void": true
+            "isSelfClosing": true
           },
           {
             "type": 1,
@@ -172,7 +173,7 @@
                 "name": "pre",
                 "start": 215,
                 "end": 271,
-                "raw": true,
+                "isRaw": true,
                 "nodes": [
                   {
                     "type": 3,
@@ -188,7 +189,7 @@
                     "name": "span",
                     "start": 241,
                     "end": 258,
-                    "raw": true,
+                    "isRaw": true,
                     "nodes": [
                       {
                         "type": 3,
@@ -221,7 +222,7 @@
         "name": "p",
         "start": 294,
         "end": 298,
-        "selfclose": true
+        "isSelfClosing": true
       }
     ]
   },

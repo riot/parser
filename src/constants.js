@@ -9,7 +9,6 @@ export const JAVASCRIPT_TAG = 'script'
 export const STYLE_TAG = 'style'
 export const TEXTAREA_TAG = 'textarea'
 export const PRE_TAG = 'textarea'
-export const SVG_TAG = 'svg'
 
 export const DEFER_ATTR = 'defer'
 

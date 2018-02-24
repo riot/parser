@@ -49,12 +49,388 @@ const unclosedTemplateLiteral = 'Unclosed ES6 template literal';
 const emptyStack = 'Stack is empty.';
 const unableToNestNamedTag = 'Unable to nest named tags';
 const unexpectedEndOfFile = 'Unexpected end of file.';
-
 const unclosedComment = 'Unclosed comment.';
 const unclosedNamedBlock = 'Unclosed "%1" block.';
 const duplicatedNamedTag = 'Duplicate tag "<%1>".';
-
 const unableToParseExportDefault = 'Unable to parse your tag \'export default\' contents.';
+
+/**
+ * Add an item into a collection, if the collection is not an array
+ * we create one and add the item to it
+ * @param   {array} collection - target collection
+ * @param   {*} item - item to add to the collection
+ * @returns {array} array containing the new item added to it
+ */
+function addToCollection(collection = [], item) {
+  collection.push(item);
+  return collection
+}
+
+/**
+ * Matches the start of valid tags names; used with the first 2 chars after the `'<'`.
+ * @const
+ * @private
+ */
+const TAG_2C = /^(?:\/[a-zA-Z]|[a-zA-Z][^\s>/]?)/;
+/**
+ * Matches valid tags names AFTER the validation with `TAG_2C`.
+ * $1: tag name including any `'/'`, $2: non self-closing brace (`>`) w/o attributes.
+ * @const
+ * @private
+ */
+const TAG_NAME = /(\/?[^\s>/]+)\s*(>)?/g;
+/**
+ * Matches an attribute name-value pair (both can be empty).
+ * $1: attribute name, $2: value including any quotes.
+ * @const
+ * @private
+ */
+const ATTR_START = /(\S[^>/=\s]*)(?:\s*=\s*([^>/])?)?/g;
+/**
+ * Matches the closing tag of a `script` and `style` block.
+ * Used by parseText fo find the end of the block.
+ * @const
+ * @private
+ */
+const RE_SCRYLE = {
+  script: /<\/script\s*>/gi,
+  style: /<\/style\s*>/gi,
+  textarea: /<\/textarea\s*>/gi
+};
+
+/**
+ * Matches the beginning of an `export default {}` expression
+ * @const
+ * @private
+ */
+const EXPORT_DEFAULT = /export(?:\W)+default(?:\s+)?{/g;
+
+// Do not touch text content inside this tags
+const RAW_TAGS = /^\/?(?:pre|textarea)$/;
+
+/**
+ * Not all the types are handled in this module.
+ *
+ * @enum {number}
+ * @readonly
+ */
+const TAG = 1; /* TAG */
+const ATTR = 2; /* ATTR */
+const TEXT = 3; /* TEXT */
+const CDATA = 4; /* CDATA */
+const COMMENT = 8; /* COMMENT */
+const DOCUMENT = 9; /* DOCUMENT */
+const DOCTYPE = 10; /* DOCTYPE */
+const DOCUMENT_FRAGMENT = 11; /* DOCUMENT_FRAGMENT */
+
+// Javascript logic nodes
+//
+const PRIVATE_JAVASCRIPT = 20; /* Javascript private code */
+const PUBLIC_JAVASCRIPT = 21; /* Javascript public methods */
+
+
+
+var types = Object.freeze({
+	TAG: TAG,
+	ATTR: ATTR,
+	TEXT: TEXT,
+	CDATA: CDATA,
+	COMMENT: COMMENT,
+	DOCUMENT: DOCUMENT,
+	DOCTYPE: DOCTYPE,
+	DOCUMENT_FRAGMENT: DOCUMENT_FRAGMENT,
+	PRIVATE_JAVASCRIPT: PRIVATE_JAVASCRIPT,
+	PUBLIC_JAVASCRIPT: PUBLIC_JAVASCRIPT
+});
+
+const JAVASCRIPT_OUTPUT_NAME = 'javascript';
+const CSS_OUTPUT_NAME = 'css';
+const TEMPLATE_OUTPUT_NAME = 'template';
+
+// Tag names
+const JAVASCRIPT_TAG = 'script';
+const STYLE_TAG = 'style';
+const TEXTAREA_TAG = 'textarea';
+
+const DEFER_ATTR = 'defer';
+
+/*---------------------------------------------------------------------
+ * Tree builder for the riot tag parser.
+ *
+ * The output has a root property and separate arrays for `html`, `css`,
+ * and `js` tags.
+ *
+ * The root tag is included as first element in the `html` array.
+ * Script tags marked with "defer" are included in `html` instead `js`.
+ *
+ * - Mark SVG tags
+ * - Mark raw tags
+ * - Mark void tags
+ * - Split prefixes from expressions
+ * - Unescape escaped brackets and escape EOLs and backslashes
+ * - Compact whitespace (option `compact`) for non-raw tags
+ * - Create an array `parts` for text nodes and attributes
+ *
+ * Throws on unclosed tags or closing tags without start tag.
+ * Selfclosing and void tags has no nodes[] property.
+ */
+
+/**
+ * Escape the carriage return and the line feed from a string
+ * @param   {string} string - input string
+ * @returns {string} output string escaped
+ */
+function escapeReturn(string) {
+  return string
+    .replace(/\r/g, '\\r')
+    .replace(/\n/g, '\\n')
+}
+
+/**
+ * Escape double slashes in a string
+ * @param   {string} string - input string
+ * @returns {string} output string escaped
+ */
+function escapeSlashes(string) {
+  return string.replace(/\\/g, '\\\\')
+}
+
+/**
+ * Replace the multiple spaces with only one
+ * @param   {string} string - input string
+ * @returns {string} string without trailing spaces
+ */
+function cleanSpaces(string) {
+  return string.replace(/\s+/g, ' ')
+}
+
+const TREE_BUILDER_STRUCT = Object.seal({
+  get() {
+    const state = this.state;
+    // The real root tag is in state.root.nodes[0]
+    return {
+      [TEMPLATE_OUTPUT_NAME]: state.root.nodes[0],
+      [CSS_OUTPUT_NAME]: state[STYLE_TAG],
+      [JAVASCRIPT_OUTPUT_NAME]: state[JAVASCRIPT_TAG],
+    }
+  },
+
+  /**
+  * Process the current tag or text.
+  * @param {Object} node - Raw pseudo-node from the parser
+  */
+  push(node) {
+    const state = this.state;
+
+    switch (node.type) {
+    case TEXT:
+      this.pushText(state, node);
+      break
+    case TAG: {
+      const name = node.name;
+      if (name[0] === '/') {
+        this.closeTag(state, node, name);
+      } else {
+        this.openTag(state, node);
+      }
+      break
+    }
+    case PRIVATE_JAVASCRIPT:
+    case PUBLIC_JAVASCRIPT:
+      state[JAVASCRIPT_TAG].nodes = addToCollection(state[JAVASCRIPT_TAG].nodes, node);
+      break
+    }
+  },
+  closeTag(state, node) {
+    const last = state.scryle || state.last;
+
+    last.end = node.end;
+
+    if (state.scryle) {
+      state.scryle = null;
+    } else {
+      if (!state.stack[0]) {
+        panic(this.state.data, emptyStack, last.start);
+      }
+      state.last = state.stack.pop();
+    }
+  },
+
+  openTag(state, node) {
+    const name = node.name;
+    const attrs = node.attributes;
+
+    if (state.scryle) {
+      panic(this.state.data, unableToNestNamedTag, node.start);
+    }
+
+    if ([JAVASCRIPT_TAG, STYLE_TAG].includes(name) && !this.deferred(node, attrs)) {
+      // Only accept one of each
+      if (state[name]) {
+        panic(this.state.data, duplicatedNamedTag.replace('%1', name), node.start);
+      }
+
+      state[name] = node;
+      // support selfclosing script (w/o text content)
+      if (!node.isSelfClosing) {
+        state.scryle = state[name];
+      }
+    } else {
+      // state.last holds the last tag pushed in the stack and this are
+      // non-void, non-empty tags, so we are sure the `lastTag` here
+      // have a `nodes` property.
+      const lastTag = state.last;
+      const newNode = node;
+
+      lastTag.nodes.push(newNode);
+
+      if (lastTag.isRaw || RAW_TAGS.test(name)) {
+        node.isRaw = true;
+      }
+
+      if (!node.isSelfClosing && !node.isVoid) {
+        state.stack.push(lastTag);
+        newNode.nodes = [];
+        state.last = newNode;
+      }
+    }
+
+    if (attrs) {
+      this.attrs(attrs);
+    }
+  },
+  deferred(node, attributes) {
+    if (attributes) {
+      for (let i = 0; i < attributes.length; i++) {
+        if (attributes[i].name === DEFER_ATTR) {
+          attributes.splice(i, 1);
+          return true
+        }
+      }
+    }
+    return false
+  },
+  attrs(attributes) {
+    for (let i = 0; i < attributes.length; i++) {
+      const attr = attributes[i];
+      if (attr.value) {
+        this.split(attr, attr.value, attr.valueStart, true);
+      }
+    }
+  },
+  pushText(state, node) {
+    const text = node.text;
+    const empty = !/\S/.test(text);
+    const scryle = state.scryle;
+    if (!scryle) {
+      // state.last always have a nodes property
+      const parent = state.last;
+      const pack = this.compact && !parent.isRaw;
+      if (pack && empty) {
+        return
+      }
+      this.split(node, text, node.start, pack);
+      parent.nodes.push(node);
+    } else if (!empty) {
+      scryle.text = node;
+    }
+  },
+  split(node, source, start, pack) {
+    const expressions = node.expressions;
+    const parts = [];
+
+    if (expressions) {
+      let pos = 0;
+      for (let i = 0; i < expressions.length; i++) {
+        const expr = expressions[i];
+        const text = source.slice(pos, expr.start - start);
+        let code = expr.text;
+        if (this.prefixes.indexOf(code[0]) !== -1) {
+          expr.prefix = code[0];
+          code = code.substr(1);
+        }
+        parts.push(this.sanitise(node, text, pack), escapeReturn(escapeSlashes(code).trim()));
+        pos = expr.end - start;
+      }
+      if ((pos += start) < node.end) {
+        parts.push(this.sanitise(node, source.slice(pos), pack));
+      }
+    } else {
+      parts[0] = this.sanitise(node, source, pack);
+    }
+
+    node.parts = parts.filter(p => p); // remove the empty strings
+  },
+  // unescape escaped brackets and split prefixes of expressions
+  sanitise(node, text, pack) {
+    let rep = node.unescape;
+    if (rep) {
+      let idx = 0;
+      rep = `\\${rep}`;
+      while ((idx = text.indexOf(rep, idx)) !== -1) {
+        text = text.substr(0, idx) + text.substr(idx + 1);
+        idx++;
+      }
+    }
+
+    text = escapeSlashes(text);
+
+    return pack ? cleanSpaces(text) : escapeReturn(text)
+  }
+});
+
+function createTreeBuilder(data, options) {
+  const root = {
+    type: TAG,
+    name: '',
+    start: 0,
+    end: 0,
+    nodes: []
+  };
+
+  return Object.assign(Object.create(TREE_BUILDER_STRUCT), {
+    compact: options.compact !== false,
+    prefixes: '?=^',
+    state: {
+      last: root,
+      stack: [],
+      scryle: null,
+      root,
+      style: null,
+      script: null,
+      data
+    }
+  })
+}
+
+/**
+ * Function to curry any javascript method
+ * @param   {Function}  fn - the target function we want to curry
+ * @param   {...[args]} acc - initial arguments
+ * @returns {Function|*} it will return a function until the target function
+ *                       will receive all of its arguments
+ */
+function curry(fn, ...acc) {
+  return (...args) => {
+    args = [...acc, ...args];
+
+    return args.length < fn.length ?
+      curry(fn, ...args) :
+      fn(...args)
+  }
+}
+
+/**
+ * Run RegExp.exec starting from a specific position
+ * @param   {RegExp} re - regex
+ * @param   {number} pos - last index position
+ * @param   {string} string - regex target
+ * @returns {array} regex result
+ */
+function execFromPos(re, pos, string) {
+  re.lastIndex = pos;
+  return re.exec(string)
+}
 
 /**
  * SVG void elements that cannot be auto-closed and shouldn't contain child nodes.
@@ -414,30 +790,6 @@ function isVoid(tag) {
 }
 
 /**
- * True if it's a known HTML tag
- * @param   {String}  tag - test tag
- * @returns {Boolean}
- * @example
- * isHtml('img') // true
- * isHtml('IMG') // true
- * isHtml('Img') // true
- * isHtml('path') // false
- */
-
-
-/**
- * True if it's a known SVG tag
- * @param   {String}  tag - test tag
- * @returns {Boolean}
- * @example
- * isSvg('g') // true
- * isSvg('radialGradient') // true
- * isSvg('radialgradient') // true
- * isSvg('div') // false
- */
-
-
-/**
  * True if it's not SVG nor a HTML known tag
  * @param   {String}  tag - test tag
  * @returns {Boolean}
@@ -445,7 +797,12 @@ function isVoid(tag) {
  * isCustom('my-component') // true
  * isCustom('div') // false
  */
-
+function isCustom(tag) {
+  return [
+    HTML_TAGS_RE,
+    SVG_TAGS_RE
+  ].every(l => !l.test(tag))
+}
 
 /**
  * True if it's a boolean attribute
@@ -455,394 +812,8 @@ function isVoid(tag) {
  * isBoolAttribute('selected') // true
  * isBoolAttribute('class') // false
  */
-
-/**
- * Add an item into a collection, if the collection is not an array
- * we create one and add the item to it
- * @param   {array} collection - target collection
- * @param   {*} item - item to add to the collection
- * @returns {array} array containing the new item added to it
- */
-function addToCollection(collection = [], item) {
-  collection.push(item);
-  return collection
-}
-
-/**
- * Not all the types are handled in this module.
- *
- * @enum {number}
- * @readonly
- */
-const TAG = 1; /* TAG */
-const ATTR = 2; /* ATTR */
-const TEXT = 3; /* TEXT */
-const CDATA = 4; /* CDATA */
-const COMMENT = 8; /* COMMENT */
-const DOCUMENT = 9; /* DOCUMENT */
-const DOCTYPE = 10; /* DOCTYPE */
-const DOCUMENT_FRAGMENT = 11; /* DOCUMENT_FRAGMENT */
-
-// Javascript logic nodes
-//
-const PRIVATE_JAVASCRIPT = 20; /* Javascript private code */
-const PUBLIC_JAVASCRIPT = 21; /* Javascript public methods */
-
-
-
-var types = Object.freeze({
-	TAG: TAG,
-	ATTR: ATTR,
-	TEXT: TEXT,
-	CDATA: CDATA,
-	COMMENT: COMMENT,
-	DOCUMENT: DOCUMENT,
-	DOCTYPE: DOCTYPE,
-	DOCUMENT_FRAGMENT: DOCUMENT_FRAGMENT,
-	PRIVATE_JAVASCRIPT: PRIVATE_JAVASCRIPT,
-	PUBLIC_JAVASCRIPT: PUBLIC_JAVASCRIPT
-});
-
-/**
- * Matches the start of valid tags names; used with the first 2 chars after the `'<'`.
- * @const
- * @private
- */
-const TAG_2C = /^(?:\/[a-zA-Z]|[a-zA-Z][^\s>/]?)/;
-/**
- * Matches valid tags names AFTER the validation with `TAG_2C`.
- * $1: tag name including any `'/'`, $2: non self-closing brace (`>`) w/o attributes.
- * @const
- * @private
- */
-const TAG_NAME = /(\/?[^\s>/]+)\s*(>)?/g;
-/**
- * Matches an attribute name-value pair (both can be empty).
- * $1: attribute name, $2: value including any quotes.
- * @const
- * @private
- */
-const ATTR_START = /(\S[^>/=\s]*)(?:\s*=\s*([^>/])?)?/g;
-/**
- * Matches the closing tag of a `script` and `style` block.
- * Used by parseText fo find the end of the block.
- * @const
- * @private
- */
-const RE_SCRYLE = {
-  script: /<\/script\s*>/gi,
-  style: /<\/style\s*>/gi,
-  textarea: /<\/textarea\s*>/gi
-};
-
-/**
- * Matches the beginning of an `export default {}` expression
- * @const
- * @private
- */
-const EXPORT_DEFAULT = /export(?:\W)+default(?:\s+)?{/g;
-
-// Do not touch text content inside this tags
-const RAW_TAGS = /^\/?(?:pre|textarea)$/;
-
-const SVG_NS = 'http://www.w3.org/2000/svg';
-
-const JAVASCRIPT_OUTPUT_NAME = 'javascript';
-const CSS_OUTPUT_NAME = 'css';
-const TEMPLATE_OUTPUT_NAME = 'template';
-
-// Tag names
-const JAVASCRIPT_TAG = 'script';
-const STYLE_TAG = 'style';
-const TEXTAREA_TAG = 'textarea';
-
-const SVG_TAG = 'svg';
-
-const DEFER_ATTR = 'defer';
-
-/*---------------------------------------------------------------------
- * Tree builder for the riot tag parser.
- *
- * The output has a root property and separate arrays for `html`, `css`,
- * and `js` tags.
- *
- * The root tag is included as first element in the `html` array.
- * Script tags marked with "defer" are included in `html` instead `js`.
- *
- * - Mark SVG tags
- * - Mark raw tags
- * - Mark void tags
- * - Split prefixes from expressions
- * - Unescape escaped brackets and escape EOLs and backslashes
- * - Compact whitespace (option `compact`) for non-raw tags
- * - Create an array `parts` for text nodes and attributes
- *
- * Throws on unclosed tags or closing tags without start tag.
- * Selfclosing and void tags has no nodes[] property.
- */
-/**
- * Escape the carriage return and the line feed from a string
- * @param   {string} string - input string
- * @returns {string} output string escaped
- */
-function escapeReturn(string) {
-  return string
-    .replace(/\r/g, '\\r')
-    .replace(/\n/g, '\\n')
-}
-
-/**
- * Escape double slashes in a string
- * @param   {string} string - input string
- * @returns {string} output string escaped
- */
-function escapeSlashes(string) {
-  return string.replace(/\\/g, '\\\\')
-}
-
-/**
- * Replace the multiple spaces with only one
- * @param   {string} string - input string
- * @returns {string} string without trailing spaces
- */
-function cleanSpaces(string) {
-  return string.replace(/\s+/g, ' ')
-}
-
-const TREE_BUILDER_STRUCT = Object.seal({
-  get() {
-    const state = this.state;
-    // The real root tag is in state.root.nodes[0]
-    return {
-      [TEMPLATE_OUTPUT_NAME]: state.root.nodes[0],
-      [CSS_OUTPUT_NAME]: state[STYLE_TAG],
-      [JAVASCRIPT_OUTPUT_NAME]: state[JAVASCRIPT_TAG],
-    }
-  },
-
-  /**
-  * Process the current tag or text.
-  * @param {Object} node - Raw pseudo-node from the parser
-  */
-  push(node) {
-    const state = this.state;
-
-    switch (node.type) {
-    case TEXT:
-      this.pushText(state, node);
-      break
-    case TAG: {
-      const name = node.name;
-      if (name[0] === '/') {
-        this.closeTag(state, node, name);
-      } else {
-        this.openTag(state, node);
-      }
-      break
-    }
-    case PRIVATE_JAVASCRIPT:
-    case PUBLIC_JAVASCRIPT:
-      state[JAVASCRIPT_TAG].nodes = addToCollection(state[JAVASCRIPT_TAG].nodes, node);
-      break
-    }
-  },
-  closeTag(state, node) {
-    const last = state.scryle || state.last;
-
-    last.end = node.end;
-
-    if (state.scryle) {
-      state.scryle = null;
-    } else {
-      if (!state.stack[0]) {
-        panic(this.state.data, emptyStack, last.start);
-      }
-      state.last = state.stack.pop();
-    }
-  },
-
-  openTag(state, node) {
-    const name = node.name;
-    const ns = state.last.ns || (name === SVG_TAG ? SVG_NS : '');
-    const attrs = node.attributes;
-
-    if (attrs && !ns) {
-      attrs.forEach(a => { a.name = a.name.toLowerCase(); });
-    }
-
-    if (state.scryle) {
-      panic(this.state.data, unableToNestNamedTag, node.start);
-    }
-
-    if ([JAVASCRIPT_TAG, STYLE_TAG].includes(name) && !this.deferred(node, attrs)) {
-      // Only accept one of each
-      if (state[name]) {
-        panic(this.state.data, duplicatedNamedTag.replace('%1', name), node.start);
-      }
-
-      state[name] = node;
-      // support selfclosing script (w/o text content)
-      if (!node.selfclose) {
-        state.scryle = state[name];
-      }
-    } else {
-      // state.last holds the last tag pushed in the stack and this are
-      // non-void, non-empty tags, so we are sure the `lastTag` here
-      // have a `nodes` property.
-      const lastTag = state.last;
-      const newNode = node;
-      lastTag.nodes.push(newNode);
-      if (lastTag.raw || RAW_TAGS.test(name)) {
-        newNode.raw = true;
-      }
-
-      if (ns) {
-        newNode.ns = ns;
-      }
-
-      if (isVoid(name)) {
-        newNode.void = true;
-      } else if (!node.selfclose) {
-        state.stack.push(lastTag);
-        newNode.nodes = [];
-        state.last = newNode;
-      }
-    }
-    if (attrs) {
-      this.attrs(attrs);
-    }
-  },
-  deferred(node, attributes) {
-    if (attributes) {
-      for (let i = 0; i < attributes.length; i++) {
-        if (attributes[i].name === DEFER_ATTR) {
-          attributes.splice(i, 1);
-          return true
-        }
-      }
-    }
-    return false
-  },
-  attrs(attributes) {
-    for (let i = 0; i < attributes.length; i++) {
-      const attr = attributes[i];
-      if (attr.value) {
-        this.split(attr, attr.value, attr.valueStart, true);
-      }
-    }
-  },
-  pushText(state, node) {
-    const text = node.text;
-    const empty = !/\S/.test(text);
-    const scryle = state.scryle;
-    if (!scryle) {
-      // state.last always have a nodes property
-      const parent = state.last;
-      const pack = this.compact && !parent.raw;
-      if (pack && empty) {
-        return
-      }
-      this.split(node, text, node.start, pack);
-      parent.nodes.push(node);
-    } else if (!empty) {
-      scryle.text = node;
-    }
-  },
-  split(node, source, start, pack) {
-    const expressions = node.expressions;
-    const parts = [];
-
-    if (expressions) {
-      let pos = 0;
-      for (let i = 0; i < expressions.length; i++) {
-        const expr = expressions[i];
-        const text = source.slice(pos, expr.start - start);
-        let code = expr.text;
-        if (this.prefixes.indexOf(code[0]) !== -1) {
-          expr.prefix = code[0];
-          code = code.substr(1);
-        }
-        parts.push(this._tt(node, text, pack), escapeReturn(escapeSlashes(code).trim()));
-        pos = expr.end - start;
-      }
-      if ((pos += start) < node.end) {
-        parts.push(this._tt(node, source.slice(pos), pack));
-      }
-    } else {
-      parts[0] = this._tt(node, source, pack);
-    }
-
-    node.parts = parts.filter(p => p); // remove the empty strings
-  },
-  // unescape escaped brackets and split prefixes of expressions
-  _tt(node, text, pack) {
-    let rep = node.unescape;
-    if (rep) {
-      let idx = 0;
-      rep = `\\${rep}`;
-      while ((idx = text.indexOf(rep, idx)) !== -1) {
-        text = text.substr(0, idx) + text.substr(idx + 1);
-        idx++;
-      }
-    }
-
-    text = escapeSlashes(text);
-
-    return pack ? cleanSpaces(text) : escapeReturn(text)
-  }
-});
-
-function createTreeBuilder(data, options) {
-  const root = {
-    type: TAG,
-    name: '',
-    start: 0,
-    end: 0,
-    nodes: []
-  };
-
-  return Object.assign(Object.create(TREE_BUILDER_STRUCT), {
-    compact: options.compact !== false,
-    prefixes: '?=^',
-    state: {
-      last: root,
-      stack: [],
-      scryle: null,
-      root,
-      style: null,
-      script: null,
-      data
-    }
-  })
-}
-
-/**
- * Function to curry any javascript method
- * @param   {Function}  fn - the target function we want to curry
- * @param   {...[args]} acc - initial arguments
- * @returns {Function|*} it will return a function until the target function
- *                       will receive all of its arguments
- */
-function curry(fn, ...acc) {
-  return (...args) => {
-    args = [...acc, ...args];
-
-    return args.length < fn.length ?
-      curry(fn, ...args) :
-      fn(...args)
-  }
-}
-
-/**
- * Run RegExp.exec starting from a specific position
- * @param   {RegExp} re - regex
- * @param   {number} pos - last index position
- * @param   {string} string - regex target
- * @returns {array} regex result
- */
-function execFromPos(re, pos, string) {
-  re.lastIndex = pos;
-  return re.exec(string)
+function isBoolAttribute(attribute) {
+  return BOOLEAN_ATTRIBUTES_RE.test(attribute)
 }
 
 /**
@@ -1198,7 +1169,7 @@ function parseExpressions(store, re) {
   const { data, options } = store;
   const { brackets } = options;
   const expressions = [];
-  let unescape, pos, match;
+  let unescape, pos, match;;;
 
   // Anything captured in $1 (closing quote or character) ends the loop...
   while ((match = re.exec(data)) && !match[1]) {
@@ -1489,7 +1460,17 @@ function tag(store) {
 function pushTag(store, name, start, end) {
   const root = store.root;
   const last = { type: TAG, name, start, end };
+
+  if (isCustom(name) && !root) {
+    last.isCustom = true;
+  }
+
+  if (isVoid(name)) {
+    last.isVoid = true;
+  }
+
   store.pos = end;
+
   if (root) {
     if (name === root.name) {
       store.count++;
@@ -1548,7 +1529,7 @@ function attr(store) {
     // closing char found. If this is a self-closing tag with the name of the
     // Root tag, we need decrement the counter as we are changing mode.
     store.pos = tag.end = _CH.lastIndex;
-    if (tag.selfclose) {
+    if (tag.isSelfClosing) {
       store.scryle = null; // allow selfClosing script/style tags
       if (root && root.name === tag.name) {
         store.count--; // "pop" root tag
@@ -1557,10 +1538,10 @@ function attr(store) {
     return TEXT
   case ch[0] === '/':
     store.pos = _CH.lastIndex; // maybe. delegate the validation
-    tag.selfclose = true; // the next loop
+    tag.isSelfClosing = true; // the next loop
     break
   default:
-    delete tag.selfclose; // ensure unmark as selfclosing tag
+    delete tag.isSelfClosing; // ensure unmark as selfclosing tag
     setAttribute(store, ch.index, tag);
   }
 
@@ -1604,7 +1585,16 @@ function setAttribute(store, pos, tag) {
  */
 function parseAttribute(store, match, start, end) {
   const { data } = store;
-  const attr = { name: match[1], value: '', start, end };
+  const attr = {
+    name: match[1],
+    value: '',
+    start,
+    end
+  };
+
+  if (isBoolAttribute(attr.name)) {
+    attr.isBoolean = true;
+  }
 
   let quote = match[2]; // first letter of value or nothing
 
@@ -1640,7 +1630,7 @@ function parseAttribute(store, match, start, end) {
  * @param   {Function} customBuilder - Tree builder factory
  * @returns {Function} Public Parser implementation.
  */
-function parser$1(options, customBuilder) {
+function parser(options, customBuilder) {
   const store = curry(createStore)(options, customBuilder || createTreeBuilder);
   return {
     parse: (data) => parse(store(data))
@@ -1740,7 +1730,7 @@ function eat(store, type) {
 const nodeTypes = types;
 
 exports.nodeTypes = nodeTypes;
-exports['default'] = parser$1;
+exports.default = parser;
 
 Object.defineProperty(exports, '__esModule', { value: true });
 
