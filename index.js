@@ -47,6 +47,7 @@ function flush(store) {
 const rootTagNotFound = 'Root tag not found.';
 const unclosedTemplateLiteral = 'Unclosed ES6 template literal';
 const emptyStack = 'Stack is empty.';
+const unableToNestNamedTag = 'Unable to nest named tags';
 const unexpectedEndOfFile = 'Unexpected end of file.';
 
 const unclosedComment = 'Unclosed comment.';
@@ -55,7 +56,129 @@ const duplicatedNamedTag = 'Duplicate tag "<%1>".';
 
 const unableToParseExportDefault = 'Unable to parse your tag \'export default\' contents.';
 
-const html = [
+/**
+ * SVG void elements that cannot be auto-closed and shouldn't contain child nodes.
+ * @const {Array}
+ */
+const VOID_SVG_TAGS_LIST = [
+  'circle',
+  'ellipse',
+  'line',
+  'path',
+  'polygon',
+  'polyline',
+  'rect',
+  'stop',
+  'use'
+];
+
+/**
+ * List of all the available svg tags
+ * @const {Array}
+ * @see {@link https://github.com/wooorm/svg-tag-names}
+ */
+const SVG_TAGS_LIST = [
+  'a',
+  'altGlyph',
+  'altGlyphDef',
+  'altGlyphItem',
+  'animate',
+  'animateColor',
+  'animateMotion',
+  'animateTransform',
+  'animation',
+  'audio',
+  'canvas',
+  'clipPath',
+  'color-profile',
+  'cursor',
+  'defs',
+  'desc',
+  'discard',
+  'feBlend',
+  'feColorMatrix',
+  'feComponentTransfer',
+  'feComposite',
+  'feConvolveMatrix',
+  'feDiffuseLighting',
+  'feDisplacementMap',
+  'feDistantLight',
+  'feDropShadow',
+  'feFlood',
+  'feFuncA',
+  'feFuncB',
+  'feFuncG',
+  'feFuncR',
+  'feGaussianBlur',
+  'feImage',
+  'feMerge',
+  'feMergeNode',
+  'feMorphology',
+  'feOffset',
+  'fePointLight',
+  'feSpecularLighting',
+  'feSpotLight',
+  'feTile',
+  'feTurbulence',
+  'filter',
+  'font',
+  'font-face',
+  'font-face-format',
+  'font-face-name',
+  'font-face-src',
+  'font-face-uri',
+  'foreignObject',
+  'g',
+  'glyph',
+  'glyphRef',
+  'handler',
+  'hatch',
+  'hatchpath',
+  'hkern',
+  'iframe',
+  'image',
+  'linearGradient',
+  'listener',
+  'marker',
+  'mask',
+  'mesh',
+  'meshgradient',
+  'meshpatch',
+  'meshrow',
+  'metadata',
+  'missing-glyph',
+  'mpath',
+  'pattern',
+  'prefetch',
+  'radialGradient',
+  'script',
+  'set',
+  'solidColor',
+  'solidcolor',
+  'style',
+  'svg',
+  'switch',
+  'symbol',
+  'tbreak',
+  'text',
+  'textArea',
+  'textPath',
+  'title',
+  'tref',
+  'tspan',
+  'unknown',
+  'video',
+  'view',
+  'vkern'
+].concat(VOID_SVG_TAGS_LIST).sort();
+
+/**
+ * HTML void elements that cannot be auto-closed and shouldn't contain child nodes.
+ * @type {Array}
+ * @see   {@link http://www.w3.org/TR/html-markup/syntax.html#syntax-elements}
+ * @see   {@link http://www.w3.org/TR/html5/syntax.html#void-elements}
+ */
+const VOID_HTML_TAGS_LIST = [
   'area',
   'base',
   'br',
@@ -73,37 +196,265 @@ const html = [
   'track',
   'wbr'
 ];
-const svg = [
-  'circle',
-  'ellipse',
-  'line',
-  'path',
-  'polygon',
-  'polyline',
-  'rect',
-  'stop',
-  'use'
+
+/**
+ * List of all the html tags
+ * @const {Array}
+ * @see {@link https://github.com/sindresorhus/html-tags}
+ */
+const HTML_TAGS_LIST = [
+  'a',
+  'abbr',
+  'address',
+  'article',
+  'aside',
+  'audio',
+  'b',
+  'bdi',
+  'bdo',
+  'blockquote',
+  'body',
+  'button',
+  'canvas',
+  'caption',
+  'cite',
+  'code',
+  'colgroup',
+  'data',
+  'datalist',
+  'dd',
+  'del',
+  'details',
+  'dfn',
+  'dialog',
+  'div',
+  'dl',
+  'dt',
+  'em',
+  'fieldset',
+  'figcaption',
+  'figure',
+  'footer',
+  'form',
+  'h1',
+  'h2',
+  'h3',
+  'h4',
+  'h5',
+  'h6',
+  'head',
+  'header',
+  'hgroup',
+  'html',
+  'i',
+  'iframe',
+  'ins',
+  'kbd',
+  'label',
+  'legend',
+  'li',
+  'main',
+  'map',
+  'mark',
+  'math',
+  'menu',
+  'meter',
+  'nav',
+  'noscript',
+  'object',
+  'ol',
+  'optgroup',
+  'option',
+  'output',
+  'p',
+  'picture',
+  'pre',
+  'progress',
+  'q',
+  'rb',
+  'rp',
+  'rt',
+  'rtc',
+  'ruby',
+  's',
+  'samp',
+  'script',
+  'section',
+  'select',
+  'slot',
+  'small',
+  'span',
+  'strong',
+  'style',
+  'sub',
+  'summary',
+  'sup',
+  'svg',
+  'table',
+  'tbody',
+  'td',
+  'template',
+  'textarea',
+  'tfoot',
+  'th',
+  'thead',
+  'time',
+  'title',
+  'tr',
+  'u',
+  'ul',
+  'var',
+  'video'
+].concat(VOID_HTML_TAGS_LIST).sort();
+
+/**
+ * Matches boolean HTML attributes in the riot tag definition.
+ * With a long list like this, a regex is faster than `[].indexOf` in most browsers.
+ * @const {RegExp}
+ * @see [attributes.md](https://github.com/riot/compiler/blob/dev/doc/attributes.md)
+ */
+const BOOLEAN_ATTRIBUTES_LIST = [
+  'disabled',
+  'visible',
+  'checked',
+  'readonly',
+  'required',
+  'allowfullscreen',
+  'autofocus',
+  'autoplay',
+  'compact',
+  'controls',
+  'default',
+  'formnovalidate',
+  'hidden',
+  'ismap',
+  'itemscope',
+  'loop',
+  'multiple',
+  'muted',
+  'noresize',
+  'noshade',
+  'novalidate',
+  'nowrap',
+  'open',
+  'reversed',
+  'seamless',
+  'selected',
+  'sortable',
+  'truespeed',
+  'typemustmatch'
 ];
-var voidTags = {
-  /**
-   * HTML void elements that cannot be auto-closed and shouldn't contain child nodes.
-   *
-   * basefont, bgsound, command, frame, isindex, nextid, nobr are not html5 elements.
-   *
-   * @const {Array.<string>}
-   * @see   {@link http://www.w3.org/TR/html-markup/syntax.html#syntax-elements}
-   * @see   {@link http://www.w3.org/TR/html5/syntax.html#void-elements}
-   */
-  html,
-  /**
-   * SVG void elements that cannot be auto-closed and shouldn't contain child nodes.
-   *
-   * @const {Array.<string>}
-   */
-  svg,
-  // Regex to match all of them
-  regex: new RegExp(`^/?(?:${html.join('|')}|${svg.join('|')})$`, 'i')
+
+/**
+ * Join a list of items with the pipe symbol (usefull for regex list concatenation)
+ * @private
+ * @param   {Array} list - list of strings
+ * @returns {String} the list received joined with pipes
+ */
+function joinWithPipe(list) {
+  return list.join('|')
 }
+
+/**
+ * Convert list of strings to regex in order to test against it ignoring the cases
+ * @private
+ * @param   {...Array} lists - array of strings
+ * @returns {RegExp} regex that will match all the strings in the array received ignoring the cases
+ */
+function listsToRegex(...lists) {
+  return new RegExp(`^/?(?:${joinWithPipe(lists.map(joinWithPipe))})$`, 'i')
+}
+
+/**
+ * Regex matching all the html tags ignoring the cases
+ * @const {RegExp}
+ */
+const HTML_TAGS_RE = listsToRegex(HTML_TAGS_LIST);
+
+/**
+ * Regex matching all the svg tags ignoring the cases
+ * @const {RegExp}
+ */
+const SVG_TAGS_RE = listsToRegex(SVG_TAGS_LIST);
+
+/**
+ * Regex matching all the void html tags ignoring the cases
+ * @const {RegExp}
+ */
+const VOID_HTML_TAGS_RE =  listsToRegex(VOID_HTML_TAGS_LIST);
+
+/**
+ * Regex matching all the void svg tags ignoring the cases
+ * @const {RegExp}
+ */
+const VOID_SVG_TAGS_RE =  listsToRegex(VOID_SVG_TAGS_LIST);
+
+/**
+ * Regex matching all the boolean attributes
+ * @const {RegExp}
+ */
+const BOOLEAN_ATTRIBUTES_RE =  listsToRegex(BOOLEAN_ATTRIBUTES_LIST);
+
+/**
+ * True if it's a self closing tag
+ * @param   {String}  tag - test tag
+ * @returns {Boolean}
+ * @example
+ * isVoid('meta') // true
+ * isVoid('circle') // true
+ * isVoid('IMG') // true
+ * isVoid('div') // false
+ * isVoid('mask') // false
+ */
+function isVoid(tag) {
+  return [
+    VOID_HTML_TAGS_RE,
+    VOID_SVG_TAGS_RE
+  ].some(r => r.test(tag))
+}
+
+/**
+ * True if it's a known HTML tag
+ * @param   {String}  tag - test tag
+ * @returns {Boolean}
+ * @example
+ * isHtml('img') // true
+ * isHtml('IMG') // true
+ * isHtml('Img') // true
+ * isHtml('path') // false
+ */
+
+
+/**
+ * True if it's a known SVG tag
+ * @param   {String}  tag - test tag
+ * @returns {Boolean}
+ * @example
+ * isSvg('g') // true
+ * isSvg('radialGradient') // true
+ * isSvg('radialgradient') // true
+ * isSvg('div') // false
+ */
+
+
+/**
+ * True if it's not SVG nor a HTML known tag
+ * @param   {String}  tag - test tag
+ * @returns {Boolean}
+ * @example
+ * isCustom('my-component') // true
+ * isCustom('div') // false
+ */
+
+
+/**
+ * True if it's a boolean attribute
+ * @param   {String} attribute - test attribute
+ * @returns {Boolean}
+ * @example
+ * isBoolAttribute('selected') // true
+ * isBoolAttribute('class') // false
+ */
 
 /**
  * Add an item into a collection, if the collection is not an array
@@ -139,7 +490,7 @@ const PUBLIC_JAVASCRIPT = 21; /* Javascript public methods */
 
 
 
-var _nodeTypes = Object.freeze({
+var types = Object.freeze({
 	TAG: TAG,
 	ATTR: ATTR,
 	TEXT: TEXT,
@@ -264,8 +615,8 @@ const TREE_BUILDER_STRUCT = Object.seal({
     // The real root tag is in state.root.nodes[0]
     return {
       [TEMPLATE_OUTPUT_NAME]: state.root.nodes[0],
-      [CSS_OUTPUT_NAME]: state.style,
-      [JAVASCRIPT_OUTPUT_NAME]: state.script,
+      [CSS_OUTPUT_NAME]: state[STYLE_TAG],
+      [JAVASCRIPT_OUTPUT_NAME]: state[JAVASCRIPT_TAG],
     }
   },
 
@@ -295,7 +646,7 @@ const TREE_BUILDER_STRUCT = Object.seal({
       break
     }
   },
-  closeTag(state, node, name) { // eslint-disable-line
+  closeTag(state, node) {
     const last = state.scryle || state.last;
 
     last.end = node.end;
@@ -314,14 +665,21 @@ const TREE_BUILDER_STRUCT = Object.seal({
     const name = node.name;
     const ns = state.last.ns || (name === SVG_TAG ? SVG_NS : '');
     const attrs = node.attributes;
+
     if (attrs && !ns) {
       attrs.forEach(a => { a.name = a.name.toLowerCase(); });
     }
+
+    if (state.scryle) {
+      panic(this.state.data, unableToNestNamedTag, node.start);
+    }
+
     if ([JAVASCRIPT_TAG, STYLE_TAG].includes(name) && !this.deferred(node, attrs)) {
       // Only accept one of each
       if (state[name]) {
         panic(this.state.data, duplicatedNamedTag.replace('%1', name), node.start);
       }
+
       state[name] = node;
       // support selfclosing script (w/o text content)
       if (!node.selfclose) {
@@ -337,14 +695,12 @@ const TREE_BUILDER_STRUCT = Object.seal({
       if (lastTag.raw || RAW_TAGS.test(name)) {
         newNode.raw = true;
       }
-      let voids;
+
       if (ns) {
         newNode.ns = ns;
-        voids = voidTags.svg;
-      } else {
-        voids = voidTags.html;
       }
-      if (voids.indexOf(name) !== -1) {
+
+      if (isVoid(name)) {
         newNode.void = true;
       } else if (!node.selfclose) {
         state.stack.push(lastTag);
@@ -1381,11 +1737,10 @@ function eat(store, type) {
 /**
  * The nodeTypes definition
  */
-const nodeTypes = _nodeTypes;
+const nodeTypes = types;
 
 exports.nodeTypes = nodeTypes;
 exports['default'] = parser$1;
-exports.voidTags = voidTags;
 
 Object.defineProperty(exports, '__esModule', { value: true });
 
