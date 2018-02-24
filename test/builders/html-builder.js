@@ -4,7 +4,7 @@
  */
 
 const parser = require('../../')
-const VOID_TAGS = parser.voidTags
+const domNodes = require('dom-nodes')
 const T = parser.nodeTypes
 // Do not touch text content inside this tags
 const R_PRE = /^\/?(?:pre|textarea|script|style)$/
@@ -87,8 +87,8 @@ Object.assign(HtmlBuilder.prototype, {
   openTag(node) {
     const name   = node.name
     const allTag = [name]
-    const isVoid = VOID_TAGS.regex.test(name)
-    const slash  = isVoid && VOID_TAGS.svg.includes(name) ? '/' : ''
+    const isVoid = domNodes.isVoid(name)
+    const slash  = isVoid && domNodes.isSvg(name) ? '/' : ''
 
     if (node.attributes) {
       node.attributes.forEach(a => {

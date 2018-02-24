@@ -58,6 +58,7 @@
     "skip-regex": "^0.3.1"
   },
   "dependencies": {
-    "curri": "^1.0.0"
+    "curri": "^1.0.0",
+    "dom-nodes": "^1.0.0"
   }
 }

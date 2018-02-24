@@ -19,8 +19,8 @@
  * Selfclosing and void tags has no nodes[] property.
  */
 import panic from './utils/panic'
-import { emptyStack, duplicatedNamedTag } from './messages'
-import voidTags from './void-tags'
+import { emptyStack, duplicatedNamedTag, unableToNestNamedTag } from './messages'
+import {isVoid} from 'dom-nodes'
 import addToCollection from './utils/add-to-collection'
 import { TEXT, TAG, PRIVATE_JAVASCRIPT, PUBLIC_JAVASCRIPT } from './node-types'
 import { RAW_TAGS } from './regex'
@@ -70,8 +70,8 @@ const TREE_BUILDER_STRUCT = Object.seal({
     // The real root tag is in state.root.nodes[0]
     return {
       [TEMPLATE_OUTPUT_NAME]: state.root.nodes[0],
-      [CSS_OUTPUT_NAME]: state.style,
-      [JAVASCRIPT_OUTPUT_NAME]: state.script,
+      [CSS_OUTPUT_NAME]: state[STYLE_TAG],
+      [JAVASCRIPT_OUTPUT_NAME]: state[JAVASCRIPT_TAG],
     }
   },
 
@@ -101,7 +101,7 @@ const TREE_BUILDER_STRUCT = Object.seal({
       break
     }
   },
-  closeTag(state, node, name) { // eslint-disable-line
+  closeTag(state, node) {
     const last = state.scryle || state.last
 
     last.end = node.end
@@ -120,14 +120,21 @@ const TREE_BUILDER_STRUCT = Object.seal({
     const name = node.name
     const ns = state.last.ns || (name === SVG_TAG ? SVG_NS : '')
     const attrs = node.attributes
+
     if (attrs && !ns) {
       attrs.forEach(a => { a.name = a.name.toLowerCase() })
     }
+
+    if (state.scryle) {
+      panic(this.state.data, unableToNestNamedTag, node.start)
+    }
+
     if ([JAVASCRIPT_TAG, STYLE_TAG].includes(name) && !this.deferred(node, attrs)) {
       // Only accept one of each
       if (state[name]) {
         panic(this.state.data, duplicatedNamedTag.replace('%1', name), node.start)
       }
+
       state[name] = node
       // support selfclosing script (w/o text content)
       if (!node.selfclose) {
@@ -143,14 +150,12 @@ const TREE_BUILDER_STRUCT = Object.seal({
       if (lastTag.raw || RAW_TAGS.test(name)) {
         newNode.raw = true
       }
-      let voids
+
       if (ns) {
         newNode.ns = ns
-        voids = voidTags.svg
-      } else {
-        voids = voidTags.html
       }
-      if (voids.indexOf(name) !== -1) {
+
+      if (isVoid(name)) {
         newNode.void = true
       } else if (!node.selfclose) {
         state.stack.push(lastTag)

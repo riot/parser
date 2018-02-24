@@ -406,19 +406,19 @@ module.exports = {
     ]
   },
 
-  'unfinished simple tag #1': {
-    data: '<div',
-    throws: /Unexpected/i
-  },
-
   'unclosed literal': {
     data: '<div>{ `foo }</div>',
     throws: /Unclosed/i
   },
 
-  'unfinished simple tag #1': {
+  'unclosed script tag': {
     data: '<script>\n const foo',
     throws: /Unclosed/i
+  },
+
+  'unfinished simple tag #1': {
+    data: '<div',
+    throws: /Unexpected/i
   },
 
   'unfinished simple tag #2': {

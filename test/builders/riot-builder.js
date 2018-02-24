@@ -19,7 +19,7 @@
  * @class RiotBuilder
  */
 const parser = require('../../')
-const VOID_TAGS = parser.voidTags.regex
+const domNodes = require('dom-nodes')
 const T = parser.nodeTypes
 
 // Do not touch text content inside this tags
@@ -121,7 +121,7 @@ Object.assign(RiotBuilder.prototype, {
       throw new Error(err)
     }
 
-    if (VOID_TAGS.test(last)) {
+    if (domNodes.isVoid(last)) {
       throw new Error(`unexpected closing tag for void element "<${last}>".`)
     }
 
@@ -143,7 +143,7 @@ Object.assign(RiotBuilder.prototype, {
 
     this._output.push(`<${allTag.join(' ')}>`)
 
-    if (VOID_TAGS.test(name)) return
+    if (domNodes.isVoid(name)) return
 
     if (node.selfclose) {
       this._output.push(`</${name}>`)
