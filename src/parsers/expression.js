@@ -1,8 +1,8 @@
 import exprExtr from '../utils/expr-extr'
 import escapeStr from '../utils/escape-str'
 import panic from '../utils/panic'
+import pushText from '../utils/push-text'
 import { unexpectedEndOfFile } from '../messages'
-import { pushText } from './text'
 /**
  * Find the end of the attribute value or text node
  * Extract expressions.
@@ -15,7 +15,7 @@ import { pushText } from './text'
  * @returns {number} Ending position
  * @private
  */
-export function expr(state, node, endingChars, start) {
+export default function expr(state, node, endingChars, start) {
   const re = b0re(state, endingChars)
 
   re.lastIndex = start // reset re position

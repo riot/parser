@@ -4,9 +4,9 @@ import treeBuilder from './tree-builder'
 import { unexpectedEndOfFile, rootTagNotFound } from './messages'
 import curry from 'curri'
 import { ATTR, TAG } from './node-types'
-import { tag } from './parsers/tag'
-import { attr } from './parsers/attribute'
-import { text } from './parsers/text'
+import tag from './parsers/tag'
+import attr from './parsers/attribute'
+import text from './parsers/text'
 
 /**
  * Factory for the Parser class, exposing only the `parse` method.

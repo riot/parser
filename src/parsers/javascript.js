@@ -1,9 +1,10 @@
 import getChunk from '../utils/get-chunk'
 import panic from '../utils/panic'
+import exprExtr from '../utils/expr-extr'
 import { unableToParseExportDefault } from '../messages'
 import { PUBLIC_JAVASCRIPT, PRIVATE_JAVASCRIPT  } from '../node-types'
 import { EXPORT_DEFAULT } from '../regex'
-import exprExtr from '../utils/expr-extr'
+
 /**
  * Create the javascript nodes
  * @param {ParserState} state  - Current parser state
@@ -11,7 +12,7 @@ import exprExtr from '../utils/expr-extr'
  * @param {number}  end     - Ending position (last char of the tag)
  * @private
  */
-export function pushJavascript(state, start, end) {
+export default function javascript(state, start, end) {
   const code = getChunk(state.data, start, end)
   const push = state.builder.push.bind(state.builder)
   const match = EXPORT_DEFAULT.exec(code)

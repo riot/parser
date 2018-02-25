@@ -1,10 +1,9 @@
 import execFromPos from '../utils/exec-from-pos'
-import flush from '../utils/flush-parser-state'
-import { TEXT, ATTR, TAG } from '../node-types'
-import { isVoid, isCustom } from 'dom-nodes'
+import pushTag from '../utils/push-tag'
+import pushText from '../utils/push-text'
+import comment from './comment'
+import { TEXT, ATTR } from '../node-types'
 import { TAG_2C, TAG_NAME, RE_SCRYLE } from '../regex'
-import { pushText } from './text'
-import { comment } from './comment'
 
 /**
  * Parse the tag following a '<' character, or delegate to other parser
@@ -14,7 +13,7 @@ import { comment } from './comment'
  * @returns {number} New parser mode
  * @private
  */
-export function tag(state) {
+export default function tag(state) {
   const { pos, data } = state // pos of the char following '<'
   const start = pos - 1 // pos of '<'
   const str = data.substr(pos, 2) // first two chars following '<'
@@ -27,46 +26,6 @@ export function tag(state) {
   default:
     return pushText(state, start, pos) // pushes the '<' as text
   }
-}
-
-
-/**
- * Pushes a new *tag* and set `last` to this, so any attributes
- * will be included on this and shifts the `end`.
- *
- * @param {ParserState} state  - Current parser state
- * @param {string}  name      - Name of the node including any slash
- * @param {number}  start     - Start position of the tag
- * @param {number}  end       - Ending position (last char of the tag + 1)
- * @private
- */
-export function pushTag(state, name, start, end) {
-  const root = state.root
-  const last = { type: TAG, name, start, end }
-
-  if (isCustom(name) && !root) {
-    last.isCustom = true
-  }
-
-  if (isVoid(name)) {
-    last.isVoid = true
-  }
-
-  state.pos = end
-
-  if (root) {
-    if (name === root.name) {
-      state.count++
-    } else if (name === root.close) {
-      state.count--
-    }
-    flush(state)
-  } else {
-    // start with root (keep ref to output)
-    state.root = { name: last.name, close: `/${name}` }
-    state.count = 1
-  }
-  state.last = last
 }
 
 function parseTag(state, start) {

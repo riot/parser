@@ -817,6 +817,45 @@ function isBoolAttribute(attribute) {
 }
 
 /**
+ * Pushes a new *tag* and set `last` to this, so any attributes
+ * will be included on this and shifts the `end`.
+ *
+ * @param {ParserState} state  - Current parser state
+ * @param {string}  name      - Name of the node including any slash
+ * @param {number}  start     - Start position of the tag
+ * @param {number}  end       - Ending position (last char of the tag + 1)
+ * @private
+ */
+function pushTag(state, name, start, end) {
+  const root = state.root;
+  const last = { type: TAG, name, start, end };
+
+  if (isCustom(name) && !root) {
+    last.isCustom = true;
+  }
+
+  if (isVoid(name)) {
+    last.isVoid = true;
+  }
+
+  state.pos = end;
+
+  if (root) {
+    if (name === root.name) {
+      state.count++;
+    } else if (name === root.close) {
+      state.count--;
+    }
+    flush(state);
+  } else {
+    // start with root (keep ref to output)
+    state.root = { name: last.name, close: `/${name}` };
+    state.count = 1;
+  }
+  state.last = last;
+}
+
+/**
  * Get the code chunks from start and end range
  * @param   {string}  source  - source code
  * @param   {number}  start   - Start position of the chunk we want to extract
@@ -826,6 +865,124 @@ function isBoolAttribute(attribute) {
  */
 function getChunk(source, start, end) {
   return source.slice(start, end)
+}
+
+/**
+ * states text in the last text node, or creates a new one if needed.
+ *
+ * @param {ParserState}   state   - Current parser state
+ * @param {number}  start   - Start position of the tag
+ * @param {number}  end     - Ending position (last char of the tag)
+ * @param {object}  extra   - extra properties to add to the text node
+ * @param {RawExpr[]} extra.expressions  - Found expressions
+ * @param {string}    extra.unescape     - Brackets to unescape
+ * @private
+ */
+function pushText(state, start, end, extra = {}) {
+  const text = getChunk(state.data, start, end);
+  const expressions = extra.expressions;
+  const unescape = extra.unescape;
+
+  let q = state.last;
+  state.pos = end;
+
+  if (q && q.type === TEXT) {
+    q.text += text;
+    q.end = end;
+  } else {
+    flush(state);
+    state.last = q = { type: TEXT, text, start, end };
+  }
+
+  if (expressions && expressions.length) {
+    q.expressions = (q.expressions || []).concat(expressions);
+  }
+
+  if (unescape) {
+    q.unescape = unescape;
+  }
+
+  return TEXT
+}
+
+/**
+ * Parses comments in long or short form
+ * (any DOCTYPE & CDATA blocks are parsed as comments).
+ *
+ * @param {ParserState} state  - Parser state
+ * @param {string} data       - Buffer to parse
+ * @param {number} start      - Position of the '<!' sequence
+ * @private
+ */
+function comment(state, data, start) {
+  const pos = start + 2; // skip '<!'
+  const str = data.substr(pos, 2) === '--' ? '-->' : '>';
+  const end = data.indexOf(str, pos);
+  if (end < 0) {
+    panic(data, unclosedComment, start);
+  }
+  pushComment(state, start, end + str.length);
+
+  return TEXT
+}
+
+/**
+ * Parse a comment.
+ *
+ * @param {ParserState}  state - Current parser state
+ * @param {number}  start - Start position of the tag
+ * @param {number}  end   - Ending position (last char of the tag)
+ * @private
+ */
+function pushComment(state, start, end) {
+  flush(state);
+  state.pos = end;
+  if (state.options.comments === true) {
+    state.last = { type: COMMENT, start, end };
+  }
+}
+
+/**
+ * Parse the tag following a '<' character, or delegate to other parser
+ * if an invalid tag name is found.
+ *
+ * @param   {ParserState} state  - Parser state
+ * @returns {number} New parser mode
+ * @private
+ */
+function tag(state) {
+  const { pos, data } = state; // pos of the char following '<'
+  const start = pos - 1; // pos of '<'
+  const str = data.substr(pos, 2); // first two chars following '<'
+
+  switch (true) {
+  case str[0] === '!':
+    return comment(state, data, start)
+  case TAG_2C.test(str):
+    return parseTag(state, start)
+  default:
+    return pushText(state, start, pos) // pushes the '<' as text
+  }
+}
+
+function parseTag(state, start) {
+  const { data, pos } = state;
+  const re = TAG_NAME; // (\/?[^\s>/]+)\s*(>)? g
+  const match = execFromPos(re, pos, data);
+  const end = re.lastIndex;
+  const name = match[1].toLowerCase(); // $1: tag name including any '/'
+  // script/style block is parsed as another tag to extract attributes
+  if (name in RE_SCRYLE) {
+    state.scryle = name; // used by parseText
+  }
+
+  pushTag(state, name, start, end);
+  // only '>' can ends the tag here, the '/' is handled in parseAttribute
+  if (!match[2]) {
+    return ATTR
+  }
+
+  return TEXT
 }
 
 /**
@@ -1223,290 +1380,6 @@ function b0re(state, str) {
 }
 
 /**
- * Create the javascript nodes
- * @param {ParserState} state  - Current parser state
- * @param {number}  start   - Start position of the tag
- * @param {number}  end     - Ending position (last char of the tag)
- * @private
- */
-function pushJavascript(state, start, end) {
-  const code = getChunk(state.data, start, end);
-  const push = state.builder.push.bind(state.builder);
-  const match = EXPORT_DEFAULT.exec(code);
-  state.pos = end;
-
-  // no export rules found
-  // skip the nodes creation
-  if (!match) return
-
-  // find the export default index
-  const publicJsIndex = EXPORT_DEFAULT.lastIndex;
-  // get the content of the export default tag
-  // the exprExtr was meant to be used for expressions but it works
-  // perfectly also in this case matching everything there is in { ... } block
-  const publicJs = exprExtr(getChunk(code, publicJsIndex, end), 0, ['{', '}']);
-
-  // dispatch syntax errors
-  if (!publicJs) {
-    panic(state.data, unableToParseExportDefault, start + publicJsIndex);
-  }
-
-  [
-    createPrivateJsNode(code, start, 0, match.index),
-    {
-      type: PUBLIC_JAVASCRIPT,
-      start: start + publicJsIndex,
-      end: start + publicJsIndex + publicJs.end,
-      code: publicJs.text
-    },
-    createPrivateJsNode(code, start, publicJsIndex + publicJs.end, code.length)
-  ].filter(n => n.code).forEach(push);
-}
-
-/**
- * Create the private javascript chunks objects
- * @param   {string} code - code chunk
- * @param   {number} offset - offset from the top of the file
- * @param   {number} start - inner offset from the <script> tag
- * @param   {number} end - end offset
- * @returns {object} private js node
- * @private
- */
-function createPrivateJsNode(code, offset, start, end) {
-  return {
-    type: PRIVATE_JAVASCRIPT,
-    start: start + offset,
-    end: end + offset,
-    code: getChunk(code, start, end)
-  }
-}
-
-/**
- * states text in the last text node, or creates a new one if needed.
- *
- * @param {ParserState}   state   - Current parser state
- * @param {number}  start   - Start position of the tag
- * @param {number}  end     - Ending position (last char of the tag)
- * @param {object}  extra   - extra properties to add to the text node
- * @param {RawExpr[]} extra.expressions  - Found expressions
- * @param {string}    extra.unescape     - Brackets to unescape
- * @private
- */
-function pushText(state, start, end, extra = {}) {
-  const text = getChunk(state.data, start, end);
-  const expressions = extra.expressions;
-  const unescape = extra.unescape;
-
-  let q = state.last;
-  state.pos = end;
-
-  if (q && q.type === TEXT) {
-    q.text += text;
-    q.end = end;
-  } else {
-    flush(state);
-    state.last = q = { type: TEXT, text, start, end };
-  }
-
-  if (expressions && expressions.length) {
-    q.expressions = (q.expressions || []).concat(expressions);
-  }
-
-  if (unescape) {
-    q.unescape = unescape;
-  }
-
-  return TEXT
-}
-
-
-/**
- * Parses regular text and script/style blocks ...scryle for short :-)
- * (the content of script and style is text as well)
- *
- * @param   {ParserState} state - Parser state
- * @returns {number} New parser mode.
- * @private
- */
-function text(state) {
-  const { pos, data, scryle } = state;
-
-  switch (true) {
-  case typeof scryle === 'string': {
-    const name = scryle;
-    const re = RE_SCRYLE[name];
-    const match = execFromPos(re, pos, data);
-
-    if (!match) {
-      panic(data, unclosedNamedBlock.replace('%1', name), pos - 1);
-    }
-
-    const start = match.index;
-    const end = re.lastIndex;
-    state.scryle = null; // reset the script/style flag now
-    // write the tag content, if any
-    if (start > pos) {
-      parseSpecialTagsContent(state, name, match);
-    }
-    // now the closing tag, either </script> or </style>
-    pushTag(state, `/${name}`, start, end);
-    break
-  }
-  case data[pos] === '<':
-    state.pos++;
-    return TAG
-  default:
-    expr(state, null, '<', pos);
-  }
-
-  return TEXT
-}
-
-/**
- * Parse the text content depending on the name
- * @param   {ParserState} state - Parser state
- * @param   {string} data  - Buffer to parse
- * @param   {string} name  - one of the tags matched by the RE_SCRYLE regex
- * @returns {array}  match - result of the regex matching the content of the parsed tag
- */
-function parseSpecialTagsContent(state, name, match) {
-  const { pos } = state;
-  const start = match.index;
-
-  switch (name) {
-  case TEXTAREA_TAG:
-    expr(state, null, match[0], pos);
-    break
-  case JAVASCRIPT_TAG:
-    pushText(state, pos, start);
-    pushJavascript(state, pos, start);
-    break
-  default:
-    pushText(state, pos, start);
-  }
-}
-
-/**
- * Parses comments in long or short form
- * (any DOCTYPE & CDATA blocks are parsed as comments).
- *
- * @param {ParserState} state  - Parser state
- * @param {string} data       - Buffer to parse
- * @param {number} start      - Position of the '<!' sequence
- * @private
- */
-function comment(state, data, start) {
-  const pos = start + 2; // skip '<!'
-  const str = data.substr(pos, 2) === '--' ? '-->' : '>';
-  const end = data.indexOf(str, pos);
-  if (end < 0) {
-    panic(data, unclosedComment, start);
-  }
-  pushComment(state, start, end + str.length);
-
-  return TEXT
-}
-
-/**
- * Parse a comment.
- *
- * @param {ParserState}  state - Current parser state
- * @param {number}  start - Start position of the tag
- * @param {number}  end   - Ending position (last char of the tag)
- * @private
- */
-function pushComment(state, start, end) {
-  flush(state);
-  state.pos = end;
-  if (state.options.comments === true) {
-    state.last = { type: COMMENT, start, end };
-  }
-}
-
-/**
- * Parse the tag following a '<' character, or delegate to other parser
- * if an invalid tag name is found.
- *
- * @param   {ParserState} state  - Parser state
- * @returns {number} New parser mode
- * @private
- */
-function tag(state) {
-  const { pos, data } = state; // pos of the char following '<'
-  const start = pos - 1; // pos of '<'
-  const str = data.substr(pos, 2); // first two chars following '<'
-
-  switch (true) {
-  case str[0] === '!':
-    return comment(state, data, start)
-  case TAG_2C.test(str):
-    return parseTag(state, start)
-  default:
-    return pushText(state, start, pos) // pushes the '<' as text
-  }
-}
-
-
-/**
- * Pushes a new *tag* and set `last` to this, so any attributes
- * will be included on this and shifts the `end`.
- *
- * @param {ParserState} state  - Current parser state
- * @param {string}  name      - Name of the node including any slash
- * @param {number}  start     - Start position of the tag
- * @param {number}  end       - Ending position (last char of the tag + 1)
- * @private
- */
-function pushTag(state, name, start, end) {
-  const root = state.root;
-  const last = { type: TAG, name, start, end };
-
-  if (isCustom(name) && !root) {
-    last.isCustom = true;
-  }
-
-  if (isVoid(name)) {
-    last.isVoid = true;
-  }
-
-  state.pos = end;
-
-  if (root) {
-    if (name === root.name) {
-      state.count++;
-    } else if (name === root.close) {
-      state.count--;
-    }
-    flush(state);
-  } else {
-    // start with root (keep ref to output)
-    state.root = { name: last.name, close: `/${name}` };
-    state.count = 1;
-  }
-  state.last = last;
-}
-
-function parseTag(state, start) {
-  const { data, pos } = state;
-  const re = TAG_NAME; // (\/?[^\s>/]+)\s*(>)? g
-  const match = execFromPos(re, pos, data);
-  const end = re.lastIndex;
-  const name = match[1].toLowerCase(); // $1: tag name including any '/'
-  // script/style block is parsed as another tag to extract attributes
-  if (name in RE_SCRYLE) {
-    state.scryle = name; // used by parseText
-  }
-
-  pushTag(state, name, start, end);
-  // only '>' can ends the tag here, the '/' is handled in parseAttribute
-  if (!match[2]) {
-    return ATTR
-  }
-
-  return TEXT
-}
-
-/**
  * The more complex parsing is for attributes as it can contain quoted or
  * unquoted values or expressions.
  *
@@ -1620,6 +1493,131 @@ function parseAttribute(state, match, start, end) {
   }
 
   return attr
+}
+
+/**
+ * Create the javascript nodes
+ * @param {ParserState} state  - Current parser state
+ * @param {number}  start   - Start position of the tag
+ * @param {number}  end     - Ending position (last char of the tag)
+ * @private
+ */
+function javascript(state, start, end) {
+  const code = getChunk(state.data, start, end);
+  const push = state.builder.push.bind(state.builder);
+  const match = EXPORT_DEFAULT.exec(code);
+  state.pos = end;
+
+  // no export rules found
+  // skip the nodes creation
+  if (!match) return
+
+  // find the export default index
+  const publicJsIndex = EXPORT_DEFAULT.lastIndex;
+  // get the content of the export default tag
+  // the exprExtr was meant to be used for expressions but it works
+  // perfectly also in this case matching everything there is in { ... } block
+  const publicJs = exprExtr(getChunk(code, publicJsIndex, end), 0, ['{', '}']);
+
+  // dispatch syntax errors
+  if (!publicJs) {
+    panic(state.data, unableToParseExportDefault, start + publicJsIndex);
+  }
+
+  [
+    createPrivateJsNode(code, start, 0, match.index),
+    {
+      type: PUBLIC_JAVASCRIPT,
+      start: start + publicJsIndex,
+      end: start + publicJsIndex + publicJs.end,
+      code: publicJs.text
+    },
+    createPrivateJsNode(code, start, publicJsIndex + publicJs.end, code.length)
+  ].filter(n => n.code).forEach(push);
+}
+
+/**
+ * Create the private javascript chunks objects
+ * @param   {string} code - code chunk
+ * @param   {number} offset - offset from the top of the file
+ * @param   {number} start - inner offset from the <script> tag
+ * @param   {number} end - end offset
+ * @returns {object} private js node
+ * @private
+ */
+function createPrivateJsNode(code, offset, start, end) {
+  return {
+    type: PRIVATE_JAVASCRIPT,
+    start: start + offset,
+    end: end + offset,
+    code: getChunk(code, start, end)
+  }
+}
+
+/**
+ * Parses regular text and script/style blocks ...scryle for short :-)
+ * (the content of script and style is text as well)
+ *
+ * @param   {ParserState} state - Parser state
+ * @returns {number} New parser mode.
+ * @private
+ */
+function text(state) {
+  const { pos, data, scryle } = state;
+
+  switch (true) {
+  case typeof scryle === 'string': {
+    const name = scryle;
+    const re = RE_SCRYLE[name];
+    const match = execFromPos(re, pos, data);
+
+    if (!match) {
+      panic(data, unclosedNamedBlock.replace('%1', name), pos - 1);
+    }
+
+    const start = match.index;
+    const end = re.lastIndex;
+    state.scryle = null; // reset the script/style flag now
+    // write the tag content, if any
+    if (start > pos) {
+      parseSpecialTagsContent(state, name, match);
+    }
+    // now the closing tag, either </script> or </style>
+    pushTag(state, `/${name}`, start, end);
+    break
+  }
+  case data[pos] === '<':
+    state.pos++;
+    return TAG
+  default:
+    expr(state, null, '<', pos);
+  }
+
+  return TEXT
+}
+
+/**
+ * Parse the text content depending on the name
+ * @param   {ParserState} state - Parser state
+ * @param   {string} data  - Buffer to parse
+ * @param   {string} name  - one of the tags matched by the RE_SCRYLE regex
+ * @returns {array}  match - result of the regex matching the content of the parsed tag
+ */
+function parseSpecialTagsContent(state, name, match) {
+  const { pos } = state;
+  const start = match.index;
+
+  switch (name) {
+  case TEXTAREA_TAG:
+    expr(state, null, match[0], pos);
+    break
+  case JAVASCRIPT_TAG:
+    pushText(state, pos, start);
+    javascript(state, pos, start);
+    break
+  default:
+    pushText(state, pos, start);
+  }
 }
 
 /**
