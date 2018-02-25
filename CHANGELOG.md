@@ -1,5 +1,9 @@
 # Changes for riot-parser
 
+### v0.4.0
+- Add the [`dom-nodes`](https://github.com/riot/dom-nodes) dependecy to improve the output
+- Add the `isCustom`, `isBoolean`, `isVoid`, `isSelfClosing` and `isRaw` boolean node attributes
+
 ### v0.3.0
 - Fix treeBuilder issues
 - Improve coverage
