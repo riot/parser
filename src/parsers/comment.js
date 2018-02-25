@@ -11,7 +11,7 @@ import { TEXT, COMMENT } from '../node-types'
  * @param {number} start      - Position of the '<!' sequence
  * @private
  */
-export function comment(state, data, start) {
+export default function comment(state, data, start) {
   const pos = start + 2 // skip '<!'
   const str = data.substr(pos, 2) === '--' ? '-->' : '>'
   const end = data.indexOf(str, pos)

@@ -1,53 +1,13 @@
-import getChunk from '../utils/get-chunk'
 import execFromPos from '../utils/exec-from-pos'
-import flush from '../utils/flush-parser-state'
 import panic from '../utils/panic'
+import pushText from '../utils/push-text'
+import pushTag from '../utils/push-tag'
+import javascript from './javascript'
+import expr from './expression'
 import { unclosedNamedBlock } from '../messages'
 import { TEXT, TAG } from '../node-types'
 import { RE_SCRYLE } from '../regex'
 import { JAVASCRIPT_TAG, TEXTAREA_TAG } from '../constants'
-import { expr } from './expression'
-import { pushJavascript } from './javascript'
-import { pushTag } from './tag'
-
-/**
- * states text in the last text node, or creates a new one if needed.
- *
- * @param {ParserState}   state   - Current parser state
- * @param {number}  start   - Start position of the tag
- * @param {number}  end     - Ending position (last char of the tag)
- * @param {object}  extra   - extra properties to add to the text node
- * @param {RawExpr[]} extra.expressions  - Found expressions
- * @param {string}    extra.unescape     - Brackets to unescape
- * @private
- */
-export function pushText(state, start, end, extra = {}) {
-  const text = getChunk(state.data, start, end)
-  const expressions = extra.expressions
-  const unescape = extra.unescape
-
-  let q = state.last
-  state.pos = end
-
-  if (q && q.type === TEXT) {
-    q.text += text
-    q.end = end
-  } else {
-    flush(state)
-    state.last = q = { type: TEXT, text, start, end }
-  }
-
-  if (expressions && expressions.length) {
-    q.expressions = (q.expressions || []).concat(expressions)
-  }
-
-  if (unescape) {
-    q.unescape = unescape
-  }
-
-  return TEXT
-}
-
 
 /**
  * Parses regular text and script/style blocks ...scryle for short :-)
@@ -57,7 +17,7 @@ export function pushText(state, start, end, extra = {}) {
  * @returns {number} New parser mode.
  * @private
  */
-export function text(state) {
+export default function text(state) {
   const { pos, data, scryle } = state
 
   switch (true) {
@@ -108,7 +68,7 @@ function parseSpecialTagsContent(state, name, match) {
     break
   case JAVASCRIPT_TAG:
     pushText(state, pos, start)
-    pushJavascript(state, pos, start)
+    javascript(state, pos, start)
     break
   default:
     pushText(state, pos, start)

@@ -1,10 +1,10 @@
 import execFromPos from '../utils/exec-from-pos'
 import getChunk from '../utils/get-chunk'
-import { isBoolAttribute } from 'dom-nodes'
+import expr from './expression'
 import addToCollection from '../utils/add-to-collection'
+import { isBoolAttribute } from 'dom-nodes'
 import { TEXT, ATTR } from '../node-types'
 import { ATTR_START } from '../regex'
-import { expr } from './expression'
 /**
  * The more complex parsing is for attributes as it can contain quoted or
  * unquoted values or expressions.
@@ -13,7 +13,7 @@ import { expr } from './expression'
  * @returns {number} New parser mode.
  * @private
  */
-export function attr(state) {
+export default function attr(state) {
   const { data, last, pos, root } = state
   const tag = last // the last (current) tag in the output
   const _CH = /\S/g // matches the first non-space char
