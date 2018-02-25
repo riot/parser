@@ -63,12 +63,12 @@ function cleanSpaces(string) {
 
 const TREE_BUILDER_STRUCT = Object.seal({
   get() {
-    const state = this.state
-    // The real root tag is in state.root.nodes[0]
+    const store = this.store
+    // The real root tag is in store.root.nodes[0]
     return {
-      [TEMPLATE_OUTPUT_NAME]: state.root.nodes[0],
-      [CSS_OUTPUT_NAME]: state[STYLE_TAG],
-      [JAVASCRIPT_OUTPUT_NAME]: state[JAVASCRIPT_TAG],
+      [TEMPLATE_OUTPUT_NAME]: store.root.nodes[0],
+      [CSS_OUTPUT_NAME]: store[STYLE_TAG],
+      [JAVASCRIPT_OUTPUT_NAME]: store[JAVASCRIPT_TAG],
     }
   },
 
@@ -77,66 +77,66 @@ const TREE_BUILDER_STRUCT = Object.seal({
   * @param {Object} node - Raw pseudo-node from the parser
   */
   push(node) {
-    const state = this.state
+    const store = this.store
 
     switch (node.type) {
     case TEXT:
-      this.pushText(state, node)
+      this.pushText(store, node)
       break
     case TAG: {
       const name = node.name
       if (name[0] === '/') {
-        this.closeTag(state, node, name)
+        this.closeTag(store, node, name)
       } else {
-        this.openTag(state, node)
+        this.openTag(store, node)
       }
       break
     }
     case PRIVATE_JAVASCRIPT:
     case PUBLIC_JAVASCRIPT:
-      state[JAVASCRIPT_TAG].nodes = addToCollection(state[JAVASCRIPT_TAG].nodes, node)
+      store[JAVASCRIPT_TAG].nodes = addToCollection(store[JAVASCRIPT_TAG].nodes, node)
       break
     }
   },
-  closeTag(state, node) {
-    const last = state.scryle || state.last
+  closeTag(store, node) {
+    const last = store.scryle || store.last
 
     last.end = node.end
 
-    if (state.scryle) {
-      state.scryle = null
+    if (store.scryle) {
+      store.scryle = null
     } else {
-      if (!state.stack[0]) {
-        panic(this.state.data, emptyStack, last.start)
+      if (!store.stack[0]) {
+        panic(this.store.data, emptyStack, last.start)
       }
-      state.last = state.stack.pop()
+      store.last = store.stack.pop()
     }
   },
 
-  openTag(state, node) {
+  openTag(store, node) {
     const name = node.name
     const attrs = node.attributes
 
-    if (state.scryle) {
-      panic(this.state.data, unableToNestNamedTag, node.start)
+    if (store.scryle) {
+      panic(this.store.data, unableToNestNamedTag, node.start)
     }
 
     if ([JAVASCRIPT_TAG, STYLE_TAG].includes(name) && !this.deferred(node, attrs)) {
       // Only accept one of each
-      if (state[name]) {
-        panic(this.state.data, duplicatedNamedTag.replace('%1', name), node.start)
+      if (store[name]) {
+        panic(this.store.data, duplicatedNamedTag.replace('%1', name), node.start)
       }
 
-      state[name] = node
+      store[name] = node
       // support selfclosing script (w/o text content)
       if (!node.isSelfClosing) {
-        state.scryle = state[name]
+        store.scryle = store[name]
       }
     } else {
-      // state.last holds the last tag pushed in the stack and this are
+      // store.last holds the last tag pushed in the stack and this are
       // non-void, non-empty tags, so we are sure the `lastTag` here
       // have a `nodes` property.
-      const lastTag = state.last
+      const lastTag = store.last
       const newNode = node
 
       lastTag.nodes.push(newNode)
@@ -146,9 +146,9 @@ const TREE_BUILDER_STRUCT = Object.seal({
       }
 
       if (!node.isSelfClosing && !node.isVoid) {
-        state.stack.push(lastTag)
+        store.stack.push(lastTag)
         newNode.nodes = []
-        state.last = newNode
+        store.last = newNode
       }
     }
 
@@ -175,13 +175,13 @@ const TREE_BUILDER_STRUCT = Object.seal({
       }
     }
   },
-  pushText(state, node) {
+  pushText(store, node) {
     const text = node.text
     const empty = !/\S/.test(text)
-    const scryle = state.scryle
+    const scryle = store.scryle
     if (!scryle) {
-      // state.last always have a nodes property
-      const parent = state.last
+      // store.last always have a nodes property
+      const parent = store.last
       const pack = this.compact && !parent.isRaw
       if (pack && empty) {
         return
@@ -248,7 +248,7 @@ export default function createTreeBuilder(data, options) {
   return Object.assign(Object.create(TREE_BUILDER_STRUCT), {
     compact: options.compact !== false,
     prefixes: '?=^',
-    state: {
+    store: {
       last: root,
       stack: [],
       scryle: null,
