@@ -8,19 +8,19 @@ import { pushText } from './text'
  * Extract expressions.
  * Detect if value have escaped brackets.
  *
- * @param   {ParserStore} store  - Parser store
+ * @param   {ParserState} state  - Parser state
  * @param   {HasExpr} node      - Node if attr, info if text
  * @param   {string} endingChars - Ends the value or text
  * @param   {number} pos        - Starting position
  * @returns {number} Ending position
  * @private
  */
-export function expr(store, node, endingChars, start) {
-  const re = b0re(store, endingChars)
+export function expr(state, node, endingChars, start) {
+  const re = b0re(state, endingChars)
 
   re.lastIndex = start // reset re position
 
-  const { unescape, expressions, end } = parseExpressions(store, re)
+  const { unescape, expressions, end } = parseExpressions(state, re)
 
   if (node) {
     if (unescape) {
@@ -30,7 +30,7 @@ export function expr(store, node, endingChars, start) {
       node.expressions = expressions
     }
   } else {
-    pushText(store, start, end, {expressions, unescape})
+    pushText(state, start, end, {expressions, unescape})
   }
 
   return end
@@ -38,12 +38,12 @@ export function expr(store, node, endingChars, start) {
 
 /**
  * Parse a text chunk finding all the expressions in it
- * @param   {ParserStore} store  - Parser store
+ * @param   {ParserState} state  - Parser state
  * @param   {RegExp} re - regex to match the expressions contents
  * @returns {object} result containing the expression found, the string to unescape and the end position
  */
-function parseExpressions(store, re) {
-  const { data, options } = store
+function parseExpressions(state, re) {
+  const { data, options } = state
   const { brackets } = options
   const expressions = []
   let unescape, pos, match
@@ -81,20 +81,20 @@ function parseExpressions(store, re) {
  * Creates a regex for the given string and the left bracket.
  * The string is captured in $1.
  *
- * @param   {ParserStore} store  - Parser store
+ * @param   {ParserState} state  - Parser state
  * @param   {string} str - String to search
  * @returns {RegExp} Resulting regex.
  * @private
  */
-function b0re(store, str) {
-  const { brackets } = store.options
-  const re = store.regexCache[str]
+function b0re(state, str) {
+  const { brackets } = state.options
+  const re = state.regexCache[str]
 
   if (re) return re
 
   const b0 = escapeStr(brackets[0])
   // cache the regex extending the regexCache object
-  Object.assign(store.regexCache, { [str]: new RegExp(`(${str})|${b0}`, 'g' ) })
+  Object.assign(state.regexCache, { [str]: new RegExp(`(${str})|${b0}`, 'g' ) })
 
-  return store.regexCache[str]
+  return state.regexCache[str]
 }

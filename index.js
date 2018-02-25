@@ -206,12 +206,12 @@ function cleanSpaces(string) {
 
 const TREE_BUILDER_STRUCT = Object.seal({
   get() {
-    const state = this.state;
-    // The real root tag is in state.root.nodes[0]
+    const store = this.store;
+    // The real root tag is in store.root.nodes[0]
     return {
-      [TEMPLATE_OUTPUT_NAME]: state.root.nodes[0],
-      [CSS_OUTPUT_NAME]: state[STYLE_TAG],
-      [JAVASCRIPT_OUTPUT_NAME]: state[JAVASCRIPT_TAG],
+      [TEMPLATE_OUTPUT_NAME]: store.root.nodes[0],
+      [CSS_OUTPUT_NAME]: store[STYLE_TAG],
+      [JAVASCRIPT_OUTPUT_NAME]: store[JAVASCRIPT_TAG],
     }
   },
 
@@ -220,66 +220,66 @@ const TREE_BUILDER_STRUCT = Object.seal({
   * @param {Object} node - Raw pseudo-node from the parser
   */
   push(node) {
-    const state = this.state;
+    const store = this.store;
 
     switch (node.type) {
     case TEXT:
-      this.pushText(state, node);
+      this.pushText(store, node);
       break
     case TAG: {
       const name = node.name;
       if (name[0] === '/') {
-        this.closeTag(state, node, name);
+        this.closeTag(store, node, name);
       } else {
-        this.openTag(state, node);
+        this.openTag(store, node);
       }
       break
     }
     case PRIVATE_JAVASCRIPT:
     case PUBLIC_JAVASCRIPT:
-      state[JAVASCRIPT_TAG].nodes = addToCollection(state[JAVASCRIPT_TAG].nodes, node);
+      store[JAVASCRIPT_TAG].nodes = addToCollection(store[JAVASCRIPT_TAG].nodes, node);
       break
     }
   },
-  closeTag(state, node) {
-    const last = state.scryle || state.last;
+  closeTag(store, node) {
+    const last = store.scryle || store.last;
 
     last.end = node.end;
 
-    if (state.scryle) {
-      state.scryle = null;
+    if (store.scryle) {
+      store.scryle = null;
     } else {
-      if (!state.stack[0]) {
-        panic(this.state.data, emptyStack, last.start);
+      if (!store.stack[0]) {
+        panic(this.store.data, emptyStack, last.start);
       }
-      state.last = state.stack.pop();
+      store.last = store.stack.pop();
     }
   },
 
-  openTag(state, node) {
+  openTag(store, node) {
     const name = node.name;
     const attrs = node.attributes;
 
-    if (state.scryle) {
-      panic(this.state.data, unableToNestNamedTag, node.start);
+    if (store.scryle) {
+      panic(this.store.data, unableToNestNamedTag, node.start);
     }
 
     if ([JAVASCRIPT_TAG, STYLE_TAG].includes(name) && !this.deferred(node, attrs)) {
       // Only accept one of each
-      if (state[name]) {
-        panic(this.state.data, duplicatedNamedTag.replace('%1', name), node.start);
+      if (store[name]) {
+        panic(this.store.data, duplicatedNamedTag.replace('%1', name), node.start);
       }
 
-      state[name] = node;
+      store[name] = node;
       // support selfclosing script (w/o text content)
       if (!node.isSelfClosing) {
-        state.scryle = state[name];
+        store.scryle = store[name];
       }
     } else {
-      // state.last holds the last tag pushed in the stack and this are
+      // store.last holds the last tag pushed in the stack and this are
       // non-void, non-empty tags, so we are sure the `lastTag` here
       // have a `nodes` property.
-      const lastTag = state.last;
+      const lastTag = store.last;
       const newNode = node;
 
       lastTag.nodes.push(newNode);
@@ -289,9 +289,9 @@ const TREE_BUILDER_STRUCT = Object.seal({
       }
 
       if (!node.isSelfClosing && !node.isVoid) {
-        state.stack.push(lastTag);
+        store.stack.push(lastTag);
         newNode.nodes = [];
-        state.last = newNode;
+        store.last = newNode;
       }
     }
 
@@ -318,13 +318,13 @@ const TREE_BUILDER_STRUCT = Object.seal({
       }
     }
   },
-  pushText(state, node) {
+  pushText(store, node) {
     const text = node.text;
     const empty = !/\S/.test(text);
-    const scryle = state.scryle;
+    const scryle = store.scryle;
     if (!scryle) {
-      // state.last always have a nodes property
-      const parent = state.last;
+      // store.last always have a nodes property
+      const parent = store.last;
       const pack = this.compact && !parent.isRaw;
       if (pack && empty) {
         return
@@ -391,7 +391,7 @@ function createTreeBuilder(data, options) {
   return Object.assign(Object.create(TREE_BUILDER_STRUCT), {
     compact: options.compact !== false,
     prefixes: '?=^',
-    state: {
+    store: {
       last: root,
       stack: [],
       scryle: null,
@@ -1131,19 +1131,19 @@ function exprExtr(code, start, bp) {
  * Extract expressions.
  * Detect if value have escaped brackets.
  *
- * @param   {ParserStore} store  - Parser store
+ * @param   {ParserState} state  - Parser state
  * @param   {HasExpr} node      - Node if attr, info if text
  * @param   {string} endingChars - Ends the value or text
  * @param   {number} pos        - Starting position
  * @returns {number} Ending position
  * @private
  */
-function expr(store, node, endingChars, start) {
-  const re = b0re(store, endingChars);
+function expr(state, node, endingChars, start) {
+  const re = b0re(state, endingChars);
 
   re.lastIndex = start; // reset re position
 
-  const { unescape, expressions, end } = parseExpressions(store, re);
+  const { unescape, expressions, end } = parseExpressions(state, re);
 
   if (node) {
     if (unescape) {
@@ -1153,7 +1153,7 @@ function expr(store, node, endingChars, start) {
       node.expressions = expressions;
     }
   } else {
-    pushText(store, start, end, {expressions, unescape});
+    pushText(state, start, end, {expressions, unescape});
   }
 
   return end
@@ -1161,12 +1161,12 @@ function expr(store, node, endingChars, start) {
 
 /**
  * Parse a text chunk finding all the expressions in it
- * @param   {ParserStore} store  - Parser store
+ * @param   {ParserState} state  - Parser state
  * @param   {RegExp} re - regex to match the expressions contents
  * @returns {object} result containing the expression found, the string to unescape and the end position
  */
-function parseExpressions(store, re) {
-  const { data, options } = store;
+function parseExpressions(state, re) {
+  const { data, options } = state;
   const { brackets } = options;
   const expressions = [];
   let unescape, pos, match;;;
@@ -1204,36 +1204,36 @@ function parseExpressions(store, re) {
  * Creates a regex for the given string and the left bracket.
  * The string is captured in $1.
  *
- * @param   {ParserStore} store  - Parser store
+ * @param   {ParserState} state  - Parser state
  * @param   {string} str - String to search
  * @returns {RegExp} Resulting regex.
  * @private
  */
-function b0re(store, str) {
-  const { brackets } = store.options;
-  const re = store.regexCache[str];
+function b0re(state, str) {
+  const { brackets } = state.options;
+  const re = state.regexCache[str];
 
   if (re) return re
 
   const b0 = escapeStr(brackets[0]);
   // cache the regex extending the regexCache object
-  Object.assign(store.regexCache, { [str]: new RegExp(`(${str})|${b0}`, 'g' ) });
+  Object.assign(state.regexCache, { [str]: new RegExp(`(${str})|${b0}`, 'g' ) });
 
-  return store.regexCache[str]
+  return state.regexCache[str]
 }
 
 /**
  * Create the javascript nodes
- * @param {ParserStore} store  - Current parser store
+ * @param {ParserState} state  - Current parser state
  * @param {number}  start   - Start position of the tag
  * @param {number}  end     - Ending position (last char of the tag)
  * @private
  */
-function pushJavascript(store, start, end) {
-  const code = getChunk(store.data, start, end);
-  const push = store.builder.push.bind(store.builder);
+function pushJavascript(state, start, end) {
+  const code = getChunk(state.data, start, end);
+  const push = state.builder.push.bind(state.builder);
   const match = EXPORT_DEFAULT.exec(code);
-  store.pos = end;
+  state.pos = end;
 
   // no export rules found
   // skip the nodes creation
@@ -1248,7 +1248,7 @@ function pushJavascript(store, start, end) {
 
   // dispatch syntax errors
   if (!publicJs) {
-    panic(store.data, unableToParseExportDefault, start + publicJsIndex);
+    panic(state.data, unableToParseExportDefault, start + publicJsIndex);
   }
 
   [
@@ -1282,9 +1282,9 @@ function createPrivateJsNode(code, offset, start, end) {
 }
 
 /**
- * Stores text in the last text node, or creates a new one if needed.
+ * states text in the last text node, or creates a new one if needed.
  *
- * @param {ParserStore}   store   - Current parser store
+ * @param {ParserState}   state   - Current parser state
  * @param {number}  start   - Start position of the tag
  * @param {number}  end     - Ending position (last char of the tag)
  * @param {object}  extra   - extra properties to add to the text node
@@ -1292,20 +1292,20 @@ function createPrivateJsNode(code, offset, start, end) {
  * @param {string}    extra.unescape     - Brackets to unescape
  * @private
  */
-function pushText(store, start, end, extra = {}) {
-  const text = getChunk(store.data, start, end);
+function pushText(state, start, end, extra = {}) {
+  const text = getChunk(state.data, start, end);
   const expressions = extra.expressions;
   const unescape = extra.unescape;
 
-  let q = store.last;
-  store.pos = end;
+  let q = state.last;
+  state.pos = end;
 
   if (q && q.type === TEXT) {
     q.text += text;
     q.end = end;
   } else {
-    flush(store);
-    store.last = q = { type: TEXT, text, start, end };
+    flush(state);
+    state.last = q = { type: TEXT, text, start, end };
   }
 
   if (expressions && expressions.length) {
@@ -1324,12 +1324,12 @@ function pushText(store, start, end, extra = {}) {
  * Parses regular text and script/style blocks ...scryle for short :-)
  * (the content of script and style is text as well)
  *
- * @param   {ParserStore} store - Parser store
+ * @param   {ParserState} state - Parser state
  * @returns {number} New parser mode.
  * @private
  */
-function text(store) {
-  const { pos, data, scryle } = store;
+function text(state) {
+  const { pos, data, scryle } = state;
 
   switch (true) {
   case typeof scryle === 'string': {
@@ -1343,20 +1343,20 @@ function text(store) {
 
     const start = match.index;
     const end = re.lastIndex;
-    store.scryle = null; // reset the script/style flag now
+    state.scryle = null; // reset the script/style flag now
     // write the tag content, if any
     if (start > pos) {
-      parseSpecialTagsContent(store, name, match);
+      parseSpecialTagsContent(state, name, match);
     }
     // now the closing tag, either </script> or </style>
-    pushTag(store, `/${name}`, start, end);
+    pushTag(state, `/${name}`, start, end);
     break
   }
   case data[pos] === '<':
-    store.pos++;
+    state.pos++;
     return TAG
   default:
-    expr(store, null, '<', pos);
+    expr(state, null, '<', pos);
   }
 
   return TEXT
@@ -1364,25 +1364,25 @@ function text(store) {
 
 /**
  * Parse the text content depending on the name
- * @param   {ParserStore} store - Parser store
+ * @param   {ParserState} state - Parser state
  * @param   {string} data  - Buffer to parse
  * @param   {string} name  - one of the tags matched by the RE_SCRYLE regex
  * @returns {array}  match - result of the regex matching the content of the parsed tag
  */
-function parseSpecialTagsContent(store, name, match) {
-  const { pos } = store;
+function parseSpecialTagsContent(state, name, match) {
+  const { pos } = state;
   const start = match.index;
 
   switch (name) {
   case TEXTAREA_TAG:
-    expr(store, null, match[0], pos);
+    expr(state, null, match[0], pos);
     break
   case JAVASCRIPT_TAG:
-    pushText(store, pos, start);
-    pushJavascript(store, pos, start);
+    pushText(state, pos, start);
+    pushJavascript(state, pos, start);
     break
   default:
-    pushText(store, pos, start);
+    pushText(state, pos, start);
   }
 }
 
@@ -1390,36 +1390,36 @@ function parseSpecialTagsContent(store, name, match) {
  * Parses comments in long or short form
  * (any DOCTYPE & CDATA blocks are parsed as comments).
  *
- * @param {ParserStore} store  - Parser store
+ * @param {ParserState} state  - Parser state
  * @param {string} data       - Buffer to parse
  * @param {number} start      - Position of the '<!' sequence
  * @private
  */
-function comment(store, data, start) {
+function comment(state, data, start) {
   const pos = start + 2; // skip '<!'
   const str = data.substr(pos, 2) === '--' ? '-->' : '>';
   const end = data.indexOf(str, pos);
   if (end < 0) {
     panic(data, unclosedComment, start);
   }
-  pushComment(store, start, end + str.length);
+  pushComment(state, start, end + str.length);
 
   return TEXT
 }
 
 /**
- * Stores a comment.
+ * Parse a comment.
  *
- * @param {ParserStore}  store - Current parser store
+ * @param {ParserState}  state - Current parser state
  * @param {number}  start - Start position of the tag
  * @param {number}  end   - Ending position (last char of the tag)
  * @private
  */
-function pushComment(store, start, end) {
-  flush(store);
-  store.pos = end;
-  if (store.options.comments === true) {
-    store.last = { type: COMMENT, start, end };
+function pushComment(state, start, end) {
+  flush(state);
+  state.pos = end;
+  if (state.options.comments === true) {
+    state.last = { type: COMMENT, start, end };
   }
 }
 
@@ -1427,22 +1427,22 @@ function pushComment(store, start, end) {
  * Parse the tag following a '<' character, or delegate to other parser
  * if an invalid tag name is found.
  *
- * @param   {ParserStore} store  - Parser store
+ * @param   {ParserState} state  - Parser state
  * @returns {number} New parser mode
  * @private
  */
-function tag(store) {
-  const { pos, data } = store; // pos of the char following '<'
+function tag(state) {
+  const { pos, data } = state; // pos of the char following '<'
   const start = pos - 1; // pos of '<'
   const str = data.substr(pos, 2); // first two chars following '<'
 
   switch (true) {
   case str[0] === '!':
-    return comment(store, data, start)
+    return comment(state, data, start)
   case TAG_2C.test(str):
-    return parseTag(store, start)
+    return parseTag(state, start)
   default:
-    return pushText(store, start, pos) // pushes the '<' as text
+    return pushText(state, start, pos) // pushes the '<' as text
   }
 }
 
@@ -1451,14 +1451,14 @@ function tag(store) {
  * Pushes a new *tag* and set `last` to this, so any attributes
  * will be included on this and shifts the `end`.
  *
- * @param {ParserStore} store  - Current parser store
+ * @param {ParserState} state  - Current parser state
  * @param {string}  name      - Name of the node including any slash
  * @param {number}  start     - Start position of the tag
  * @param {number}  end       - Ending position (last char of the tag + 1)
  * @private
  */
-function pushTag(store, name, start, end) {
-  const root = store.root;
+function pushTag(state, name, start, end) {
+  const root = state.root;
   const last = { type: TAG, name, start, end };
 
   if (isCustom(name) && !root) {
@@ -1469,35 +1469,35 @@ function pushTag(store, name, start, end) {
     last.isVoid = true;
   }
 
-  store.pos = end;
+  state.pos = end;
 
   if (root) {
     if (name === root.name) {
-      store.count++;
+      state.count++;
     } else if (name === root.close) {
-      store.count--;
+      state.count--;
     }
-    flush(store);
+    flush(state);
   } else {
     // start with root (keep ref to output)
-    store.root = { name: last.name, close: `/${name}` };
-    store.count = 1;
+    state.root = { name: last.name, close: `/${name}` };
+    state.count = 1;
   }
-  store.last = last;
+  state.last = last;
 }
 
-function parseTag(store, start) {
-  const { data, pos } = store;
+function parseTag(state, start) {
+  const { data, pos } = state;
   const re = TAG_NAME; // (\/?[^\s>/]+)\s*(>)? g
   const match = execFromPos(re, pos, data);
   const end = re.lastIndex;
   const name = match[1].toLowerCase(); // $1: tag name including any '/'
   // script/style block is parsed as another tag to extract attributes
   if (name in RE_SCRYLE) {
-    store.scryle = name; // used by parseText
+    state.scryle = name; // used by parseText
   }
 
-  pushTag(store, name, start, end);
+  pushTag(state, name, start, end);
   // only '>' can ends the tag here, the '/' is handled in parseAttribute
   if (!match[2]) {
     return ATTR
@@ -1510,39 +1510,39 @@ function parseTag(store, start) {
  * The more complex parsing is for attributes as it can contain quoted or
  * unquoted values or expressions.
  *
- * @param   {ParserStore} store  - Parser store
+ * @param   {ParserStore} state  - Parser state
  * @returns {number} New parser mode.
  * @private
  */
-function attr(store) {
-  const { data, last, pos, root } = store;
+function attr(state) {
+  const { data, last, pos, root } = state;
   const tag = last; // the last (current) tag in the output
   const _CH = /\S/g; // matches the first non-space char
   const ch = execFromPos(_CH, pos, data);
 
   switch (true) {
   case !ch:
-    store.pos = data.length; // reaching the end of the buffer with
+    state.pos = data.length; // reaching the end of the buffer with
     // NodeTypes.ATTR will generate error
     break
   case ch[0] === '>':
     // closing char found. If this is a self-closing tag with the name of the
     // Root tag, we need decrement the counter as we are changing mode.
-    store.pos = tag.end = _CH.lastIndex;
+    state.pos = tag.end = _CH.lastIndex;
     if (tag.isSelfClosing) {
-      store.scryle = null; // allow selfClosing script/style tags
+      state.scryle = null; // allow selfClosing script/style tags
       if (root && root.name === tag.name) {
-        store.count--; // "pop" root tag
+        state.count--; // "pop" root tag
       }
     }
     return TEXT
   case ch[0] === '/':
-    store.pos = _CH.lastIndex; // maybe. delegate the validation
+    state.pos = _CH.lastIndex; // maybe. delegate the validation
     tag.isSelfClosing = true; // the next loop
     break
   default:
     delete tag.isSelfClosing; // ensure unmark as selfclosing tag
-    setAttribute(store, ch.index, tag);
+    setAttribute(state, ch.index, tag);
   }
 
   return ATTR
@@ -1551,13 +1551,13 @@ function attr(store) {
 /**
  * Parses an attribute and its expressions.
  *
- * @param   {ParserStore}  store  - Parser store
+ * @param   {ParserStore}  state  - Parser state
  * @param   {number} pos    - Starting position of the attribute
  * @param   {Object} tag    - Current parent tag
  * @private
  */
-function setAttribute(store, pos, tag) {
-  const { data } = store;
+function setAttribute(state, pos, tag) {
+  const { data } = state;
   const re = ATTR_START; // (\S[^>/=\s]*)(?:\s*=\s*([^>/])?)? g
   const start = re.lastIndex = pos; // first non-whitespace
   const match = re.exec(data);
@@ -1567,24 +1567,24 @@ function setAttribute(store, pos, tag) {
   }
 
   let end = re.lastIndex;
-  const attr = parseAttribute(store, match, start, end);
+  const attr = parseAttribute(state, match, start, end);
 
   //assert(q && q.type === Mode.TAG, 'no previous tag for the attr!')
   // Pushes the attribute and shifts the `end` position of the tag (`last`).
-  store.pos = tag.end = attr.end;
+  state.pos = tag.end = attr.end;
   tag.attributes = addToCollection(tag.attributes, attr);
 }
 
 /**
  * Parse the attribute values normalising the quotes
- * @param   {ParserStore}  store  - Parser store
+ * @param   {ParserStore}  state  - Parser state
  * @param   {array} match - results of the attributes regex
  * @param   {number} start - attribute start position
  * @param   {number} end - attribute end position
  * @returns {object} attribute object
  */
-function parseAttribute(store, match, start, end) {
-  const { data } = store;
+function parseAttribute(state, match, start, end) {
+  const { data } = state;
   const attr = {
     name: match[1],
     value: '',
@@ -1609,7 +1609,7 @@ function parseAttribute(store, match, start, end) {
       valueStart--; // adjust the starting position
     }
 
-    end = expr(store, attr, quote || '[>/\\s]', valueStart);
+    end = expr(state, attr, quote || '[>/\\s]', valueStart);
 
     // adjust the bounds of the value and save its content
     Object.assign(attr, {
@@ -1631,20 +1631,20 @@ function parseAttribute(store, match, start, end) {
  * @returns {Function} Public Parser implementation.
  */
 function parser(options, customBuilder) {
-  const store = curry(createStore)(options, customBuilder || createTreeBuilder);
+  const state = curry(createParserState)(options, customBuilder || createTreeBuilder);
   return {
-    parse: (data) => parse(store(data))
+    parse: (data) => parse(state(data))
   }
 }
 
 /**
- * Create a new store object
+ * Create a new state object
  * @param   {object} userOptions - parser options
  * @param   {Function} customBuilder - Tree builder factory
  * @param   {string} data - data to parse
- * @returns {ParserStore}
+ * @returns {ParserState}
  */
-function createStore(userOptions, builder, data) {
+function createParserState(userOptions, builder, data) {
   const options = Object.assign({
     brackets: ['{', '}']
   }, userOptions);
@@ -1670,57 +1670,57 @@ function createStore(userOptions, builder, data) {
  * - TEXT    -- Raw text
  * - COMMENT -- Comments
  *
- * @param   {ParserStore}  store - Current parser store
+ * @param   {ParserState}  state - Current parser state
  * @returns {ParserResult} Result, contains data and output properties.
  */
-function parse(store) {
-  const { data } = store;
+function parse(state) {
+  const { data } = state;
 
-  walk(store);
-  flush(store);
+  walk(state);
+  flush(state);
 
-  if (store.count) {
-    panic(data, store.count > 0 ? unexpectedEndOfFile : rootTagNotFound, store.pos);
+  if (state.count) {
+    panic(data, state.count > 0 ? unexpectedEndOfFile : rootTagNotFound, state.pos);
   }
 
   return {
     data,
-    output: store.builder.get()
+    output: state.builder.get()
   }
 }
 
 /**
  * Parser walking recursive function
- * @param {ParserStore}  store - Current parser store
+ * @param {ParserState}  state - Current parser state
  * @param   {string} type - current parsing context
  */
-function walk(store, type) {
-  const { data } = store;
-  // extend the store adding the tree builder instance and the initial data
+function walk(state, type) {
+  const { data } = state;
+  // extend the state adding the tree builder instance and the initial data
   const length = data.length;
 
   // The "count" property is set to 1 when the first tag is found.
   // This becomes the root and precedent text or comments are discarded.
   // So, at the end of the parsing count must be zero.
-  if (store.pos < length && store.count) {
-    walk(store, eat(store, type));
+  if (state.pos < length && state.count) {
+    walk(state, eat(state, type));
   }
 }
 
 /**
- * Function to help iterating on the current parser store
- * @param {ParserStore}  store - Current parser store
+ * Function to help iterating on the current parser state
+ * @param {ParserState}  state - Current parser state
  * @param   {string} type - current parsing context
  * @returns {string} parsing context
  */
-function eat(store, type) {
+function eat(state, type) {
   switch (type) {
   case TAG:
-    return tag(store)
+    return tag(state)
   case ATTR:
-    return attr(store)
+    return attr(state)
   default:
-    return text(store)
+    return text(state)
   }
 }
 

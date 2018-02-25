@@ -6,16 +6,16 @@ import { EXPORT_DEFAULT } from '../regex'
 import exprExtr from '../utils/expr-extr'
 /**
  * Create the javascript nodes
- * @param {ParserStore} store  - Current parser store
+ * @param {ParserState} state  - Current parser state
  * @param {number}  start   - Start position of the tag
  * @param {number}  end     - Ending position (last char of the tag)
  * @private
  */
-export function pushJavascript(store, start, end) {
-  const code = getChunk(store.data, start, end)
-  const push = store.builder.push.bind(store.builder)
+export function pushJavascript(state, start, end) {
+  const code = getChunk(state.data, start, end)
+  const push = state.builder.push.bind(state.builder)
   const match = EXPORT_DEFAULT.exec(code)
-  store.pos = end
+  state.pos = end
 
   // no export rules found
   // skip the nodes creation
@@ -30,7 +30,7 @@ export function pushJavascript(store, start, end) {
 
   // dispatch syntax errors
   if (!publicJs) {
-    panic(store.data, unableToParseExportDefault, start + publicJsIndex)
+    panic(state.data, unableToParseExportDefault, start + publicJsIndex)
   }
 
   [
