@@ -411,6 +411,16 @@ module.exports = {
     throws: /Unclosed/i
   },
 
+  'unexpected char': {
+    data: '<div>{ foo[ }</div>',
+    throws: /Unexpected/i
+  },
+
+  'unclosed expression': {
+    data: '<div>{ foo[ </div>',
+    throws: /Unclosed/i
+  },
+
   'unclosed script tag': {
     data: '<script>\n const foo',
     throws: /Unclosed/i

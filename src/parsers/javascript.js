@@ -1,7 +1,5 @@
 import getChunk from '../utils/get-chunk'
-import panic from '../utils/panic'
 import exprExtr from '../utils/expr-extr'
-import { unableToParseExportDefault } from '../messages'
 import { PUBLIC_JAVASCRIPT, PRIVATE_JAVASCRIPT  } from '../node-types'
 import { EXPORT_DEFAULT } from '../regex'
 
@@ -29,12 +27,7 @@ export default function javascript(state, start, end) {
   // perfectly also in this case matching everything there is in { ... } block
   const publicJs = exprExtr(getChunk(code, publicJsIndex, end), 0, ['{', '}'])
 
-  // dispatch syntax errors
-  if (!publicJs) {
-    panic(state.data, unableToParseExportDefault, start + publicJsIndex)
-  }
-
-  [
+  ;[
     createPrivateJsNode(code, start, 0, match.index),
     {
       type: PUBLIC_JAVASCRIPT,

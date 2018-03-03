@@ -10,5 +10,9 @@ export const STYLE_TAG = 'style'
 export const TEXTAREA_TAG = 'textarea'
 export const PRE_TAG = 'textarea'
 
-export const DEFER_ATTR = 'defer'
-
+// Boolean attributes
+export const IS_RAW = 'isRaw'
+export const IS_SELF_CLOSING = 'isSelfClosing'
+export const IS_VOID = 'isVoid'
+export const IS_BOOLEAN = 'isBoolean'
+export const IS_CUSTOM = 'isCustom'

@@ -42,6 +42,19 @@ module.exports = {
     ]
   },
 
+  'expression containing javascript keywords': {
+    data: '<p>{ if (foo) { bar } else { baz } }</p>',
+    expected: [
+      { type: _T.TAG, name: 'p', start: 0, end: 3 },
+      {
+        type: _T.TEXT, text: '{ if (foo) { bar } else { baz } }', start: 3, end: 36, expressions: [
+          { text: ' if (foo) { bar } else { baz } ', start: 3, end: 36 }
+        ]
+      },
+      { type: _T.TAG, name: '/p', start: 36, end: 40 }
+    ]
+  },
+
   'must handle double quotes inside unquoted expression': {
     data: '<p>foo {"<a>"}</p>',
     expected: [

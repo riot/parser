@@ -19,7 +19,7 @@
  * Selfclosing and void tags has no nodes[] property.
  */
 import panic from './utils/panic'
-import { emptyStack, duplicatedNamedTag, unableToNestNamedTag } from './messages'
+import { duplicatedNamedTag, unableToNestNamedTag } from './messages'
 import addToCollection from './utils/add-to-collection'
 import { RAW_TAGS } from './regex'
 import { TEXT, TAG, PRIVATE_JAVASCRIPT, PUBLIC_JAVASCRIPT } from './node-types'
@@ -29,7 +29,9 @@ import {
   TEMPLATE_OUTPUT_NAME,
   JAVASCRIPT_TAG,
   STYLE_TAG,
-  DEFER_ATTR
+  IS_RAW,
+  IS_SELF_CLOSING,
+  IS_VOID
 } from './constants'
 
 /**
@@ -106,9 +108,6 @@ const TREE_BUILDER_STRUCT = Object.seal({
     if (store.scryle) {
       store.scryle = null
     } else {
-      if (!store.stack[0]) {
-        panic(this.store.data, emptyStack, last.start)
-      }
       store.last = store.stack.pop()
     }
   },
@@ -121,7 +120,7 @@ const TREE_BUILDER_STRUCT = Object.seal({
       panic(this.store.data, unableToNestNamedTag, node.start)
     }
 
-    if ([JAVASCRIPT_TAG, STYLE_TAG].includes(name) && !this.deferred(node, attrs)) {
+    if ([JAVASCRIPT_TAG, STYLE_TAG].includes(name)) {
       // Only accept one of each
       if (store[name]) {
         panic(this.store.data, duplicatedNamedTag.replace('%1', name), node.start)
@@ -129,7 +128,7 @@ const TREE_BUILDER_STRUCT = Object.seal({
 
       store[name] = node
       // support selfclosing script (w/o text content)
-      if (!node.isSelfClosing) {
+      if (!node[IS_SELF_CLOSING]) {
         store.scryle = store[name]
       }
     } else {
@@ -141,11 +140,11 @@ const TREE_BUILDER_STRUCT = Object.seal({
 
       lastTag.nodes.push(newNode)
 
-      if (lastTag.isRaw || RAW_TAGS.test(name)) {
-        node.isRaw = true
+      if (lastTag[IS_RAW] || RAW_TAGS.test(name)) {
+        node[IS_RAW] = true
       }
 
-      if (!node.isSelfClosing && !node.isVoid) {
+      if (!node[IS_SELF_CLOSING] && !node[IS_VOID]) {
         store.stack.push(lastTag)
         newNode.nodes = []
         store.last = newNode
@@ -155,17 +154,6 @@ const TREE_BUILDER_STRUCT = Object.seal({
     if (attrs) {
       this.attrs(attrs)
     }
-  },
-  deferred(node, attributes) {
-    if (attributes) {
-      for (let i = 0; i < attributes.length; i++) {
-        if (attributes[i].name === DEFER_ATTR) {
-          attributes.splice(i, 1)
-          return true
-        }
-      }
-    }
-    return false
   },
   attrs(attributes) {
     for (let i = 0; i < attributes.length; i++) {
@@ -182,7 +170,7 @@ const TREE_BUILDER_STRUCT = Object.seal({
     if (!scryle) {
       // store.last always have a nodes property
       const parent = store.last
-      const pack = this.compact && !parent.isRaw
+      const pack = this.compact && !parent[IS_RAW]
       if (pack && empty) {
         return
       }
@@ -202,10 +190,6 @@ const TREE_BUILDER_STRUCT = Object.seal({
         const expr = expressions[i]
         const text = source.slice(pos, expr.start - start)
         let code = expr.text
-        if (this.prefixes.indexOf(code[0]) !== -1) {
-          expr.prefix = code[0]
-          code = code.substr(1)
-        }
         parts.push(this.sanitise(node, text, pack), escapeReturn(escapeSlashes(code).trim()))
         pos = expr.end - start
       }
@@ -247,7 +231,6 @@ export default function createTreeBuilder(data, options) {
 
   return Object.assign(Object.create(TREE_BUILDER_STRUCT), {
     compact: options.compact !== false,
-    prefixes: '?=^',
     store: {
       last: root,
       stack: [],

@@ -1,6 +1,10 @@
 import flush from './flush-parser-state'
 import { TAG } from '../node-types'
 import { isVoid, isCustom } from 'dom-nodes'
+import {
+  IS_VOID,
+  IS_CUSTOM
+} from '../constants'
 
 /**
  * Pushes a new *tag* and set `last` to this, so any attributes
@@ -17,11 +21,11 @@ export default function pushTag(state, name, start, end) {
   const last = { type: TAG, name, start, end }
 
   if (isCustom(name) && !root) {
-    last.isCustom = true
+    last[IS_CUSTOM] = true
   }
 
   if (isVoid(name)) {
-    last.isVoid = true
+    last[IS_VOID] = true
   }
 
   state.pos = end
