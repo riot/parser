@@ -627,6 +627,20 @@ module.exports = {
     ]
   },
 
+  'Custom brackets `% %` w/ES6 inside in unquoted attr': {
+    options: { brackets: ['%', '%'] },
+    data: '<a b=% `a${0}` % />',
+    expected: [
+      { type: _T.TAG, name: 'a', start: 0, end: 19, attributes: [
+        { name: 'b', value: '% `a${0}` %', start: 3, end: 16, valueStart: 5,
+          expressions: [
+            { text: ' `a${0}` ', start: 5, end: 16 }
+          ]
+        }
+      ], isSelfClosing: true }
+    ]
+  },
+
   'Custom brackets `${ }` preceding by escaped bracket in attr': {
     options: { brackets: ['${', '}'] },
     data: '<a b="\\${${{}}}" />',

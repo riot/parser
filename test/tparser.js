@@ -411,6 +411,11 @@ module.exports = {
     throws: /Unclosed/i
   },
 
+  'no root tag': {
+    data: '',
+    throws: /not found/i
+  },
+
   'unexpected char': {
     data: '<div>{ foo[ }</div>',
     throws: /Unexpected/i

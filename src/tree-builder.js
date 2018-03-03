@@ -123,10 +123,8 @@ const TREE_BUILDER_STRUCT = Object.seal({
       }
 
       store[name] = node
-      // support selfclosing script (w/o text content)
-      if (!node[IS_SELF_CLOSING]) {
-        store.scryle = store[name]
-      }
+      store.scryle = store[name]
+
     } else {
       // store.last holds the last tag pushed in the stack and this are
       // non-void, non-empty tags, so we are sure the `lastTag` here
