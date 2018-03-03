@@ -1030,6 +1030,7 @@ function _prev(code, pos) {
  * @returns {number} Position of the char following the regex.
  *
  */
+/* istanbul ignore next */
 function skipRegex(code, start) {
   let pos = RE_DOT_CHAR.lastIndex = start++;
 
@@ -1410,17 +1411,15 @@ function setAttribute(state, pos, tag) {
   const start = re.lastIndex = pos; // first non-whitespace
   const match = re.exec(data);
 
-  if (!match) {
-    return
+  if (match) {
+    let end = re.lastIndex;
+    const attr = parseAttribute(state, match, start, end);
+
+    //assert(q && q.type === Mode.TAG, 'no previous tag for the attr!')
+    // Pushes the attribute and shifts the `end` position of the tag (`last`).
+    state.pos = tag.end = attr.end;
+    tag.attributes = addToCollection(tag.attributes, attr);
   }
-
-  let end = re.lastIndex;
-  const attr = parseAttribute(state, match, start, end);
-
-  //assert(q && q.type === Mode.TAG, 'no previous tag for the attr!')
-  // Pushes the attribute and shifts the `end` position of the tag (`last`).
-  state.pos = tag.end = attr.end;
-  tag.attributes = addToCollection(tag.attributes, attr);
 }
 
 /**
