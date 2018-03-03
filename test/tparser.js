@@ -488,6 +488,16 @@ module.exports = {
     throws: /expected/i
   },
 
+  'multiple <style> tags are not supported': {
+    data: '<div><style></style><style></style></div>',
+    throws: /Duplicate/i
+  },
+
+  'multiple <script> tags are not supported': {
+    data: '<div><script></script><script></script></div>',
+    throws: /Duplicate/i
+  },
+
   'whitespace after the tag name is ignored #1': {
     data: '<div\t\n\n  \n\t/>',
     expected: [{ type: _T.TAG, name: 'div', end: 13, isSelfClosing: true }]

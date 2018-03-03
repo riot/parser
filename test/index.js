@@ -17,6 +17,11 @@ function cat(dir, name) {
   return fs.readFileSync(path.join('.', dir, name), 'utf8')
 }
 
+function throwException(test) {
+  const _p = parser(getOpts(test))
+  return expect(function () { _p.parse(test.data) }).throw(test.throws)
+}
+
 describe('The Parser', function () {
   const tests = require('./tparser')
 
@@ -26,8 +31,7 @@ describe('The Parser', function () {
       const _p = parser(getOpts(test), echoBuilder)
 
       if (test.throws) {
-        expect(function () { _p.parse(test.data) }).throw(test.throws)
-
+        throwException(test)
       } else {
         let result = _p.parse(test.data)
         let expected
@@ -51,8 +55,7 @@ describe('Expressions', function () {
       const _p = parser(getOpts(test), echoBuilder)
 
       if (test.throws) {
-        expect(function () { _p.parse(test.data) }).throw(test.throws)
-
+        throwException(test)
       } else {
         let result = _p.parse(test.data)
         let expected

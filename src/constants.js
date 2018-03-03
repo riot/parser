@@ -8,7 +8,6 @@ export const TEMPLATE_OUTPUT_NAME = 'template'
 export const JAVASCRIPT_TAG = 'script'
 export const STYLE_TAG = 'style'
 export const TEXTAREA_TAG = 'textarea'
-export const PRE_TAG = 'textarea'
 
 // Boolean attributes
 export const IS_RAW = 'isRaw'

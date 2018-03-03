@@ -19,7 +19,7 @@
  * Selfclosing and void tags has no nodes[] property.
  */
 import panic from './utils/panic'
-import { duplicatedNamedTag, unableToNestNamedTag } from './messages'
+import { duplicatedNamedTag } from './messages'
 import addToCollection from './utils/add-to-collection'
 import { RAW_TAGS } from './regex'
 import { TEXT, TAG, PRIVATE_JAVASCRIPT, PUBLIC_JAVASCRIPT } from './node-types'
@@ -115,10 +115,6 @@ const TREE_BUILDER_STRUCT = Object.seal({
   openTag(store, node) {
     const name = node.name
     const attrs = node.attributes
-
-    if (store.scryle) {
-      panic(this.store.data, unableToNestNamedTag, node.start)
-    }
 
     if ([JAVASCRIPT_TAG, STYLE_TAG].includes(name)) {
       // Only accept one of each

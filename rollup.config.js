@@ -2,8 +2,8 @@ import resolve from 'rollup-plugin-node-resolve'
 
 export default {
   input: 'src/index.js',
-  name: 'parser',
   output: {
+    name: 'parser',
     format: 'umd',
     file: './index.js'
   },

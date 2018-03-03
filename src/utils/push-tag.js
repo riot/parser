@@ -42,5 +42,6 @@ export default function pushTag(state, name, start, end) {
     state.root = { name: last.name, close: `/${name}` }
     state.count = 1
   }
+
   state.last = last
 }

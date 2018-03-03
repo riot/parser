@@ -46,7 +46,6 @@ function flush(store) {
 
 const rootTagNotFound = 'Root tag not found.';
 const unclosedTemplateLiteral = 'Unclosed ES6 template literal.';
-const unableToNestNamedTag = 'Unable to nest named tags.';
 const unexpectedEndOfFile = 'Unexpected end of file.';
 const unclosedComment = 'Unclosed comment.';
 const unclosedNamedBlock = 'Unclosed "%1" block.';
@@ -261,10 +260,6 @@ const TREE_BUILDER_STRUCT = Object.seal({
   openTag(store, node) {
     const name = node.name;
     const attrs = node.attributes;
-
-    if (store.scryle) {
-      panic(this.store.data, unableToNestNamedTag, node.start);
-    }
 
     if ([JAVASCRIPT_TAG, STYLE_TAG].includes(name)) {
       // Only accept one of each
@@ -838,6 +833,7 @@ function pushTag(state, name, start, end) {
     state.root = { name: last.name, close: `/${name}` };
     state.count = 1;
   }
+
   state.last = last;
 }
 
@@ -1002,6 +998,9 @@ const RE_LIT_REGEX = /^\/(?=[^*>/])[^[/\\]*(?:(?:\\.|\[(?:\\.|[^\]\\]*)*\])[^[\\
 // Valid characters for JavaScript variable names and literal numbers.
 const RE_JS_VCHAR = /[$\w]/;
 
+// Match dot characters that could be part of tricky regex
+const RE_DOT_CHAR = /.*/g;
+
 /**
  * Searches the position of the previous non-blank character inside `code`,
  * starting with `pos - 1`.
@@ -1019,25 +1018,24 @@ function _prev(code, pos) {
 
 
 /**
-   * Check if the character in the `start` position within `code` can be a regex
-   * and returns the position following this regex or `start+1` if this is not
-   * one.
-   *
-   * NOTE: Ensure `start` points to a slash (this is not checked).
-   *
-   * @function skipRegex
-   * @param   {string} code  - Buffer to test in
-   * @param   {number} start - Position the first slash inside `code`
-   * @returns {number} Position of the char following the regex.
-   *
-   */
+ * Check if the character in the `start` position within `code` can be a regex
+ * and returns the position following this regex or `start+1` if this is not
+ * one.
+ *
+ * NOTE: Ensure `start` points to a slash (this is not checked).
+ *
+ * @function skipRegex
+ * @param   {string} code  - Buffer to test in
+ * @param   {number} start - Position the first slash inside `code`
+ * @returns {number} Position of the char following the regex.
+ *
+ */
 function skipRegex(code, start) {
-  const re = /.*/g;
-  let pos = re.lastIndex = start++;
+  let pos = RE_DOT_CHAR.lastIndex = start++;
 
   // `exec()` will extract from the slash to the end of the line
   //   and the chained `match()` will match the possible regex.
-  const match = (re.exec(code) || ' ')[0].match(RE_LIT_REGEX);
+  const match = (RE_DOT_CHAR.exec(code) || ' ')[0].match(RE_LIT_REGEX);
 
   if (match) {
     const next = pos + match[0].length;      // result comes from `re.match`

@@ -1,6 +1,5 @@
 export const rootTagNotFound = 'Root tag not found.'
 export const unclosedTemplateLiteral = 'Unclosed ES6 template literal.'
-export const unableToNestNamedTag = 'Unable to nest named tags.'
 export const unexpectedEndOfFile = 'Unexpected end of file.'
 export const unexpectedNamedTag = 'Unexpected tag <%1>'
 export const unclosedComment = 'Unclosed comment.'

@@ -652,6 +652,5 @@ module.exports = {
         isSelfClosing: true
       }
     ]
-  },
-
+  }
 }

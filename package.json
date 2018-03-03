@@ -11,7 +11,7 @@
     "npm": ">=3.0"
   },
   "scripts": {
-    "test": "nyc mocha ./test",
+    "test": "nyc mocha ./test/index",
     "test-debug": "mocha --inspect-brk ./test",
     "cov": "nyc report --reporter=text-lcov | coveralls",
     "cov-html": "nyc report --reporter=html",
