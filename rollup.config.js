@@ -4,7 +4,7 @@ export default {
   input: 'src/index.js',
   output: {
     name: 'parser',
-    format: 'umd',
+    format: 'cjs',
     file: './index.js'
   },
   plugins: [resolve()]
