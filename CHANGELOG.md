@@ -1,5 +1,10 @@
 # Changes for riot-parser
 
+### v0.5.0
+- Remove the the useless prefix option
+- Improve the coverage
+- Improve the quality of the source code
+
 ### v0.4.0
 - Add the [`dom-nodes`](https://github.com/riot/dom-nodes) dependecy to improve the output
 - Add the `isCustom`, `isBoolean`, `isVoid`, `isSelfClosing` and `isRaw` boolean node attributes
