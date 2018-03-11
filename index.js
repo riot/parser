@@ -1,8 +1,6 @@
-(function (global, factory) {
-	typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
-	typeof define === 'function' && define.amd ? define(['exports'], factory) :
-	(factory((global.parser = {})));
-}(this, (function (exports) { 'use strict';
+'use strict';
+
+Object.defineProperty(exports, '__esModule', { value: true });
 
 function formatError (data, message, pos) {
   if (!pos) {
@@ -45,14 +43,13 @@ function flush(store) {
 }
 
 const rootTagNotFound = 'Root tag not found.';
-const unclosedTemplateLiteral = 'Unclosed ES6 template literal';
-const emptyStack = 'Stack is empty.';
-const unableToNestNamedTag = 'Unable to nest named tags';
+const unclosedTemplateLiteral = 'Unclosed ES6 template literal.';
 const unexpectedEndOfFile = 'Unexpected end of file.';
 const unclosedComment = 'Unclosed comment.';
 const unclosedNamedBlock = 'Unclosed "%1" block.';
 const duplicatedNamedTag = 'Duplicate tag "<%1>".';
-const unableToParseExportDefault = 'Unable to parse your tag \'export default\' contents.';
+const unexpectedCharInExpression = 'Unexpected character %1.';
+const unclosedExpression = 'Unclosed expression.';
 
 /**
  * Add an item into a collection, if the collection is not an array
@@ -152,7 +149,12 @@ const JAVASCRIPT_TAG = 'script';
 const STYLE_TAG = 'style';
 const TEXTAREA_TAG = 'textarea';
 
-const DEFER_ATTR = 'defer';
+// Boolean attributes
+const IS_RAW = 'isRaw';
+const IS_SELF_CLOSING = 'isSelfClosing';
+const IS_VOID = 'isVoid';
+const IS_BOOLEAN = 'isBoolean';
+const IS_CUSTOM = 'isCustom';
 
 /*---------------------------------------------------------------------
  * Tree builder for the riot tag parser.
@@ -249,9 +251,6 @@ const TREE_BUILDER_STRUCT = Object.seal({
     if (store.scryle) {
       store.scryle = null;
     } else {
-      if (!store.stack[0]) {
-        panic(this.store.data, emptyStack, last.start);
-      }
       store.last = store.stack.pop();
     }
   },
@@ -260,21 +259,15 @@ const TREE_BUILDER_STRUCT = Object.seal({
     const name = node.name;
     const attrs = node.attributes;
 
-    if (store.scryle) {
-      panic(this.store.data, unableToNestNamedTag, node.start);
-    }
-
-    if ([JAVASCRIPT_TAG, STYLE_TAG].includes(name) && !this.deferred(node, attrs)) {
+    if ([JAVASCRIPT_TAG, STYLE_TAG].includes(name)) {
       // Only accept one of each
       if (store[name]) {
         panic(this.store.data, duplicatedNamedTag.replace('%1', name), node.start);
       }
 
       store[name] = node;
-      // support selfclosing script (w/o text content)
-      if (!node.isSelfClosing) {
-        store.scryle = store[name];
-      }
+      store.scryle = store[name];
+
     } else {
       // store.last holds the last tag pushed in the stack and this are
       // non-void, non-empty tags, so we are sure the `lastTag` here
@@ -284,11 +277,11 @@ const TREE_BUILDER_STRUCT = Object.seal({
 
       lastTag.nodes.push(newNode);
 
-      if (lastTag.isRaw || RAW_TAGS.test(name)) {
-        node.isRaw = true;
+      if (lastTag[IS_RAW] || RAW_TAGS.test(name)) {
+        node[IS_RAW] = true;
       }
 
-      if (!node.isSelfClosing && !node.isVoid) {
+      if (!node[IS_SELF_CLOSING] && !node[IS_VOID]) {
         store.stack.push(lastTag);
         newNode.nodes = [];
         store.last = newNode;
@@ -298,17 +291,6 @@ const TREE_BUILDER_STRUCT = Object.seal({
     if (attrs) {
       this.attrs(attrs);
     }
-  },
-  deferred(node, attributes) {
-    if (attributes) {
-      for (let i = 0; i < attributes.length; i++) {
-        if (attributes[i].name === DEFER_ATTR) {
-          attributes.splice(i, 1);
-          return true
-        }
-      }
-    }
-    return false
   },
   attrs(attributes) {
     for (let i = 0; i < attributes.length; i++) {
@@ -325,7 +307,7 @@ const TREE_BUILDER_STRUCT = Object.seal({
     if (!scryle) {
       // store.last always have a nodes property
       const parent = store.last;
-      const pack = this.compact && !parent.isRaw;
+      const pack = this.compact && !parent[IS_RAW];
       if (pack && empty) {
         return
       }
@@ -345,10 +327,6 @@ const TREE_BUILDER_STRUCT = Object.seal({
         const expr = expressions[i];
         const text = source.slice(pos, expr.start - start);
         let code = expr.text;
-        if (this.prefixes.indexOf(code[0]) !== -1) {
-          expr.prefix = code[0];
-          code = code.substr(1);
-        }
         parts.push(this.sanitise(node, text, pack), escapeReturn(escapeSlashes(code).trim()));
         pos = expr.end - start;
       }
@@ -390,7 +368,6 @@ function createTreeBuilder(data, options) {
 
   return Object.assign(Object.create(TREE_BUILDER_STRUCT), {
     compact: options.compact !== false,
-    prefixes: '?=^',
     store: {
       last: root,
       stack: [],
@@ -831,11 +808,11 @@ function pushTag(state, name, start, end) {
   const last = { type: TAG, name, start, end };
 
   if (isCustom(name) && !root) {
-    last.isCustom = true;
+    last[IS_CUSTOM] = true;
   }
 
   if (isVoid(name)) {
-    last.isVoid = true;
+    last[IS_VOID] = true;
   }
 
   state.pos = end;
@@ -852,6 +829,7 @@ function pushTag(state, name, start, end) {
     state.root = { name: last.name, close: `/${name}` };
     state.count = 1;
   }
+
   state.last = last;
 }
 
@@ -985,126 +963,122 @@ function parseTag(state, start) {
   return TEXT
 }
 
+// forked from https://github.com/aMarCruz/skip-regex
+
+// safe characters to precced a regex (including `=>`, `**`, and `...`)
+const beforeReChars = '[{(,;:?=|&!^~>%*/';
+const beforeReSign = beforeReChars + '+-';
+
+// keyword that can preceed a regex (`in` is handled as special case)
+const beforeReWords = [
+  'case',
+  'default',
+  'do',
+  'else',
+  'in',
+  'instanceof',
+  'prefix',
+  'return',
+  'typeof',
+  'void',
+  'yield'
+];
+
+// Last chars of all the beforeReWords elements to speed up the process.
+const wordsEndChar = beforeReWords.reduce((s, w) => s + w.slice(-1), '');
+
+// Matches literal regex from the start of the buffer.
+// The buffer to search must not include line-endings.
+const RE_LIT_REGEX = /^\/(?=[^*>/])[^[/\\]*(?:(?:\\.|\[(?:\\.|[^\]\\]*)*\])[^[\\/]*)*?\/[gimuy]*/;
+
+// Valid characters for JavaScript variable names and literal numbers.
+const RE_JS_VCHAR = /[$\w]/;
+
+// Match dot characters that could be part of tricky regex
+const RE_DOT_CHAR = /.*/g;
+
 /**
- * skipRegex v0.3.1
- * @author aMarCruz
- * @license MIT
+ * Searches the position of the previous non-blank character inside `code`,
+ * starting with `pos - 1`.
+ *
+ * @param   {string} code - Buffer to search
+ * @param   {number} pos  - Starting position
+ * @returns {number} Position of the first non-blank character to the left.
+ * @private
  */
-/** @exports skipRegex */
-var skipRegex = (function () {
+function _prev(code, pos) {
+  while (--pos >= 0 && /\s/.test(code[pos]));
+  return pos
+}
 
-  // safe characters to precced a regex (including `=>`, `**`, and `...`)
-  var beforeReChars = '[{(,;:?=|&!^~>%*/';
-  var beforeReSign = beforeReChars + '+-';
 
-  // keyword that can preceed a regex (`in` is handled as special case)
-  var beforeReWords = [
-    'case',
-    'default',
-    'do',
-    'else',
-    'in',
-    'instanceof',
-    'prefix',
-    'return',
-    'typeof',
-    'void',
-    'yield'
-  ];
 
-  // Last chars of all the beforeReWords elements to speed up the process.
-  var wordsEndChar = beforeReWords.reduce(function (s, w) { return s + w.slice(-1); }, '');
+/**
+ * Check if the character in the `start` position within `code` can be a regex
+ * and returns the position following this regex or `start+1` if this is not
+ * one.
+ *
+ * NOTE: Ensure `start` points to a slash (this is not checked).
+ *
+ * @function skipRegex
+ * @param   {string} code  - Buffer to test in
+ * @param   {number} start - Position the first slash inside `code`
+ * @returns {number} Position of the char following the regex.
+ *
+ */
+/* istanbul ignore next */
+function skipRegex(code, start) {
+  let pos = RE_DOT_CHAR.lastIndex = start++;
 
-  // Matches literal regex from the start of the buffer.
-  // The buffer to search must not include line-endings.
-  var RE_LIT_REGEX = /^\/(?=[^*>/])[^[/\\]*(?:(?:\\.|\[(?:\\.|[^\]\\]*)*\])[^[\\/]*)*?\/[gimuy]*/;
+  // `exec()` will extract from the slash to the end of the line
+  //   and the chained `match()` will match the possible regex.
+  const match = (RE_DOT_CHAR.exec(code) || ' ')[0].match(RE_LIT_REGEX);
 
-  // Valid characters for JavaScript variable names and literal numbers.
-  var RE_JS_VCHAR = /[$\w]/;
+  if (match) {
+    const next = pos + match[0].length;      // result comes from `re.match`
 
-  /**
-   * Searches the position of the previous non-blank character inside `code`,
-   * starting with `pos - 1`.
-   *
-   * @param   {string} code - Buffer to search
-   * @param   {number} pos  - Starting position
-   * @returns {number} Position of the first non-blank character to the left.
-   * @private
-   */
-  function _prev(code, pos) {
-    while (--pos >= 0 && /\s/.test(code[pos])){  }
-    return pos
-  }
+    pos = _prev(code, pos);
+    let c = code[pos];
 
-  /**
-   * Check if the character in the `start` position within `code` can be a regex
-   * and returns the position following this regex or `start+1` if this is not
-   * one.
-   *
-   * NOTE: Ensure `start` points to a slash (this is not checked).
-   *
-   * @function skipRegex
-   * @param   {string} code  - Buffer to test in
-   * @param   {number} start - Position the first slash inside `code`
-   * @returns {number} Position of the char following the regex.
-   *
-   */
-  return function skipRegex(code, start) {
+    // start of buffer or safe prefix?
+    if (pos < 0 || beforeReChars.includes(c)) {
+      return next
+    }
 
-    var re = /.*/g;
-    var pos = re.lastIndex = start++;
-
-    // `exec()` will extract from the slash to the end of the line
-    //   and the chained `match()` will match the possible regex.
-    var match = (re.exec(code) || ' ')[0].match(RE_LIT_REGEX);
-
-    if (match) {
-      var next = pos + match[0].length;      // result comes from `re.match`
-
-      pos = _prev(code, pos);
-      var c = code[pos];
-
-      // start of buffer or safe prefix?
-      if (pos < 0 || ~beforeReChars.indexOf(c)) {
-        return next
+    // from here, `pos` is >= 0 and `c` is code[pos]
+    if (c === '.') {
+      // can be `...` or something silly like 5./2
+      if (code[pos - 1] === '.') {
+        start = next;
       }
 
-      // from here, `pos` is >= 0 and `c` is code[pos]
-      if (c === '.') {
-        // can be `...` or something silly like 5./2
-        if (code[pos - 1] === '.') {
-          start = next;
-        }
+    } else {
 
-      } else {
-
-        if (c === '+' || c === '-') {
-          // tricky case
-          if (code[--pos] !== c ||            // if have a single operator or
+      if (c === '+' || c === '-') {
+        // tricky case
+        if (code[--pos] !== c ||            // if have a single operator or
              (pos = _prev(code, pos)) < 0 ||  // ...have `++` and no previous token
-             ~beforeReSign.indexOf(c = code[pos])) {
-            return next                       // ...this is a regex
-          }
+             beforeReSign.includes(c = code[pos])) {
+          return next                       // ...this is a regex
         }
+      }
 
-        if (~wordsEndChar.indexOf(c)) {  // looks like a keyword?
-          var end = pos + 1;
+      if (wordsEndChar.includes(c)) {  // looks like a keyword?
+        const end = pos + 1;
 
-          // get the complete (previous) keyword
-          while (--pos >= 0 && RE_JS_VCHAR.test(code[pos])){  }
+        // get the complete (previous) keyword
+        while (--pos >= 0 && RE_JS_VCHAR.test(code[pos]));
 
-          // it is in the allowed keywords list?
-          if (~beforeReWords.indexOf(code.slice(pos + 1, end))) {
-            start = next;
-          }
+        // it is in the allowed keywords list?
+        if (beforeReWords.includes(code.slice(pos + 1, end))) {
+          start = next;
         }
       }
     }
-
-    return start
   }
 
-})();
+  return start
+}
 
 /**
  * Escape special characters in a given string, in preparation to create a regex.
@@ -1217,7 +1191,7 @@ function updateStack(stack, char, idx, code) {
   case ']':
   case '}':
     if (char !== stack.pop()) {
-      throw new Error(`Unexpected character '${char}'`)
+      panic(code, unexpectedCharInExpression.replace('%1', char), index);
     }
 
     if (char === '}' && stack[stack.length - 1] === $_ES6_BQ) {
@@ -1241,7 +1215,7 @@ function updateStack(stack, char, idx, code) {
    * @param   {string}  code  - Buffer to parse
    * @param   {number}  start - Position of the opening brace
    * @param   {[string,string]} bp - Brackets pair
-   * @returns {(Object | null)} Expression's end (after the closing brace) or -1
+   * @returns {Object} Expression's end (after the closing brace) or -1
    *                            if it is not an expr.
    */
 function exprExtr(code, start, bp) {
@@ -1277,10 +1251,8 @@ function exprExtr(code, start, bp) {
   }
 
   if (stack.length) {
-    throw new Error('Unclosed expression.')
+    panic(code, unclosedExpression, end);
   }
-
-  return null
 }
 
 /**
@@ -1326,7 +1298,7 @@ function parseExpressions(state, re) {
   const { data, options } = state;
   const { brackets } = options;
   const expressions = [];
-  let unescape, pos, match;;;
+  let unescape, pos, match;
 
   // Anything captured in $1 (closing quote or character) ends the loop...
   while ((match = re.exec(data)) && !match[1]) {
@@ -1402,7 +1374,7 @@ function attr(state) {
     // closing char found. If this is a self-closing tag with the name of the
     // Root tag, we need decrement the counter as we are changing mode.
     state.pos = tag.end = _CH.lastIndex;
-    if (tag.isSelfClosing) {
+    if (tag[IS_SELF_CLOSING]) {
       state.scryle = null; // allow selfClosing script/style tags
       if (root && root.name === tag.name) {
         state.count--; // "pop" root tag
@@ -1411,10 +1383,10 @@ function attr(state) {
     return TEXT
   case ch[0] === '/':
     state.pos = _CH.lastIndex; // maybe. delegate the validation
-    tag.isSelfClosing = true; // the next loop
+    tag[IS_SELF_CLOSING] = true; // the next loop
     break
   default:
-    delete tag.isSelfClosing; // ensure unmark as selfclosing tag
+    delete tag[IS_SELF_CLOSING]; // ensure unmark as selfclosing tag
     setAttribute(state, ch.index, tag);
   }
 
@@ -1435,17 +1407,15 @@ function setAttribute(state, pos, tag) {
   const start = re.lastIndex = pos; // first non-whitespace
   const match = re.exec(data);
 
-  if (!match) {
-    return
+  if (match) {
+    let end = re.lastIndex;
+    const attr = parseAttribute(state, match, start, end);
+
+    //assert(q && q.type === Mode.TAG, 'no previous tag for the attr!')
+    // Pushes the attribute and shifts the `end` position of the tag (`last`).
+    state.pos = tag.end = attr.end;
+    tag.attributes = addToCollection(tag.attributes, attr);
   }
-
-  let end = re.lastIndex;
-  const attr = parseAttribute(state, match, start, end);
-
-  //assert(q && q.type === Mode.TAG, 'no previous tag for the attr!')
-  // Pushes the attribute and shifts the `end` position of the tag (`last`).
-  state.pos = tag.end = attr.end;
-  tag.attributes = addToCollection(tag.attributes, attr);
 }
 
 /**
@@ -1466,7 +1436,7 @@ function parseAttribute(state, match, start, end) {
   };
 
   if (isBoolAttribute(attr.name)) {
-    attr.isBoolean = true;
+    attr[IS_BOOLEAN] = true;
   }
 
   let quote = match[2]; // first letter of value or nothing
@@ -1517,14 +1487,9 @@ function javascript(state, start, end) {
   // get the content of the export default tag
   // the exprExtr was meant to be used for expressions but it works
   // perfectly also in this case matching everything there is in { ... } block
-  const publicJs = exprExtr(getChunk(code, publicJsIndex, end), 0, ['{', '}']);
+  const publicJs = exprExtr(getChunk(code, publicJsIndex, end), 0, ['{', '}'])
 
-  // dispatch syntax errors
-  if (!publicJs) {
-    panic(state.data, unableToParseExportDefault, start + publicJsIndex);
-  }
-
-  [
+  ;[
     createPrivateJsNode(code, start, 0, match.index),
     {
       type: PUBLIC_JAVASCRIPT,
@@ -1729,7 +1694,3 @@ const nodeTypes = types;
 
 exports.nodeTypes = nodeTypes;
 exports.default = parser;
-
-Object.defineProperty(exports, '__esModule', { value: true });
-
-})));

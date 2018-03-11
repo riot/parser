@@ -4,8 +4,10 @@
  * and return its text without the enclosing brackets.
  * Does not works with comments, but supports ES6 template strings.
  */
-import skipRegex from 'skip-regex'
+import skipRegex from './skip-regex'
 import escapeStr from './escape-str'
+import panic from './panic'
+import { unexpectedCharInExpression, unclosedExpression } from '../messages'
 import skipES6TL, { $_ES6_BQ } from './skip-es6-tl'
 /**
  * @exports exprExtr
@@ -72,7 +74,7 @@ function updateStack(stack, char, idx, code) {
   case ']':
   case '}':
     if (char !== stack.pop()) {
-      throw new Error(`Unexpected character '${char}'`)
+      panic(code, unexpectedCharInExpression.replace('%1', char), index)
     }
 
     if (char === '}' && stack[stack.length - 1] === $_ES6_BQ) {
@@ -96,7 +98,7 @@ function updateStack(stack, char, idx, code) {
    * @param   {string}  code  - Buffer to parse
    * @param   {number}  start - Position of the opening brace
    * @param   {[string,string]} bp - Brackets pair
-   * @returns {(Object | null)} Expression's end (after the closing brace) or -1
+   * @returns {Object} Expression's end (after the closing brace) or -1
    *                            if it is not an expr.
    */
 export default function exprExtr(code, start, bp) {
@@ -132,8 +134,6 @@ export default function exprExtr(code, start, bp) {
   }
 
   if (stack.length) {
-    throw new Error('Unclosed expression.')
+    panic(code, unclosedExpression, end)
   }
-
-  return null
 }

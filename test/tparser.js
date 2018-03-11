@@ -411,6 +411,21 @@ module.exports = {
     throws: /Unclosed/i
   },
 
+  'no root tag': {
+    data: '',
+    throws: /not found/i
+  },
+
+  'unexpected char': {
+    data: '<div>{ foo[ }</div>',
+    throws: /Unexpected/i
+  },
+
+  'unclosed expression': {
+    data: '<div>{ foo[ </div>',
+    throws: /Unclosed/i
+  },
+
   'unclosed script tag': {
     data: '<script>\n const foo',
     throws: /Unclosed/i
@@ -476,6 +491,16 @@ module.exports = {
   'must throw error on unfinished attributes #3': {
     data: '<div foo="bar',
     throws: /expected/i
+  },
+
+  'multiple <style> tags are not supported': {
+    data: '<div><style></style><style></style></div>',
+    throws: /Duplicate/i
+  },
+
+  'multiple <script> tags are not supported': {
+    data: '<div><script></script><script></script></div>',
+    throws: /Duplicate/i
   },
 
   'whitespace after the tag name is ignored #1': {
