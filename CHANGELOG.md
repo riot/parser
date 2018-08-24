@@ -1,5 +1,8 @@
 # Changes for riot-parser
 
+### v0.6.9
+- Remove the unecessary PUBLIC_JAVASCRIPT and PRIVATE_JAVASCRIPT nodes
+
 ### v0.5.0
 - Remove the the useless prefix option
 - Improve the coverage
