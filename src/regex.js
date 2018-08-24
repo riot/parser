@@ -30,12 +30,5 @@ export const RE_SCRYLE = {
   textarea: /<\/textarea\s*>/gi
 }
 
-/**
- * Matches the beginning of an `export default {}` expression
- * @const
- * @private
- */
-export const EXPORT_DEFAULT = /export(?:\W)+default(?:\s+)?{/g
-
 // Do not touch text content inside this tags
 export const RAW_TAGS = /^\/?(?:pre|textarea)$/

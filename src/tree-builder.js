@@ -20,9 +20,8 @@
  */
 import panic from './utils/panic'
 import { duplicatedNamedTag } from './messages'
-import addToCollection from './utils/add-to-collection'
 import { RAW_TAGS } from './regex'
-import { TEXT, TAG, PRIVATE_JAVASCRIPT, PUBLIC_JAVASCRIPT } from './node-types'
+import { TEXT, TAG } from './node-types'
 import {
   JAVASCRIPT_OUTPUT_NAME,
   CSS_OUTPUT_NAME,
@@ -94,10 +93,6 @@ const TREE_BUILDER_STRUCT = Object.seal({
       }
       break
     }
-    case PRIVATE_JAVASCRIPT:
-    case PUBLIC_JAVASCRIPT:
-      store[JAVASCRIPT_TAG].nodes = addToCollection(store[JAVASCRIPT_TAG].nodes, node)
-      break
     }
   },
   closeTag(store, node) {

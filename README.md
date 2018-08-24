@@ -57,64 +57,6 @@ The first element of `output` is the opening tag of the root element.
 
 The parsing stops when the closing tag of the root is found, so the last node have the ending position.
 
-#### Javascript fragments
-
-The `export default {}` object is used to identify the tags public API.
-The remaining javascript will be considered private.
-If a tag contains the `export default` expression the parser will detect and split the javascript node into children nodes
-of type `NodeTypes.JAVASCRIPT_PUBLIC` and `NodeTypes.JAVASCRIPT_PRIVATE`.
-
-For example:
-
-Input
-```html
-<my-tag>
-  <script>
-    function foo() {}
-    export default {
-      onMount() {}
-    }
-    function bar() {}
-  </script>
-</my-tag>
-```
-Output
-```js
-{
-  "javascript": {
-    "type": 1,
-    "name": "script",
-    "start": 24,
-    "end": 112,
-    "nodes": [
-      {
-        "type": nodeTypes.JAVASCRIPT_PRIVATE,
-        "start": 53,
-        "end": 75,
-        "code": "\n    function foo() {}"
-      },
-      {
-        "type": nodeTypes.JAVASCRIPT_PUBLIC,
-        "start": 62,
-        "end": 86,
-        "code": "\n    onMount() {}"
-      },
-      {
-        "type": nodeTypes.JAVASCRIPT_PRIVATE,
-        "start": 86,
-        "end": 112,
-        "code": "\n    function bar() {}"
-      },
-    ],
-    "text": {
-      "type": 3,
-      "text": "...",
-      "start": 19,
-      "end": 112
-    }
-  }
-}
-```
 
 ### Commands
 

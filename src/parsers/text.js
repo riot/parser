@@ -2,12 +2,11 @@ import execFromPos from '../utils/exec-from-pos'
 import panic from '../utils/panic'
 import pushText from '../utils/push-text'
 import pushTag from '../utils/push-tag'
-import javascript from './javascript'
 import expr from './expression'
 import { unclosedNamedBlock } from '../messages'
 import { TEXT, TAG } from '../node-types'
 import { RE_SCRYLE } from '../regex'
-import { JAVASCRIPT_TAG, TEXTAREA_TAG } from '../constants'
+import { TEXTAREA_TAG } from '../constants'
 
 /**
  * Parses regular text and script/style blocks ...scryle for short :-)
@@ -62,15 +61,9 @@ function parseSpecialTagsContent(state, name, match) {
   const { pos } = state
   const start = match.index
 
-  switch (name) {
-  case TEXTAREA_TAG:
+  if (name === TEXTAREA_TAG) {
     expr(state, null, match[0], pos)
-    break
-  case JAVASCRIPT_TAG:
-    pushText(state, pos, start)
-    javascript(state, pos, start)
-    break
-  default:
+  } else {
     pushText(state, pos, start)
   }
 }

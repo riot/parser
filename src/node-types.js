@@ -12,9 +12,3 @@ export const COMMENT = 8 /* COMMENT */
 export const DOCUMENT = 9 /* DOCUMENT */
 export const DOCTYPE = 10 /* DOCTYPE */
 export const DOCUMENT_FRAGMENT = 11 /* DOCUMENT_FRAGMENT */
-
-// Javascript logic nodes
-//
-export const PRIVATE_JAVASCRIPT = 20 /* Javascript private code */
-export const PUBLIC_JAVASCRIPT = 21 /* Javascript public methods */
-

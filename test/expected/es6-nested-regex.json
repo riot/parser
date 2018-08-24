@@ -49,26 +49,6 @@
     "name": "script",
     "start": 45,
     "end": 371,
-    "nodes": [
-      {
-        "type": 20,
-        "start": 53,
-        "end": 75,
-        "code": "\n    const x = 1\n\n    "
-      },
-      {
-        "type": 21,
-        "start": 91,
-        "end": 298,
-        "code": "      message: `\n        regex: ${\n          /x}`/.source\n        }`,\n\n      foobar() { `\n        foobar() {\n          return ${\n            foo( 5 /x/.1 )  // not regex\n          }\n        }`\n      }\n    "
-      },
-      {
-        "type": 20,
-        "start": 298,
-        "end": 362,
-        "code": "\n\n\n\n\n\n  function foo(bar) {\n\n  }\n\n  function foo(bar) {\n\n  }\n\n  "
-      }
-    ],
     "text": {
       "type": 3,
       "text": "\n    const x = 1\n\n    export default {\n      message: `\n        regex: ${\n          /x}`/.source\n        }`,\n\n      foobar() { `\n        foobar() {\n          return ${\n            foo( 5 /x/.1 )  // not regex\n          }\n        }`\n      }\n    }\n\n\n\n\n\n  function foo(bar) {\n\n  }\n\n  function foo(bar) {\n\n  }\n\n  ",

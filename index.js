@@ -52,18 +52,6 @@ const unexpectedCharInExpression = 'Unexpected character %1.';
 const unclosedExpression = 'Unclosed expression.';
 
 /**
- * Add an item into a collection, if the collection is not an array
- * we create one and add the item to it
- * @param   {array} collection - target collection
- * @param   {*} item - item to add to the collection
- * @returns {array} array containing the new item added to it
- */
-function addToCollection(collection = [], item) {
-  collection.push(item);
-  return collection
-}
-
-/**
  * Matches the start of valid tags names; used with the first 2 chars after the `'<'`.
  * @const
  * @private
@@ -95,13 +83,6 @@ const RE_SCRYLE = {
   textarea: /<\/textarea\s*>/gi
 };
 
-/**
- * Matches the beginning of an `export default {}` expression
- * @const
- * @private
- */
-const EXPORT_DEFAULT = /export(?:\W)+default(?:\s+)?{/g;
-
 // Do not touch text content inside this tags
 const RAW_TAGS = /^\/?(?:pre|textarea)$/;
 
@@ -120,11 +101,6 @@ const DOCUMENT = 9; /* DOCUMENT */
 const DOCTYPE = 10; /* DOCTYPE */
 const DOCUMENT_FRAGMENT = 11; /* DOCUMENT_FRAGMENT */
 
-// Javascript logic nodes
-//
-const PRIVATE_JAVASCRIPT = 20; /* Javascript private code */
-const PUBLIC_JAVASCRIPT = 21; /* Javascript public methods */
-
 var types = /*#__PURE__*/Object.freeze({
   TAG: TAG,
   ATTR: ATTR,
@@ -133,9 +109,7 @@ var types = /*#__PURE__*/Object.freeze({
   COMMENT: COMMENT,
   DOCUMENT: DOCUMENT,
   DOCTYPE: DOCTYPE,
-  DOCUMENT_FRAGMENT: DOCUMENT_FRAGMENT,
-  PRIVATE_JAVASCRIPT: PRIVATE_JAVASCRIPT,
-  PUBLIC_JAVASCRIPT: PUBLIC_JAVASCRIPT
+  DOCUMENT_FRAGMENT: DOCUMENT_FRAGMENT
 });
 
 const JAVASCRIPT_OUTPUT_NAME = 'javascript';
@@ -235,10 +209,6 @@ const TREE_BUILDER_STRUCT = Object.seal({
       }
       break
     }
-    case PRIVATE_JAVASCRIPT:
-    case PUBLIC_JAVASCRIPT:
-      store[JAVASCRIPT_TAG].nodes = addToCollection(store[JAVASCRIPT_TAG].nodes, node);
-      break
     }
   },
   closeTag(store, node) {
@@ -1350,6 +1320,18 @@ function b0re(state, str) {
 }
 
 /**
+ * Add an item into a collection, if the collection is not an array
+ * we create one and add the item to it
+ * @param   {array} collection - target collection
+ * @param   {*} item - item to add to the collection
+ * @returns {array} array containing the new item added to it
+ */
+function addToCollection(collection = [], item) {
+  collection.push(item);
+  return collection
+}
+
+/**
  * The more complex parsing is for attributes as it can contain quoted or
  * unquoted values or expressions.
  *
@@ -1464,60 +1446,6 @@ function parseAttribute(state, match, start, end) {
 }
 
 /**
- * Create the javascript nodes
- * @param {ParserState} state  - Current parser state
- * @param {number}  start   - Start position of the tag
- * @param {number}  end     - Ending position (last char of the tag)
- * @private
- */
-function javascript(state, start, end) {
-  const code = getChunk(state.data, start, end);
-  const push = state.builder.push.bind(state.builder);
-  const match = EXPORT_DEFAULT.exec(code);
-  state.pos = end;
-
-  // no export rules found
-  // skip the nodes creation
-  if (!match) return
-
-  // find the export default index
-  const publicJsIndex = EXPORT_DEFAULT.lastIndex;
-  // get the content of the export default tag
-  // the exprExtr was meant to be used for expressions but it works
-  // perfectly also in this case matching everything there is in { ... } block
-  const publicJs = exprExtr(getChunk(code, publicJsIndex, end), 0, ['{', '}'])
-
-  ;[
-    createPrivateJsNode(code, start, 0, match.index),
-    {
-      type: PUBLIC_JAVASCRIPT,
-      start: start + publicJsIndex,
-      end: start + publicJsIndex + publicJs.end,
-      code: publicJs.text
-    },
-    createPrivateJsNode(code, start, publicJsIndex + publicJs.end, code.length)
-  ].filter(n => n.code).forEach(push);
-}
-
-/**
- * Create the private javascript chunks objects
- * @param   {string} code - code chunk
- * @param   {number} offset - offset from the top of the file
- * @param   {number} start - inner offset from the <script> tag
- * @param   {number} end - end offset
- * @returns {object} private js node
- * @private
- */
-function createPrivateJsNode(code, offset, start, end) {
-  return {
-    type: PRIVATE_JAVASCRIPT,
-    start: start + offset,
-    end: end + offset,
-    code: getChunk(code, start, end)
-  }
-}
-
-/**
  * Parses regular text and script/style blocks ...scryle for short :-)
  * (the content of script and style is text as well)
  *
@@ -1570,15 +1498,9 @@ function parseSpecialTagsContent(state, name, match) {
   const { pos } = state;
   const start = match.index;
 
-  switch (name) {
-  case TEXTAREA_TAG:
+  if (name === TEXTAREA_TAG) {
     expr(state, null, match[0], pos);
-    break
-  case JAVASCRIPT_TAG:
-    pushText(state, pos, start);
-    javascript(state, pos, start);
-    break
-  default:
+  } else {
     pushText(state, pos, start);
   }
 }
