@@ -1054,7 +1054,7 @@ function skipRegex(code, start) {
  * @param   {string} str - Raw string
  * @returns {string} Escaped string.
  */
-var escapeStr = (str) => str.replace(/(?=[-[\](){^*+?.$|\\])/g, '\\')
+var escapeStr = (str) => str.replace(/(?=[-[\](){^*+?.$|\\])/g, '\\');
 
 const $_ES6_BQ = '`';
 

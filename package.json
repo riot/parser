@@ -47,14 +47,14 @@
   "bugs": "https://github.com/riot/parser/issues",
   "readme": "https://github.com/riot/parser/blob/master/README.md",
   "devDependencies": {
-    "chai": "^4.1.2",
-    "coveralls": "^3.0.1",
-    "eslint": "^4.19.1",
+    "chai": "^4.2.0",
+    "coveralls": "^3.0.2",
+    "eslint": "^5.6.0",
     "eslint-config-riot": "^2.0.0",
     "mocha": "^5.2.0",
-    "nyc": "^12.0.2",
-    "rollup": "^0.59.4",
-    "rollup-plugin-node-resolve": "^3.3.0"
+    "nyc": "^13.0.1",
+    "rollup": "^0.66.3",
+    "rollup-plugin-node-resolve": "^3.4.0"
   },
   "dependencies": {
     "curri": "^1.0.0",
