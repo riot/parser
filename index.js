@@ -2,6 +2,32 @@
 
 Object.defineProperty(exports, '__esModule', { value: true });
 
+/**
+ * Not all the types are handled in this module.
+ *
+ * @enum {number}
+ * @readonly
+ */
+const TAG = 1; /* TAG */
+const ATTR = 2; /* ATTR */
+const TEXT = 3; /* TEXT */
+const CDATA = 4; /* CDATA */
+const COMMENT = 8; /* COMMENT */
+const DOCUMENT = 9; /* DOCUMENT */
+const DOCTYPE = 10; /* DOCTYPE */
+const DOCUMENT_FRAGMENT = 11; /* DOCUMENT_FRAGMENT */
+
+var types = /*#__PURE__*/Object.freeze({
+  TAG: TAG,
+  ATTR: ATTR,
+  TEXT: TEXT,
+  CDATA: CDATA,
+  COMMENT: COMMENT,
+  DOCUMENT: DOCUMENT,
+  DOCTYPE: DOCTYPE,
+  DOCUMENT_FRAGMENT: DOCUMENT_FRAGMENT
+});
+
 function formatError (data, message, pos) {
   if (!pos) {
     pos = data.length;
@@ -85,32 +111,6 @@ const RE_SCRYLE = {
 
 // Do not touch text content inside this tags
 const RAW_TAGS = /^\/?(?:pre|textarea)$/;
-
-/**
- * Not all the types are handled in this module.
- *
- * @enum {number}
- * @readonly
- */
-const TAG = 1; /* TAG */
-const ATTR = 2; /* ATTR */
-const TEXT = 3; /* TEXT */
-const CDATA = 4; /* CDATA */
-const COMMENT = 8; /* COMMENT */
-const DOCUMENT = 9; /* DOCUMENT */
-const DOCTYPE = 10; /* DOCTYPE */
-const DOCUMENT_FRAGMENT = 11; /* DOCUMENT_FRAGMENT */
-
-var types = /*#__PURE__*/Object.freeze({
-  TAG: TAG,
-  ATTR: ATTR,
-  TEXT: TEXT,
-  CDATA: CDATA,
-  COMMENT: COMMENT,
-  DOCUMENT: DOCUMENT,
-  DOCTYPE: DOCTYPE,
-  DOCUMENT_FRAGMENT: DOCUMENT_FRAGMENT
-});
 
 const JAVASCRIPT_OUTPUT_NAME = 'javascript';
 const CSS_OUTPUT_NAME = 'css';

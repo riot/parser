@@ -12,24 +12,24 @@ Minimal, loose html parser for Riot tags
 ### Install
 
 ```bash
-npm i riot-parser --save
+npm i @riotjs/parser --save
 ```
 
 The package has two modules:
 
 ```js
 // Use as: parser(options).parse(code, startPosition)
-const parser = require('riot-parser').default
+const parser = require('@riotjs/parser').default
 
 // The enum NodeTypes (a plain JS object) that contains the values of the
 // type property of the nodes emited by tagParser (and more).
-const nodeTypes = require('riot-parser').nodeTypes
+const nodeTypes = require('@riotjs/parser').nodeTypes
 ```
 
 ES6 modules export:
 
 ```js
-import parser, { nodeTypes } from 'riot-parser'
+import parser, { nodeTypes } from '@riotjs/parser'
 ```
 
 This parser is a low-level tool that builds a simple array of objects with information about the given html fragment, readed secuencially. It is designed to parse one single tag and not entire html pages, the tag closing the root element ends the parsing.
@@ -128,9 +128,9 @@ This character is preserved in the output, but the parser will add a `replace` p
 [license-image]:http://img.shields.io/badge/license-MIT-000000.svg?style=flat-square
 [license-url]:LICENSE.txt
 
-[npm-version-image]:http://img.shields.io/npm/v/riot-parser.svg?style=flat-square
-[npm-downloads-image]:http://img.shields.io/npm/dm/riot-parser.svg?style=flat-square
-[npm-url]:https://npmjs.org/package/riot-parser
+[npm-version-image]:http://img.shields.io/npm/v/@riotjs/parser.svg?style=flat-square
+[npm-downloads-image]:http://img.shields.io/npm/dm/@riotjs/parser.svg?style=flat-square
+[npm-url]:https://npmjs.org/package/@riotjs/parser
 
 [coverage-image]:https://img.shields.io/coveralls/riot/parser/master.svg?style=flat-square
 [coverage-url]:https://coveralls.io/r/riot/parser/?branch=master

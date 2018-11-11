@@ -1,5 +1,5 @@
-import parser from './parser'
 import * as types from './node-types'
+import parser from './parser'
 
 /**
  * The nodeTypes definition
