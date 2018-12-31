@@ -1,5 +1,9 @@
 # Changes for riot-parser
 
+### v0.7.0
+- Add support for the spread attributes `<a {...foo.bar}>`
+- Fixed the `isCustom` boolean that will be added also to the root nodes
+
 ### v0.6.9
 - Remove the unecessary PUBLIC_JAVASCRIPT and PRIVATE_JAVASCRIPT nodes
 
