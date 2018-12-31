@@ -22,10 +22,9 @@
     "prepublish": "npm run build"
   },
   "files": [
-    "*.ts",
     "*.js",
-    "dist/",
-    "lib/"
+    "dist",
+    "src"
   ],
   "keywords": [
     "html",

@@ -1,5 +1,8 @@
 # Changes for riot-parser
 
+### v0.8.1
+- Add the `src` folder to the npm publishing files
+
 ### v0.8.0
 - Add support for the spread attributes `<a {...foo.bar}>`
 - Fixed the `isCustom` boolean that will be added also to the root nodes
