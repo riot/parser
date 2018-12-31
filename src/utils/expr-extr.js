@@ -4,11 +4,11 @@
  * and return its text without the enclosing brackets.
  * Does not works with comments, but supports ES6 template strings.
  */
-import skipRegex from './skip-regex'
+import skipES6TL, {$_ES6_BQ} from './skip-es6-tl'
+import {unclosedExpression, unexpectedCharInExpression} from '../messages'
 import escapeStr from './escape-str'
 import panic from './panic'
-import { unexpectedCharInExpression, unclosedExpression } from '../messages'
-import skipES6TL, { $_ES6_BQ } from './skip-es6-tl'
+import skipRegex from './skip-regex'
 /**
  * @exports exprExtr
  */
@@ -34,14 +34,14 @@ const reBr = {}
  * and the closing brackets of an expression.
  *
  * @param   {string} b - Closing brackets
- * @returns {RegExp}
+ * @returns {RegExp} - optimized regex
  */
 function _regex(b) {
   let re = reBr[b]
   if (!re) {
     let s = escapeStr(b)
     if (b.length > 1) {
-      s = s + '|['
+      s = `${s}|[`
     } else {
       s = /[{}[\]()]/.test(b) ? '[' : `[${s}`
     }
@@ -52,13 +52,13 @@ function _regex(b) {
 
 /**
  * Update the scopes stack removing or adding closures to it
- * @param   {array} stack - array stacking the expression closures
+ * @param   {Array} stack - array stacking the expression closures
  * @param   {string} char - current char to add or remove from the stack
  * @param   {string} idx  - matching index
  * @param   {string} code - expression code
- * @returns {object} result
- * @returns {object} result.char - either the char received or the closing braces
- * @returns {object} result.index - either a new index to skip part of the source code,
+ * @returns {Object} result
+ * @returns {Object} result.char - either the char received or the closing braces
+ * @returns {Object} result.index - either a new index to skip part of the source code,
  *                                  or 0 to keep from parsing from the old position
  */
 function updateStack(stack, char, idx, code) {
@@ -112,7 +112,7 @@ export default function exprExtr(code, start, bp) {
   let end
   let match
 
-  while (match = re.exec(code)) {
+  while (match = re.exec(code)) { // eslint-disable-line
     const idx = match.index
     const str = match[0]
     end = re.lastIndex
@@ -122,7 +122,7 @@ export default function exprExtr(code, start, bp) {
       return {
         text: code.slice(offset, idx),
         start,
-        end,
+        end
       }
     }
 

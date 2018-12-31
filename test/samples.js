@@ -8,7 +8,7 @@ const opts = {
 
 process.chdir(__dirname)
 
-;(function () {
+;(function() {
   console.log('Tree Builder')
   console.log('------------')
 
@@ -20,7 +20,7 @@ process.chdir(__dirname)
   console.log()
 })()
 
-;(function () {
+;(function() {
   console.log('Tree Builder')
   console.log('------------')
 
@@ -32,7 +32,7 @@ process.chdir(__dirname)
   console.log()
 })()
 
-;(function () {
+;(function() {
   console.log('------------------')
   console.log('Tree Builder (svg)')
   console.log('------------------')

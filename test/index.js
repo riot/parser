@@ -19,14 +19,14 @@ function cat(dir, name) {
 
 function throwException(test) {
   const _p = parser(getOpts(test))
-  return expect(function () { _p.parse(test.data) }).throw(test.throws)
+  return expect(function() { _p.parse(test.data) }).throw(test.throws)
 }
 
-describe('The Parser', function () {
+describe('The Parser', function() {
   const tests = require('./tparser')
 
   Object.keys(tests).forEach(title => {
-    it(title, function () {
+    it(title, function() {
       const test = tests[title]
       const _p = parser(getOpts(test), echoBuilder)
 
@@ -47,10 +47,10 @@ describe('The Parser', function () {
   })
 })
 
-describe('Expressions', function () {
+describe('Expressions', function() {
   const tests = require('./texpr')
   Object.keys(tests).forEach(title => {
-    it(title, function () {
+    it(title, function() {
       const test = tests[title]
       const _p = parser(getOpts(test), echoBuilder)
 
@@ -72,7 +72,7 @@ describe('Expressions', function () {
 })
 
 
-describe('Tree Builder', function () {
+describe('Tree Builder', function() {
   const titles = fs.readdirSync('./fixtures')
   const _p = parser(getOpts())
 
@@ -88,7 +88,7 @@ describe('Tree Builder', function () {
     const name = path.basename(title, ext)
 
 
-    it(title, function () {
+    it(title, function() {
       const src = cat('fixtures', title)
 
       if (name === _TDEBUG) debugger
@@ -102,11 +102,11 @@ describe('Tree Builder', function () {
       const json = JSON.stringify(tree, null, '  ')
 
       if (_TOSAVE[0] === '*' || _TOSAVE.indexOf(name) !== -1) {
-        fs.writeFile(path.join('.', 'expected', name + '_out.json'), json, function (err) {
+        fs.writeFile(path.join('.', 'expected', `${name}_out.json`), json, function(err) {
           if (err) throw err
         })
       }
-      expect(json.trim()).to.be.equal(cat('expected', name + '.json').trim())
+      expect(json.trim()).to.be.equal(cat('expected', `${name}.json`).trim())
     })
 
     if (_TDEBUG && title === _TDEBUG) break
@@ -114,7 +114,7 @@ describe('Tree Builder', function () {
 })
 
 
-describe('HTML Builder', function () {
+describe('HTML Builder', function() {
   const htmlBuilder = require('./builders/html-builder')
   const theTests = require('./thtmlbuilder')
   const titles = Object.keys(theTests)
@@ -124,7 +124,7 @@ describe('HTML Builder', function () {
   for (let i = 0; i < titles.length; i++) {
     const title = titles[i]
 
-    it(title, function () {
+    it(title, function() {
       const test = theTests[title]
       const _p = parser(getOpts(test), echoBuilder)
       const builder = htmlBuilder(test.builderOptions)
@@ -132,7 +132,7 @@ describe('HTML Builder', function () {
       if (_TDEBUG && title === _TDEBUG) debugger
 
       if (test.throws) {
-        expect(function () {
+        expect(function() {
           builder.build(_p.parse(test.data))
         }).throw(test.throws)
       } else {
@@ -144,7 +144,7 @@ describe('HTML Builder', function () {
     if (_TDEBUG && title === _TDEBUG) break
   }
 
-  it('SVG Test', function () {
+  it('SVG Test', function() {
     const source = fs.readFileSync('fixtures/loop-svg-nodes.tag', 'utf8').trim()
     const _p = parser(getOpts(), echoBuilder)
     const builder = htmlBuilder({ compact: false })
@@ -158,7 +158,7 @@ describe('HTML Builder', function () {
       '  <loop-svg-nodes></loop-svg-nodes>',
       '',
       '  <script>',
-      "  this.points = [{'x': 1,'y': 0}, {'x': 9, 'y': 6}, {'x': 4, 'y': 7}]",
+      '  this.points = [{\'x\': 1,\'y\': 0}, {\'x\': 9, \'y\': 6}, {\'x\': 4, \'y\': 7}]',
       '  </script>',
       '',
       '</loop-svg-nodes>'

@@ -1,12 +1,12 @@
+import {TAG, TEXT} from '../node-types'
+import {RE_SCRYLE} from '../regex'
+import {TEXTAREA_TAG} from '../constants'
 import execFromPos from '../utils/exec-from-pos'
-import panic from '../utils/panic'
-import pushText from '../utils/push-text'
-import pushTag from '../utils/push-tag'
 import expr from './expression'
-import { unclosedNamedBlock } from '../messages'
-import { TEXT, TAG } from '../node-types'
-import { RE_SCRYLE } from '../regex'
-import { TEXTAREA_TAG } from '../constants'
+import panic from '../utils/panic'
+import pushTag from '../utils/push-tag'
+import pushText from '../utils/push-text'
+import {unclosedNamedBlock} from '../messages'
 
 /**
  * Parses regular text and script/style blocks ...scryle for short :-)
@@ -53,9 +53,9 @@ export default function text(state) {
 /**
  * Parse the text content depending on the name
  * @param   {ParserState} state - Parser state
- * @param   {string} data  - Buffer to parse
  * @param   {string} name  - one of the tags matched by the RE_SCRYLE regex
- * @returns {array}  match - result of the regex matching the content of the parsed tag
+ * @param   {Array}  match - result of the regex matching the content of the parsed tag
+ * @returns {undefined} void function
  */
 function parseSpecialTagsContent(state, name, match) {
   const { pos } = state

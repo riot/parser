@@ -1,14 +1,16 @@
+import {COMMENT, TEXT} from '../node-types'
 import flush from '../utils/flush-parser-state'
 import panic from '../utils/panic'
-import { unclosedComment } from '../messages'
-import { TEXT, COMMENT } from '../node-types'
+import {unclosedComment} from '../messages'
+
 /**
  * Parses comments in long or short form
  * (any DOCTYPE & CDATA blocks are parsed as comments).
  *
- * @param {ParserState} state  - Parser state
- * @param {string} data       - Buffer to parse
- * @param {number} start      - Position of the '<!' sequence
+ * @param   {ParserState} state  - Parser state
+ * @param   {string} data       - Buffer to parse
+ * @param   {number} start      - Position of the '<!' sequence
+ * @returns {number} node type id
  * @private
  */
 export default function comment(state, data, start) {
@@ -26,9 +28,10 @@ export default function comment(state, data, start) {
 /**
  * Parse a comment.
  *
- * @param {ParserState}  state - Current parser state
- * @param {number}  start - Start position of the tag
- * @param {number}  end   - Ending position (last char of the tag)
+ * @param   {ParserState}  state - Current parser state
+ * @param   {number}  start - Start position of the tag
+ * @param   {number}  end   - Ending position (last char of the tag)
+ * @returns {undefined} void function
  * @private
  */
 export function pushComment(state, start, end) {

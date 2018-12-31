@@ -1,6 +1,6 @@
-import getChunk from './get-chunk'
-import { TEXT } from '../node-types'
+import {TEXT} from '../node-types'
 import flush from './flush-parser-state'
+import getChunk from './get-chunk'
 
 /**
  * states text in the last text node, or creates a new one if needed.
@@ -8,9 +8,10 @@ import flush from './flush-parser-state'
  * @param {ParserState}   state   - Current parser state
  * @param {number}  start   - Start position of the tag
  * @param {number}  end     - Ending position (last char of the tag)
- * @param {object}  extra   - extra properties to add to the text node
+ * @param {Object}  extra   - extra properties to add to the text node
  * @param {RawExpr[]} extra.expressions  - Found expressions
  * @param {string}    extra.unescape     - Brackets to unescape
+ * @returns {undefined} - void function
  * @private
  */
 export default function pushText(state, start, end, extra = {}) {

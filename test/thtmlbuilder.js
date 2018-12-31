@@ -77,7 +77,7 @@ module.exports = {
   },
 
   'Attributes: Single quoted values are converted to double quoted': {
-    data:     "<font size= '14' class ='foo' > text</font>",
+    data:     '<font size= \'14\' class =\'foo\' > text</font>',
     expected: '<font size="14" class="foo"> text</font>'
   },
 

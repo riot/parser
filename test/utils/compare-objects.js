@@ -12,7 +12,7 @@ function isEmpty(v) {
 
 function compareObjects(a, b) {
   if (a === b) return true
-  var p
+  let p
 
   for (p in a) {
     if (typeof b[p] == 'undefined') {

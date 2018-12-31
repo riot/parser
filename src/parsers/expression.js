@@ -1,17 +1,17 @@
-import exprExtr from '../utils/expr-extr'
 import escapeStr from '../utils/escape-str'
+import exprExtr from '../utils/expr-extr'
 import panic from '../utils/panic'
 import pushText from '../utils/push-text'
-import { unexpectedEndOfFile } from '../messages'
+import {unexpectedEndOfFile} from '../messages'
 /**
  * Find the end of the attribute value or text node
  * Extract expressions.
  * Detect if value have escaped brackets.
  *
  * @param   {ParserState} state  - Parser state
- * @param   {HasExpr} node      - Node if attr, info if text
+ * @param   {HasExpr} node       - Node if attr, info if text
  * @param   {string} endingChars - Ends the value or text
- * @param   {number} pos        - Starting position
+ * @param   {number} start       - Starting position
  * @returns {number} Ending position
  * @private
  */
@@ -40,7 +40,7 @@ export default function expr(state, node, endingChars, start) {
  * Parse a text chunk finding all the expressions in it
  * @param   {ParserState} state  - Parser state
  * @param   {RegExp} re - regex to match the expressions contents
- * @returns {object} result containing the expression found, the string to unescape and the end position
+ * @returns {Object} result containing the expression found, the string to unescape and the end position
  */
 function parseExpressions(state, re) {
   const { data, options } = state
@@ -94,7 +94,7 @@ function b0re(state, str) {
 
   const b0 = escapeStr(brackets[0])
   // cache the regex extending the regexCache object
-  Object.assign(state.regexCache, { [str]: new RegExp(`(${str})|${b0}`, 'g' ) })
+  Object.assign(state.regexCache, { [str]: new RegExp(`(${str})|${b0}`, 'g') })
 
   return state.regexCache[str]
 }

@@ -82,12 +82,12 @@ module.exports = {
   },
 
   'must handle single quotes inside single quoted expression': {
-    data: "<p>foo '{'<a>'}'</p>",
+    data: '<p>foo \'{\'<a>\'}\'</p>',
     expected: [
       { type: _T.TAG, name: 'p', start: 0, end: 3 },
       {
-        type: _T.TEXT, text: "foo '{'<a>'}'", start: 3, end: 16, expressions: [
-          { text: "'<a>'", start: 8, end: 15 }
+        type: _T.TEXT, text: 'foo \'{\'<a>\'}\'', start: 3, end: 16, expressions: [
+          { text: '\'<a>\'', start: 8, end: 15 }
         ]
       },
       { type: _T.TAG, name: '/p', start: 16, end: 20 }
@@ -117,11 +117,11 @@ module.exports = {
   },
 
   'text inside tag, ternary with embeded brackets': {
-    data: "<div>foo & { s === \"{\" ? '' : '}' }</div>",
+    data: '<div>foo & { s === "{" ? \'\' : \'}\' }</div>',
     expected: [
       { type: _T.TAG, name: 'div', start: 0, end: 5 },
-      { type: _T.TEXT, text: "foo & { s === \"{\" ? '' : '}' }", start: 5, end: 35, expressions: [
-        { text: " s === \"{\" ? '' : '}' ", start: 11, end: 35 }
+      { type: _T.TEXT, text: 'foo & { s === "{" ? \'\' : \'}\' }', start: 5, end: 35, expressions: [
+        { text: ' s === "{" ? \'\' : \'}\' ', start: 11, end: 35 }
       ] },
       { type: _T.TAG, name: '/div', start: 35, end: 41 }
     ]
@@ -218,6 +218,32 @@ module.exports = {
     ]
   },
 
+  'attributes: spread attribute': {
+    data: '<a {...foo.bar} />',
+    expected: [
+      {
+        type: _T.TAG, name: 'a', start: 0, end: 18, isSelfClosing: true, attributes: [
+          { isSpread: true, start: 3, end: 15, expressions: [
+            { text: 'foo.bar', start: 3, end: 15 }
+          ] }
+        ]
+      }
+    ]
+  },
+
+  'attributes: spread attribute with quotes': {
+    data: '<a "{...foo.bar}" />',
+    expected: [
+      {
+        type: _T.TAG, name: 'a', start: 0, end: 20, isSelfClosing: true, attributes: [
+          { isSpread: true, start: 3, end: 17, expressions: [
+            { text: 'foo.bar', start: 4, end: 16 }
+          ] }
+        ]
+      }
+    ]
+  },
+
   'attributes: expression in unquoted value, spaces inside expression': {
     data: '<a foo={ e }/>',
     expected: [
@@ -260,8 +286,8 @@ module.exports = {
     expected: [
       {
         type: _T.TAG, name: 'a', start: 0, end: 16, isSelfClosing: true, attributes: [
-          { name: 'foo', value: "{'e'}", start: 3, end: 14, valueStart: 8, expressions: [
-            { text: "'e'", start: 8, end: 13 }
+          { name: 'foo', value: '{\'e\'}', start: 3, end: 14, valueStart: 8, expressions: [
+            { text: '\'e\'', start: 8, end: 13 }
           ] }
         ]
       }
@@ -269,12 +295,12 @@ module.exports = {
   },
 
   'single quoted expr inside single quoted attribute value': {
-    data: "<a foo='{'e'}'/>",
+    data: '<a foo=\'{\'e\'}\'/>',
     expected: [
       {
         type: _T.TAG, name: 'a', start: 0, end: 16, isSelfClosing: true, attributes: [
-          { name: 'foo', value: "{'e'}", start: 3, end: 14, valueStart: 8, expressions: [
-            { text: "'e'", start: 8, end: 13 }
+          { name: 'foo', value: '{\'e\'}', start: 3, end: 14, valueStart: 8, expressions: [
+            { text: '\'e\'', start: 8, end: 13 }
           ] }
         ]
       }

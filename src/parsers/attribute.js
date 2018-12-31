@@ -1,14 +1,11 @@
-import execFromPos from '../utils/exec-from-pos'
-import getChunk from '../utils/get-chunk'
-import expr from './expression'
-import {
-  IS_SELF_CLOSING,
-  IS_BOOLEAN,
-} from '../constants'
+import {ATTR, TEXT} from '../node-types'
+import {ATTR_START, SPREAD_OPERATOR} from '../regex'
+import {IS_BOOLEAN, IS_SELF_CLOSING, IS_SPREAD} from '../constants'
 import addToCollection from '../utils/add-to-collection'
-import { isBoolAttribute } from 'dom-nodes'
-import { TEXT, ATTR } from '../node-types'
-import { ATTR_START } from '../regex'
+import execFromPos from '../utils/exec-from-pos'
+import expr from './expression'
+import getChunk from '../utils/get-chunk'
+import {isBoolAttribute} from 'dom-nodes'
 /**
  * The more complex parsing is for attributes as it can contain quoted or
  * unquoted values or expressions.
@@ -57,6 +54,7 @@ export default function attr(state) {
  * @param   {ParserStore}  state  - Parser state
  * @param   {number} pos    - Starting position of the attribute
  * @param   {Object} tag    - Current parent tag
+ * @returns {undefined} void function
  * @private
  */
 function setAttribute(state, pos, tag) {
@@ -66,7 +64,7 @@ function setAttribute(state, pos, tag) {
   const match = re.exec(data)
 
   if (match) {
-    let end = re.lastIndex
+    const end = re.lastIndex
     const attr = parseAttribute(state, match, start, end)
 
     //assert(q && q.type === Mode.TAG, 'no previous tag for the attr!')
@@ -76,28 +74,13 @@ function setAttribute(state, pos, tag) {
   }
 }
 
-/**
- * Parse the attribute values normalising the quotes
- * @param   {ParserStore}  state  - Parser state
- * @param   {array} match - results of the attributes regex
- * @param   {number} start - attribute start position
- * @param   {number} end - attribute end position
- * @returns {object} attribute object
- */
-function parseAttribute(state, match, start, end) {
+function parseNomalAttribute(state, attr, quote) {
   const { data } = state
-  const attr = {
-    name: match[1],
-    value: '',
-    start,
-    end
-  }
+  let { end } = attr
 
   if (isBoolAttribute(attr.name)) {
     attr[IS_BOOLEAN] = true
   }
-
-  let quote = match[2] // first letter of value or nothing
 
   // parse the whole value (if any) and get any expressions on it
   if (quote) {
@@ -105,7 +88,7 @@ function parseAttribute(state, match, start, end) {
     // (`end`) is the start of the value.
     let valueStart = end
     // If it not, this is an unquoted value and we need adjust the start.
-    if (quote !== '"' && quote !== "'") {
+    if (quote !== '"' && quote !== '\'') {
       quote = '' // first char of value is not a quote
       valueStart-- // adjust the starting position
     }
@@ -113,7 +96,7 @@ function parseAttribute(state, match, start, end) {
     end = expr(state, attr, quote || '[>/\\s]', valueStart)
 
     // adjust the bounds of the value and save its content
-    Object.assign(attr, {
+    return Object.assign(attr, {
       value: getChunk(data, valueStart, end),
       valueStart,
       end: quote ? ++end : end
@@ -121,4 +104,41 @@ function parseAttribute(state, match, start, end) {
   }
 
   return attr
+}
+
+function parseSpreadAttribute(state, attr, quote) {
+  let end = expr(state, attr, quote || '[>/\\s]', attr.start)
+
+  return {
+    [IS_SPREAD]: true,
+    start: attr.start,
+    expressions: attr.expressions.map(expr => Object.assign(expr, {
+      text: expr.text.replace(SPREAD_OPERATOR, '')
+    })),
+    end: quote ? ++end : end
+  }
+}
+
+/**
+ * Parse the attribute values normalising the quotes
+ * @param   {ParserStore}  state  - Parser state
+ * @param   {Array} match - results of the attributes regex
+ * @param   {number} start - attribute start position
+ * @param   {number} end - attribute end position
+ * @returns {Object} attribute object
+ */
+function parseAttribute(state, match, start, end) {
+  const attr = {
+    name: match[1],
+    value: '',
+    start,
+    end
+  }
+  const quote = match[2] // first letter of value or nothing
+
+  if (SPREAD_OPERATOR.test(attr.name)) {
+    return parseSpreadAttribute(state, attr, quote)
+  }
+
+  return parseNomalAttribute(state, attr, quote)
 }

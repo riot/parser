@@ -52,7 +52,7 @@ module.exports = {
       { type: _T.TAG, name: 'div', start: 0, end: 16, isSelfClosing: true, attributes: [
         { name: 'a', value: '1', start: 5, end: 10, valueStart: 8 },
         { name: 'b', value: '2', start: 11, end: 14, valueStart: 13 }
-      ] },
+      ] }
     ]
   },
 
@@ -148,7 +148,7 @@ module.exports = {
   },
 
   'multiline attribute #1': {
-    data: "<div id='\nxxx\nyyy\n'/>",
+    data: '<div id=\'\nxxx\nyyy\n\'/>',
     expected: [
       { type: _T.TAG,  name: 'div', start: 0, end: 21, isSelfClosing: true, attributes: [
         { name: 'id', value: '\nxxx\nyyy\n', start: 5, end: 19, valueStart: 9 }
@@ -235,7 +235,7 @@ module.exports = {
   },
 
   'self closing tag with new line after quoted attribute value': {
-    data: "<div a='b'\n/>",
+    data: '<div a=\'b\'\n/>',
     expected: [
       { type: _T.TAG, name: 'div', start: 0, end: 13, isSelfClosing: true, attributes: [
         { name: 'a', value: 'b', start: 5, end: 10, valueStart: 8 }
@@ -529,13 +529,13 @@ module.exports = {
   // ==========================================================================
 
   'attribute with single quotes': {
-    data: "<div a='1'/>",
+    data: '<div a=\'1\'/>',
     expected: [
       {
         type: _T.TAG, name: 'div', start: 0, end: 12, isSelfClosing: true, attributes: [
           { name: 'a', value: '1', start: 5, end: 10, valueStart: 8 }
         ]
-      },
+      }
     ]
   },
 
@@ -544,7 +544,7 @@ module.exports = {
     expected: [
       {
         type: _T.TAG, name: 'div', start: 0, end: 12, isSelfClosing: true, attributes: [
-          { name: 'a', value: "'", start: 5, end: 10, valueStart: 8 }
+          { name: 'a', value: '\'', start: 5, end: 10, valueStart: 8 }
         ]
       }
     ]
@@ -778,7 +778,7 @@ module.exports = {
   // ==========================================================================
 
   'multiline complex tag': {
-    data: "<div\n  id='foo'\n></div\n \n\t>",
+    data: '<div\n  id=\'foo\'\n></div\n \n\t>',
     expected: [
       { type: _T.TAG, name: 'div', end: 17, attributes: [
         { name: 'id', value: 'foo', start: 7, end: 15, valueStart: 11 }
@@ -803,7 +803,7 @@ module.exports = {
     expected: [
       { type: _T.TAG, name: 'a', start: 0, end: 3 },
       { type: _T.COMMENT, start: 3, end: 29 },
-      { type: _T.TAG, name: '/a', start: 29, end: 33 },
+      { type: _T.TAG, name: '/a', start: 29, end: 33 }
     ]
   },
 
@@ -814,7 +814,7 @@ module.exports = {
       { type: _T.TAG, name: 'a', start: 0, end: 3 },
       { type: _T.COMMENT, start: 3, end: 26 },
       { type: _T.TEXT, text: ' -->', start: 26, end: 30 },
-      { type: _T.TAG, name: '/a', start: 30, end: 34 },
+      { type: _T.TAG, name: '/a', start: 30, end: 34 }
     ]
   },
 
@@ -902,7 +902,7 @@ module.exports = {
     data: '<p><! -- <p --></p>',
     expected: [
       { type: _T.TAG, name: 'p', start: 0, end: 3 },
-      { type: _T.TAG, name: '/p', start: 15, end: 19 },
+      { type: _T.TAG, name: '/p', start: 15, end: 19 }
     ]
   },
 
@@ -919,12 +919,12 @@ module.exports = {
   // ==========================================================================
 
   'tags inside script tag content': {
-    data: "<script language='javascript'>\nvar foo = '<bar>xxx</bar>';\n</script>",
+    data: '<script language=\'javascript\'>\nvar foo = \'<bar>xxx</bar>\';\n</script>',
     expected: [
       { type: _T.TAG,  name: 'script', start: 0, end: 30, attributes: [
         { name: 'language', value: 'javascript', start: 8, end: 29, valueStart: 18 }
       ] },
-      { type: _T.TEXT, text: "\nvar foo = '<bar>xxx</bar>';\n", start: 30, end: 59 },
+      { type: _T.TEXT, text: '\nvar foo = \'<bar>xxx</bar>\';\n', start: 30, end: 59 },
       { type: _T.TAG,  name: '/script', start: 59, end: 68 }
     ]
   },
@@ -941,12 +941,12 @@ module.exports = {
   },
 
   'escaped closing script tag <\\/script> in the script content works': {
-    data: "<script language=javascript>\nvar foo = '<\\/script>';\n</script>",
+    data: '<script language=javascript>\nvar foo = \'<\\/script>\';\n</script>',
     expected: [
       { type: _T.TAG,  name: 'script', start: 0, end: 28, attributes: [
         { name: 'language', value: 'javascript', start: 8, end: 27, valueStart: 17 }
       ] },
-      { type: _T.TEXT, text: "\nvar foo = '<\\/script>';\n", start: 28, end: 53 },
+      { type: _T.TEXT, text: '\nvar foo = \'<\\/script>\';\n', start: 28, end: 53 },
       { type: _T.TAG,  name: '/script', start: 53, end: 62 }
     ]
   },
@@ -962,24 +962,24 @@ module.exports = {
   },
 
   'comments in script tag code are preserved always': {
-    data: "<script language='javascript'>\nvar foo = '<!-- xxx -->';\n</script>",
+    data: '<script language=\'javascript\'>\nvar foo = \'<!-- xxx -->\';\n</script>',
     expected: [
       { type: _T.TAG,  name: 'script', start: 0, end: 30, attributes: [
         { name: 'language', value: 'javascript', start: 8, end: 29, valueStart: 18 }
       ] },
-      { type: _T.TEXT, text: "\nvar foo = '<!-- xxx -->';\n", start: 30, end: 57 },
-      { type: _T.TAG,  name: '/script', start: 57, end: 66 },
+      { type: _T.TEXT, text: '\nvar foo = \'<!-- xxx -->\';\n', start: 30, end: 57 },
+      { type: _T.TAG,  name: '/script', start: 57, end: 66 }
     ]
   },
 
   'CDATA sections in script tag code are preserved': {
-    data: "<script language='javascript'>\nvar foo = '<![CDATA[ xxx ]]>';\n</script>",
+    data: '<script language=\'javascript\'>\nvar foo = \'<![CDATA[ xxx ]]>\';\n</script>',
     expected: [
       { type: _T.TAG,  name: 'script', end: 30, attributes: [
         { name: 'language', value: 'javascript', start: 8, end: 29, valueStart: 18 }
       ] },
-      { type: _T.TEXT, text: "\nvar foo = '<![CDATA[ xxx ]]>';\n", start: 30, end: 62 },
-      { type: _T.TAG,  name: '/script', start: 62, end: 71 },
+      { type: _T.TEXT, text: '\nvar foo = \'<![CDATA[ xxx ]]>\';\n', start: 30, end: 62 },
+      { type: _T.TAG,  name: '/script', start: 62, end: 71 }
     ]
   },
 
@@ -993,24 +993,24 @@ module.exports = {
   },
 
   'html comments in script code are preserved': {
-    data: "<script language='javascript'>\n<!--\nvar foo = '<bar>xxx</bar>';\n//-->\n</script>",
+    data: '<script language=\'javascript\'>\n<!--\nvar foo = \'<bar>xxx</bar>\';\n//-->\n</script>',
     expected: [
       { type: _T.TAG, name: 'script', end: 30, attributes: [
         { name: 'language', value: 'javascript', start: 8, end: 29, valueStart: 18 }
       ] },
-      { type: _T.TEXT, text: "\n<!--\nvar foo = '<bar>xxx</bar>';\n//-->\n", start: 30, end: 70 },
-      { type: _T.TAG, name: '/script', start: 70, end: 79 },
+      { type: _T.TEXT, text: '\n<!--\nvar foo = \'<bar>xxx</bar>\';\n//-->\n', start: 30, end: 70 },
+      { type: _T.TAG, name: '/script', start: 70, end: 79 }
     ]
   },
 
   'cdata within script tag is preserved': {
-    data: "<script language='javascript'>\n<![CDATA[\nvar foo = '<bar>xxx</bar>';\n]]>\n</script>",
+    data: '<script language=\'javascript\'>\n<![CDATA[\nvar foo = \'<bar>xxx</bar>\';\n]]>\n</script>',
     expected: [
       { type: _T.TAG, name: 'script', end: 30, attributes: [
         { name: 'language', value: 'javascript', start: 8, end: 29, valueStart: 18 }
       ] },
-      { type: _T.TEXT, text: "\n<![CDATA[\nvar foo = '<bar>xxx</bar>';\n]]>\n", start: 30, end: 73 },
-      { type: _T.TAG, name: '/script', start: 73, end: 82 },
+      { type: _T.TEXT, text: '\n<![CDATA[\nvar foo = \'<bar>xxx</bar>\';\n]]>\n', start: 30, end: 73 },
+      { type: _T.TAG, name: '/script', start: 73, end: 82 }
     ]
   },
 
@@ -1043,7 +1043,7 @@ module.exports = {
   // unexpected characters
   // ==========================================================================
 
-  "character '<' inside text": {
+  'character \'<\' inside text': {
     data: '<div>text < text</div>',
     expected: [
       { type: _T.TAG, name: 'div', end: 5 },
@@ -1052,7 +1052,7 @@ module.exports = {
     ]
   },
 
-  "character '<' inside text #2": {
+  'character \'<\' inside text #2': {
     data: '<<div><<div><< </div><</div>',
     expected: [
       { type: _T.TAG, name: 'div', start: 1, end: 6 },
@@ -1065,7 +1065,7 @@ module.exports = {
     ]
   },
 
-  "character '<' and '>' before tag": {
+  'character \'<\' and \'>\' before tag': {
     data: '<a><<div></div><<><div>></a>',
     expected: [
       { type: _T.TAG, name: 'a', start: 0, end: 3 },
@@ -1079,7 +1079,7 @@ module.exports = {
     ]
   },
 
-  "sequence '<!DOCTYPE ' inside text is a comment": {
+  'sequence \'<!DOCTYPE \' inside text is a comment': {
     data: '<div>text <!DOCTYPE html></div>',
     expected: [
       { type: _T.TAG, name: 'div', end: 5 },

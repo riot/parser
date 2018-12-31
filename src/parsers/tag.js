@@ -1,9 +1,9 @@
+import {ATTR, TEXT} from '../node-types'
+import {RE_SCRYLE, TAG_2C, TAG_NAME} from '../regex'
+import comment from './comment'
 import execFromPos from '../utils/exec-from-pos'
 import pushTag from '../utils/push-tag'
 import pushText from '../utils/push-text'
-import comment from './comment'
-import { TEXT, ATTR } from '../node-types'
-import { TAG_2C, TAG_NAME, RE_SCRYLE } from '../regex'
 
 /**
  * Parse the tag following a '<' character, or delegate to other parser

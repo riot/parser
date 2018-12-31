@@ -1,12 +1,12 @@
-import panic from './utils/panic'
-import flush from './utils/flush-parser-state'
-import treeBuilder from './tree-builder'
-import { unexpectedEndOfFile, rootTagNotFound } from './messages'
-import curry from 'curri'
-import { ATTR, TAG } from './node-types'
-import tag from './parsers/tag'
+import {ATTR, TAG} from './node-types'
+import {rootTagNotFound, unexpectedEndOfFile} from './messages'
 import attr from './parsers/attribute'
+import curry from 'curri'
+import flush from './utils/flush-parser-state'
+import panic from './utils/panic'
+import tag from './parsers/tag'
 import text from './parsers/text'
+import treeBuilder from './tree-builder'
 
 /**
  * Factory for the Parser class, exposing only the `parse` method.
@@ -25,10 +25,10 @@ export default function parser(options, customBuilder) {
 
 /**
  * Create a new state object
- * @param   {object} userOptions - parser options
- * @param   {Function} customBuilder - Tree builder factory
+ * @param   {Object} userOptions - parser options
+ * @param   {Function} builder - Tree builder factory
  * @param   {string} data - data to parse
- * @returns {ParserState}
+ * @returns {ParserState} it represents the current parser state
  */
 function createParserState(userOptions, builder, data) {
   const options = Object.assign({
@@ -78,7 +78,8 @@ function parse(state) {
 /**
  * Parser walking recursive function
  * @param {ParserState}  state - Current parser state
- * @param   {string} type - current parsing context
+ * @param {string} type - current parsing context
+ * @returns {undefined} void function
  */
 function walk(state, type) {
   const { data } = state

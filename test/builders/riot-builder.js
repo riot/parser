@@ -60,7 +60,7 @@ Object.assign(RiotBuilder.prototype, {
   /**
    * Exposed as htmlBuilder.build
    *
-   * @param   {object} input - Original code and array of pseudo-nodes
+   * @param   {Object} input - Original code and array of pseudo-nodes
    * @returns {string} HTML output
    */
   _build(input) {
@@ -85,7 +85,7 @@ Object.assign(RiotBuilder.prototype, {
         if (name[0] !== '/') {
           // is not a closing tag
           if (name === 'script' || name === 'style') {
-            this._output = this[name + 's']
+            this._output = this[`${name}s`]
           }
           this.openTag(node)
 
@@ -178,7 +178,7 @@ Object.assign(RiotBuilder.prototype, {
   },
 
   unescape(s, c) {
-    const rep = '\\' + c
+    const rep = `\\${c}`
     let ix = 0
     while (~(ix = s.indexOf(rep, ix))) { // eslint-disable-line
       s = s.substr(0, ix) + s.substr(ix + 1)

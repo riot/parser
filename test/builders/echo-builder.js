@@ -15,10 +15,10 @@ const Echo = {
 
   push(node) {
     this.output.push(node)
-  },
+  }
 
 }
 
-module.exports = function (_, errorFn) {
+module.exports = function(_, errorFn) {
   return Object.create(Echo).init(errorFn)
 }

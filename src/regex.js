@@ -18,6 +18,13 @@ export const TAG_NAME = /(\/?[^\s>/]+)\s*(>)?/g
  * @private
  */
 export const ATTR_START = /(\S[^>/=\s]*)(?:\s*=\s*([^>/])?)?/g
+
+/**
+ * Matches the spread operator
+ * it will be used for the spread attributes
+ * @type {RegExp}
+ */
+export const SPREAD_OPERATOR = /\.\.\./
 /**
  * Matches the closing tag of a `script` and `style` block.
  * Used by parseText fo find the end of the block.

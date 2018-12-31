@@ -1,2 +1,8 @@
 extends:
   eslint-config-riot
+
+rules:
+  fp/no-mutating-methods: false
+  fp/no-let: false
+  fp/no-loops: false
+  fp/no-delete: false

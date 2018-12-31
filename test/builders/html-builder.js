@@ -32,7 +32,7 @@ Object.assign(HtmlBuilder.prototype, {
   /**
    * Exposed as htmlBuilder.build
    *
-   * @param   {object} input - Original code and array of pseudo-nodes
+   * @param   {Object} input - Original code and array of pseudo-nodes
    * @returns {string} HTML output
    */
   _build(input) {

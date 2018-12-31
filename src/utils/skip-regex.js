@@ -2,7 +2,7 @@
 
 // safe characters to precced a regex (including `=>`, `**`, and `...`)
 const beforeReChars = '[{(,;:?=|&!^~>%*/'
-const beforeReSign = beforeReChars + '+-'
+const beforeReSign = `${beforeReChars}+-`
 
 // keyword that can preceed a regex (`in` is handled as special case)
 const beforeReWords = [

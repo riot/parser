@@ -18,20 +18,20 @@
  * Throws on unclosed tags or closing tags without start tag.
  * Selfclosing and void tags has no nodes[] property.
  */
-import panic from './utils/panic'
-import { duplicatedNamedTag } from './messages'
-import { RAW_TAGS } from './regex'
-import { TEXT, TAG } from './node-types'
 import {
-  JAVASCRIPT_OUTPUT_NAME,
   CSS_OUTPUT_NAME,
-  TEMPLATE_OUTPUT_NAME,
-  JAVASCRIPT_TAG,
-  STYLE_TAG,
   IS_RAW,
   IS_SELF_CLOSING,
-  IS_VOID
+  IS_VOID,
+  JAVASCRIPT_OUTPUT_NAME,
+  JAVASCRIPT_TAG,
+  STYLE_TAG,
+  TEMPLATE_OUTPUT_NAME
 } from './constants'
+import {TAG, TEXT} from './node-types'
+import {RAW_TAGS} from './regex'
+import {duplicatedNamedTag} from './messages'
+import panic from './utils/panic'
 
 /**
  * Escape the carriage return and the line feed from a string
@@ -69,13 +69,14 @@ const TREE_BUILDER_STRUCT = Object.seal({
     return {
       [TEMPLATE_OUTPUT_NAME]: store.root.nodes[0],
       [CSS_OUTPUT_NAME]: store[STYLE_TAG],
-      [JAVASCRIPT_OUTPUT_NAME]: store[JAVASCRIPT_TAG],
+      [JAVASCRIPT_OUTPUT_NAME]: store[JAVASCRIPT_TAG]
     }
   },
 
   /**
   * Process the current tag or text.
   * @param {Object} node - Raw pseudo-node from the parser
+  * @returns {undefined} void function
   */
   push(node) {
     const store = this.store
@@ -145,12 +146,11 @@ const TREE_BUILDER_STRUCT = Object.seal({
     }
   },
   attrs(attributes) {
-    for (let i = 0; i < attributes.length; i++) {
-      const attr = attributes[i]
+    attributes.forEach(attr => {
       if (attr.value) {
         this.split(attr, attr.value, attr.valueStart, true)
       }
-    }
+    })
   },
   pushText(store, node) {
     const text = node.text
@@ -175,13 +175,14 @@ const TREE_BUILDER_STRUCT = Object.seal({
 
     if (expressions) {
       let pos = 0
-      for (let i = 0; i < expressions.length; i++) {
-        const expr = expressions[i]
+
+      expressions.forEach(expr => {
         const text = source.slice(pos, expr.start - start)
-        let code = expr.text
+        const code = expr.text
         parts.push(this.sanitise(node, text, pack), escapeReturn(escapeSlashes(code).trim()))
         pos = expr.end - start
-      }
+      })
+
       if ((pos += start) < node.end) {
         parts.push(this.sanitise(node, source.slice(pos), pack))
       }
