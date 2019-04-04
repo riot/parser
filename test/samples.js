@@ -13,7 +13,7 @@ process.chdir(__dirname)
   console.log('------------')
 
   const parser  = tagParser(opts)
-  const source  = fs.readFileSync('fixtures/box.tag', 'utf8').trim()
+  const source  = fs.readFileSync('fixtures/box.riot', 'utf8').trim()
   const result  = parser.parse(source).output
 
   console.dir(result, { depth: 12, colors: true })
@@ -25,7 +25,7 @@ process.chdir(__dirname)
   console.log('------------')
 
   const parser  = tagParser(opts)
-  const source  = fs.readFileSync('fixtures/es6-nested-regex.tag', 'utf8').trim()
+  const source  = fs.readFileSync('fixtures/es6-nested-regex.riot', 'utf8').trim()
   const result  = parser.parse(source).output
 
   console.dir(result, { depth: 12, colors: true })
@@ -38,7 +38,7 @@ process.chdir(__dirname)
   console.log('------------------')
 
   const parser  = tagParser(opts)
-  const source  = fs.readFileSync('fixtures/loop-svg-nodes.tag', 'utf8').trim()
+  const source  = fs.readFileSync('fixtures/loop-svg-nodes.riot', 'utf8').trim()
   const result  = parser.parse(source).output
 
   console.dir(result, { depth: 12, colors: true })

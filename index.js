@@ -1091,8 +1091,8 @@ function parseSpreadAttribute(state, attr, quote) {
   return {
     [IS_SPREAD]: true,
     start: attr.start,
-    expressions: attr.expressions.map(expr$$1 => Object.assign(expr$$1, {
-      text: expr$$1.text.replace(SPREAD_OPERATOR, '')
+    expressions: attr.expressions.map(expr => Object.assign(expr, {
+      text: expr.text.replace(SPREAD_OPERATOR, '')
     })),
     end: quote ? ++end : end
   }
@@ -1651,5 +1651,5 @@ function eat(state, type) {
  */
 const nodeTypes = types;
 
-exports.nodeTypes = nodeTypes;
 exports.default = parser;
+exports.nodeTypes = nodeTypes;

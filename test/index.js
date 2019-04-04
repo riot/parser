@@ -145,7 +145,7 @@ describe('HTML Builder', function() {
   }
 
   it('SVG Test', function() {
-    const source = fs.readFileSync('fixtures/loop-svg-nodes.tag', 'utf8').trim()
+    const source = fs.readFileSync('fixtures/loop-svg-nodes.riot', 'utf8').trim()
     const _p = parser(getOpts(), echoBuilder)
     const builder = htmlBuilder({ compact: false })
     const expected = [

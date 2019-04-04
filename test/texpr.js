@@ -257,6 +257,25 @@ module.exports = {
     ]
   },
 
+  'attributes: multiple expressions combined together': {
+    data: '<a foo="{e}-{e}"/>',
+    expected: [
+      {'type':1,'name':'a','start':0,'end':18,'attributes':[
+        {'name':'foo','value':'{e}-{e}','start':3,'end':16,'expressions':[
+          {'text':'e','start':8,'end':11},{'text':'e','start':12,'end':15}],'valueStart':8}
+      ],'isSelfClosing':true}]
+  },
+
+  'attributes: multiple expressions combined together (with spaces)': {
+    data: '<a foo="{ e }-{ e }"/>',
+    expected: [
+      {'type':1,'name':'a','start':0,'end':22,'attributes': [
+        {'name':'foo','value':'{ e }-{ e }','start':3,'end':20,'expressions':[
+          {'text':' e ','start':8,'end':13},{'text':' e ','start':14,'end':19}],'valueStart':8}
+      ],'isSelfClosing':true}
+    ]
+  },
+
   'attributes: boolean attribute ': {
     data: '<a selected={ e }/>',
     expected: [
