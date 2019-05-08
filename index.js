@@ -1086,7 +1086,7 @@ function parseNomalAttribute(state, attr, quote) {
 }
 
 function parseSpreadAttribute(state, attr, quote) {
-  let end = expr(state, attr, quote || '[>/\\s]', attr.start);
+  const end = expr(state, attr, quote || '[>/\\s]', attr.start);
 
   return {
     [IS_SPREAD]: true,
@@ -1094,7 +1094,7 @@ function parseSpreadAttribute(state, attr, quote) {
     expressions: attr.expressions.map(expr => Object.assign(expr, {
       text: expr.text.replace(SPREAD_OPERATOR, '')
     })),
-    end: quote ? ++end : end
+    end: quote ? end + 1 : end
   }
 }
 

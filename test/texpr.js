@@ -231,6 +231,17 @@ module.exports = {
     ]
   },
 
+  'attributes: spread attribute with spaces': {
+    data: '<a { ...foo.bar } />',
+    expected: [{
+        type: _T.TAG, name: 'a', start: 0, end: 18, isSelfClosing: true, attributes: [
+          { isSpread: true, start: 3, end: 15, expressions: [
+            { text: 'foo.bar', start: 3, end: 15 }
+          ] }
+        ]
+      }]
+  },
+
   'attributes: spread attribute with quotes': {
     data: '<a "{...foo.bar}" />',
     expected: [
