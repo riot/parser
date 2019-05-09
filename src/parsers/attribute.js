@@ -6,6 +6,19 @@ import execFromPos from '../utils/exec-from-pos'
 import expr from './expression'
 import getChunk from '../utils/get-chunk'
 import {isBoolAttribute} from 'dom-nodes'
+
+const momoizedExpressionContentRe = (re => {
+  return brackets => {
+    if (re) return re
+
+    re = RegExp(`(${brackets[0]}[^${brackets[1]}]*?})`)
+
+    return re
+  }
+})()
+
+const isSpreadAttribute = name => SPREAD_OPERATOR.test(name)
+
 /**
  * The more complex parsing is for attributes as it can contain quoted or
  * unquoted values or expressions.
@@ -59,9 +72,11 @@ export default function attr(state) {
  */
 function setAttribute(state, pos, tag) {
   const { data } = state
+  const spreadAttrRe = momoizedExpressionContentRe(state.options.brackets)
   const re = ATTR_START // (\S[^>/=\s]*)(?:\s*=\s*([^>/])?)? g
   const start = re.lastIndex = pos // first non-whitespace
-  const match = re.exec(data)
+  const attrMatches = re.exec(data)
+  const match = isSpreadAttribute(attrMatches[1]) ? [null, spreadAttrRe.exec(data)[1], null] : attrMatches
 
   if (match) {
     const end = re.lastIndex
@@ -106,8 +121,10 @@ function parseNomalAttribute(state, attr, quote) {
   return attr
 }
 
-function parseSpreadAttribute(state, attr, quote) {
-  const end = expr(state, attr, quote || '[>/\\s]', attr.start)
+function parseSpreadAttribute(state, attr) {
+  const end = expr(state, attr, '[>/\\s]', attr.start)
+
+  console.log(attr, end) // eslint-disable-line
 
   return {
     [IS_SPREAD]: true,
@@ -134,10 +151,11 @@ function parseAttribute(state, match, start, end) {
     start,
     end
   }
+
   const quote = match[2] // first letter of value or nothing
 
-  if (SPREAD_OPERATOR.test(attr.name)) {
-    return parseSpreadAttribute(state, attr, quote)
+  if (isSpreadAttribute(attr.name)) {
+    return parseSpreadAttribute(state, attr)
   }
 
   return parseNomalAttribute(state, attr, quote)
