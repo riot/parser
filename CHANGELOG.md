@@ -1,5 +1,10 @@
 # Changes for riot-parser
 
+### v4.0.0-rc.1
+
+- Fix https://github.com/riot/riot/issues/2679
+- Add support for `<a {href}>` expression attributes shortcuts
+
 ### v0.8.1
 - Add the `src` folder to the npm publishing files
 
