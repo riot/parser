@@ -233,26 +233,26 @@ module.exports = {
 
   'attributes: spread attribute with spaces': {
     data: '<a { ...foo.bar } />',
-    expected: [{
-        type: _T.TAG, name: 'a', start: 0, end: 18, isSelfClosing: true, attributes: [
-          { isSpread: true, start: 3, end: 15, expressions: [
-            { text: 'foo.bar', start: 3, end: 15 }
-          ] }
-        ]
-      }]
+    expected: [{'type':_T.TAG,'name':'a','start':0,'end':20,'attributes': [
+      {'isSpread':true,'start':3,'expressions':[
+        {'text':'foo.bar','start':3,'end':17}],
+      'end':17}
+    ],'isSelfClosing':true
+    }]
   },
 
-  'attributes: spread attribute with quotes': {
-    data: '<a "{...foo.bar}" />',
-    expected: [
-      {
-        type: _T.TAG, name: 'a', start: 0, end: 20, isSelfClosing: true, attributes: [
-          { isSpread: true, start: 3, end: 17, expressions: [
-            { text: 'foo.bar', start: 4, end: 16 }
-          ] }
-        ]
-      }
-    ]
+  'attributes: expression name': {
+    data: '<a {href} />',
+    expected: [{'type':_T.TAG,'name':'a','start':0,'end':12,'attributes': [
+      {'start':3,'name':'href','expressions':[{'text':'href','start':3,'end':9}],'end':9}],
+    'isSelfClosing':true}]
+  },
+
+  'attributes: expression name with spaces': {
+    data: '<a { href } />',
+    expected: [{'type':_T.TAG,'name':'a','start':0,'end':14,'attributes':
+      [{'start':3,'name':'href','expressions':[{'text':' href ','start':3,'end':11}],'end':11}],
+    'isSelfClosing':true}]
   },
 
   'attributes: expression in unquoted value, spaces inside expression': {

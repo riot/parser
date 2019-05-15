@@ -985,17 +985,29 @@ function isBoolAttribute(attribute) {
   return BOOLEAN_ATTRIBUTES_RE.test(attribute)
 }
 
-const momoizedSpreadRegex = (re => {
-  return brackets => {
-    if (re) return re
+/**
+ * Memoization function
+ * @param   {Function} fn - function to memoize
+ * @returns {*} return of the function to memoize
+ */
+function memoize(fn) {
+  const cache = new WeakMap();
 
-    re = RegExp(`(${brackets[0]}[^${brackets[1]}]*?})`);
+  return (...args) => {
+    if (cache.has(args[0])) return cache.get(args[0])
 
-    return re
+    const ret = fn(...args);
+
+    cache.set(args[0], ret);
+
+    return ret
   }
-})();
+}
 
+const expressionsContentRe = memoize(brackets => RegExp(`(${brackets[0]}[^${brackets[1]}]*?${brackets[1]})`));
 const isSpreadAttribute = name => SPREAD_OPERATOR.test(name);
+const isAttributeExpression = (name, brackets) => name[0] === brackets[0];
+const getAttributeEnd = (state, attr) => expr(state, attr, '[>/\\s]', attr.start);
 
 /**
  * The more complex parsing is for attributes as it can contain quoted or
@@ -1050,15 +1062,16 @@ function attr(state) {
  */
 function setAttribute(state, pos, tag) {
   const { data } = state;
-  const spreadAttrRe = momoizedSpreadRegex(state.options.brackets);
+  const expressionContent = expressionsContentRe(state.options.brackets);
   const re = ATTR_START; // (\S[^>/=\s]*)(?:\s*=\s*([^>/])?)? g
-  const start = re.lastIndex = spreadAttrRe.lastIndex = pos; // first non-whitespace
+  const start = re.lastIndex = pos; // first non-whitespace
   const attrMatches = re.exec(data);
-  const match = isSpreadAttribute(attrMatches[1]) ? [null, spreadAttrRe.exec(data)[1], null] : attrMatches;
+  const isExpressionName = isAttributeExpression(attrMatches[1], state.options.brackets);
+  const match = isExpressionName ? [null, expressionContent.exec(data)[1], null] : attrMatches;
 
   if (match) {
     const end = re.lastIndex;
-    const attr = parseAttribute(state, match, start, end);
+    const attr = parseAttribute(state, match, start, end, isExpressionName);
 
     //assert(q && q.type === Mode.TAG, 'no previous tag for the attr!')
     // Pushes the attribute and shifts the `end` position of the tag (`last`).
@@ -1099,18 +1112,40 @@ function parseNomalAttribute(state, attr, quote) {
   return attr
 }
 
-function parseSpreadAttribute(state, attr) {
-  const end = expr(state, attr, '[>/\\s]', attr.start);
 
-  console.log(attr, end); // eslint-disable-line
+/**
+ * Parse expression names <a {href}>
+ * @param   {ParserStore}  state  - Parser state
+ * @param   {Object} attr - attribute object parsed
+ * @returns {Object} normalized attribute object
+ */
+function parseSpreadAttribute(state, attr) {
+  const end = getAttributeEnd(state, attr);
 
   return {
     [IS_SPREAD]: true,
     start: attr.start,
     expressions: attr.expressions.map(expr => Object.assign(expr, {
-      text: expr.text.replace(SPREAD_OPERATOR, '')
+      text: expr.text.replace(SPREAD_OPERATOR, '').trim()
     })),
-    end: quote ? end + 1 : end
+    end: end
+  }
+}
+
+/**
+ * Parse expression names <a {href}>
+ * @param   {ParserStore}  state  - Parser state
+ * @param   {Object} attr - attribute object parsed
+ * @returns {Object} normalized attribute object
+ */
+function parseExpressionNameAttribute(state, attr) {
+  const end = getAttributeEnd(state, attr);
+
+  return {
+    start: attr.start,
+    name: attr.expressions[0].text.trim(),
+    expressions: attr.expressions,
+    end: end
   }
 }
 
@@ -1120,9 +1155,10 @@ function parseSpreadAttribute(state, attr) {
  * @param   {Array} match - results of the attributes regex
  * @param   {number} start - attribute start position
  * @param   {number} end - attribute end position
+ * @param   {boolean} isExpressionName - true if the attribute name is an expression
  * @returns {Object} attribute object
  */
-function parseAttribute(state, match, start, end) {
+function parseAttribute(state, match, start, end, isExpressionName) {
   const attr = {
     name: match[1],
     value: '',
@@ -1132,8 +1168,12 @@ function parseAttribute(state, match, start, end) {
 
   const quote = match[2]; // first letter of value or nothing
 
-  if (isSpreadAttribute(attr.name)) {
-    return parseSpreadAttribute(state, attr)
+  if (isExpressionName) {
+    if (isSpreadAttribute(attr.name)) {
+      return parseSpreadAttribute(state, attr)
+    }
+
+    return parseExpressionNameAttribute(state, attr)
   }
 
   return parseNomalAttribute(state, attr, quote)
