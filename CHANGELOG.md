@@ -1,7 +1,9 @@
 # Changes for riot-parser
 
-### v4.0.0-rc.1
+### v4.0.0-rc.2
+- Fix: support spread attributes together with other attribute expressions on the same DOM node
 
+### v4.0.0-rc.1
 - Fix https://github.com/riot/riot/issues/2679
 - Add support for `<a {href}>` expression attributes shortcuts
 
