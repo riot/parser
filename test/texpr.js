@@ -231,6 +231,18 @@ module.exports = {
     ]
   },
 
+  'attributes: spread and each attribute': {
+    data: '<a each={item in items} {...foo.bar} />',
+    expected: [{'type':_T.TAG,'name':'a','start':0,'end':39,'attributes':
+    [
+      {'name':'each','value':'{item in items}','start':3,'end':23,'expressions': [
+        {'text':'item in items','start':8,'end':23}
+      ],'valueStart':8},
+      {'start':24, isSpread: true, 'expressions': [
+        {'text':'foo.bar','start':24,'end':36}],'end':36}],
+    'isSelfClosing':true}]
+  },
+
   'attributes: spread attribute with spaces': {
     data: '<a { ...foo.bar } />',
     expected: [{'type':_T.TAG,'name':'a','start':0,'end':20,'attributes': [

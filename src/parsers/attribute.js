@@ -8,7 +8,7 @@ import getChunk from '../utils/get-chunk'
 import {isBoolAttribute} from 'dom-nodes'
 import memoize from '../utils/memoize'
 
-const expressionsContentRe = memoize(brackets => RegExp(`(${brackets[0]}[^${brackets[1]}]*?${brackets[1]})`))
+const expressionsContentRe = memoize(brackets => RegExp(`(${brackets[0]}[^${brackets[1]}]*?${brackets[1]})`, 'g'))
 const isSpreadAttribute = name => SPREAD_OPERATOR.test(name)
 const isAttributeExpression = (name, brackets) => name[0] === brackets[0]
 const getAttributeEnd = (state, attr) => expr(state, attr, '[>/\\s]', attr.start)
@@ -68,7 +68,7 @@ function setAttribute(state, pos, tag) {
   const { data } = state
   const expressionContent = expressionsContentRe(state.options.brackets)
   const re = ATTR_START // (\S[^>/=\s]*)(?:\s*=\s*([^>/])?)? g
-  const start = re.lastIndex = pos // first non-whitespace
+  const start = re.lastIndex = expressionContent.lastIndex = pos // first non-whitespace
   const attrMatches = re.exec(data)
   const isExpressionName = isAttributeExpression(attrMatches[1], state.options.brackets)
   const match = isExpressionName ? [null, expressionContent.exec(data)[1], null] : attrMatches
@@ -172,13 +172,12 @@ function parseAttribute(state, match, start, end, isExpressionName) {
 
   const quote = match[2] // first letter of value or nothing
 
-  if (isExpressionName) {
-    if (isSpreadAttribute(attr.name)) {
-      return parseSpreadAttribute(state, attr)
-    }
-
+  switch (true) {
+  case isSpreadAttribute(attr.name):
+    return parseSpreadAttribute(state, attr)
+  case isExpressionName === true:
     return parseExpressionNameAttribute(state, attr)
+  default:
+    return parseNomalAttribute(state, attr, quote)
   }
-
-  return parseNomalAttribute(state, attr, quote)
 }
