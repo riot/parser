@@ -1,5 +1,9 @@
 # Changes for riot-parser
 
+### v4.0.0
+- Stable release
+- Add more tests for the new feautures listed below
+
 ### v4.0.0-rc.2
 - Fix: support spread attributes together with other attribute expressions on the same DOM node
 
