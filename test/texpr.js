@@ -253,10 +253,30 @@ module.exports = {
     }]
   },
 
+  'attributes: multiple spread attributes': {
+    data: '<a { ...foo.bar } { ...foo.baz } />',
+    expected: [{'type':_T.TAG,'name':'a','start':0,'end':35,'attributes': [
+      {'isSpread':true,'start':3,'expressions':[
+        {'text':'foo.bar','start':3,'end':17}],'end':17},
+      {'isSpread':true,'start':18,'expressions':[
+        {'text':'foo.baz','start':18,'end':32}],'end':32}
+    ],'isSelfClosing':true}]
+  },
+
   'attributes: expression name': {
     data: '<a {href} />',
     expected: [{'type':_T.TAG,'name':'a','start':0,'end':12,'attributes': [
       {'start':3,'name':'href','expressions':[{'text':'href','start':3,'end':9}],'end':9}],
+    'isSelfClosing':true}]
+  },
+
+  'attributes: multiple expression names': {
+    data: '<a {href} {target} />',
+    expected: [{'type': _T.TAG,'name':'a','start':0,'end':21,'attributes': [
+      {'start':3,'name':'href','expressions':[
+        {'text':'href','start':3,'end':9}],'end':9},
+      {'start':10,'name':'target','expressions':[
+        {'text':'target','start':10,'end':18}],'end':18}],
     'isSelfClosing':true}]
   },
 
