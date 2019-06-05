@@ -1,0 +1,38 @@
+{
+  "template": {
+    "type": 1,
+    "name": "text-frags",
+    "start": 0,
+    "end": 47,
+    "isCustom": true,
+    "nodes": [
+      {
+        "type": 1,
+        "name": "p",
+        "start": 15,
+        "end": 33,
+        "nodes": [
+          {
+            "type": 3,
+            "text": "{expr}hello",
+            "start": 18,
+            "end": 29,
+            "expressions": [
+              {
+                "text": "expr",
+                "start": 18,
+                "end": 24
+              }
+            ],
+            "parts": [
+              "expr",
+              "hello"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "css": null,
+  "javascript": null
+}

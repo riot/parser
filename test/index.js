@@ -79,10 +79,11 @@ describe('Tree Builder', function() {
   const _TDEBUG = 0
   const _TOSAVE = ['*']
 
+
   for (let i = 0; i < titles.length; i++) {
     const title = titles[i]
     const ext = path.extname(title)
-    if (ext !== '.tag') {
+    if (ext !== '.riot') {
       continue
     }
     const name = path.basename(title, ext)

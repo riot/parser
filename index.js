@@ -1549,7 +1549,7 @@ const TREE_BUILDER_STRUCT = Object.seal({
         pos = expr.end - start;
       });
 
-      if ((pos += start) < node.end) {
+      if (pos < node.end) {
         parts.push(this.sanitise(node, source.slice(pos), pack));
       }
     } else {
