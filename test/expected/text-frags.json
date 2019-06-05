@@ -3,25 +3,45 @@
     "type": 1,
     "name": "text-frags",
     "start": 0,
-    "end": 47,
+    "end": 70,
     "isCustom": true,
     "nodes": [
       {
         "type": 1,
         "name": "p",
         "start": 15,
-        "end": 33,
+        "end": 56,
+        "attributes": [
+          {
+            "name": "attr",
+            "value": "{something}cool",
+            "start": 18,
+            "end": 40,
+            "expressions": [
+              {
+                "text": "something",
+                "start": 24,
+                "end": 35
+              }
+            ],
+            "valueStart": 24,
+            "parts": [
+              "something",
+              "cool"
+            ]
+          }
+        ],
         "nodes": [
           {
             "type": 3,
             "text": "{expr}hello",
-            "start": 18,
-            "end": 29,
+            "start": 41,
+            "end": 52,
             "expressions": [
               {
                 "text": "expr",
-                "start": 18,
-                "end": 24
+                "start": 41,
+                "end": 47
               }
             ],
             "parts": [

@@ -1,5 +1,8 @@
 # Changes for riot-parser
 
+### v4.0.1
+- Fix the creation of the `parts` array in nodes containing expressions
+
 ### v4.0.0
 - Stable release
 - Add more tests for the new feautures listed below
