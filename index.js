@@ -1469,8 +1469,8 @@ const TREE_BUILDER_STRUCT = Object.seal({
 
     if (store.scryle) {
       store.scryle = null;
-    } else {
-      store.last = store.stack.length ? store.stack.pop() : store.last;
+    } else if (store.stack.length) {
+      store.last = store.stack.pop();
     }
   },
 
