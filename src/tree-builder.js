@@ -87,9 +87,12 @@ const TREE_BUILDER_STRUCT = Object.seal({
       break
     case TAG: {
       const name = node.name
-      if (name[0] === '/') {
+      const closingTagChar = '/'
+      const [firstChar] = name
+
+      if (firstChar === closingTagChar && !node.isVoid) {
         this.closeTag(store, node, name)
-      } else {
+      } else if (firstChar !== closingTagChar) {
         this.openTag(store, node)
       }
       break
@@ -103,7 +106,7 @@ const TREE_BUILDER_STRUCT = Object.seal({
 
     if (store.scryle) {
       store.scryle = null
-    } else if (store.stack.length) {
+    } else {
       store.last = store.stack.pop()
     }
   },

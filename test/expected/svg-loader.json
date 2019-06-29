@@ -3,14 +3,14 @@
     "type": 1,
     "name": "svg-loader",
     "start": 0,
-    "end": 396,
+    "end": 418,
     "isCustom": true,
     "nodes": [
       {
         "type": 1,
         "name": "svg",
         "start": 15,
-        "end": 247,
+        "end": 404,
         "attributes": [
           {
             "name": "xmlns",
@@ -132,94 +132,94 @@
                 ]
               }
             ]
-          }
-        ]
-      },
-      {
-        "type": 1,
-        "name": "circle",
-        "start": 252,
-        "end": 387,
-        "isVoid": true,
-        "attributes": [
-          {
-            "name": "class",
-            "value": "donut__fill",
-            "start": 260,
-            "end": 279,
-            "valueStart": 267,
-            "parts": [
-              "donut__fill"
-            ]
           },
           {
-            "name": "stroke",
-            "value": "#00acc1",
-            "start": 280,
-            "end": 296,
-            "valueStart": 288,
-            "parts": [
-              "#00acc1"
-            ]
-          },
-          {
-            "name": "stroke-width",
-            "value": "4",
-            "start": 297,
-            "end": 313,
-            "valueStart": 311,
-            "parts": [
-              "4"
-            ]
-          },
-          {
-            "name": "stroke-dasharray",
-            "value": "50,100",
-            "start": 314,
-            "end": 339,
-            "valueStart": 332,
-            "parts": [
-              "50,100"
-            ]
-          },
-          {
-            "name": "fill",
-            "value": "none",
-            "start": 340,
-            "end": 351,
-            "valueStart": 346,
-            "parts": [
-              "none"
-            ]
-          },
-          {
-            "name": "cx",
-            "value": "50%",
-            "start": 352,
-            "end": 360,
-            "valueStart": 356,
-            "parts": [
-              "50%"
-            ]
-          },
-          {
-            "name": "cy",
-            "value": "50%",
-            "start": 361,
-            "end": 369,
-            "valueStart": 365,
-            "parts": [
-              "50%"
-            ]
-          },
-          {
-            "name": "r",
-            "value": "15.91549431",
-            "start": 370,
-            "end": 385,
-            "valueStart": 373,
-            "parts": [
-              "15.91549431"
+            "type": 1,
+            "name": "circle",
+            "start": 252,
+            "end": 386,
+            "isVoid": true,
+            "attributes": [
+              {
+                "name": "class",
+                "value": "donut__fill",
+                "start": 260,
+                "end": 279,
+                "valueStart": 267,
+                "parts": [
+                  "donut__fill"
+                ]
+              },
+              {
+                "name": "stroke",
+                "value": "#00acc1",
+                "start": 280,
+                "end": 296,
+                "valueStart": 288,
+                "parts": [
+                  "#00acc1"
+                ]
+              },
+              {
+                "name": "stroke-width",
+                "value": "4",
+                "start": 297,
+                "end": 313,
+                "valueStart": 311,
+                "parts": [
+                  "4"
+                ]
+              },
+              {
+                "name": "stroke-dasharray",
+                "value": "50,100",
+                "start": 314,
+                "end": 339,
+                "valueStart": 332,
+                "parts": [
+                  "50,100"
+                ]
+              },
+              {
+                "name": "fill",
+                "value": "none",
+                "start": 340,
+                "end": 351,
+                "valueStart": 346,
+                "parts": [
+                  "none"
+                ]
+              },
+              {
+                "name": "cx",
+                "value": "50%",
+                "start": 352,
+                "end": 360,
+                "valueStart": 356,
+                "parts": [
+                  "50%"
+                ]
+              },
+              {
+                "name": "cy",
+                "value": "50%",
+                "start": 361,
+                "end": 369,
+                "valueStart": 365,
+                "parts": [
+                  "50%"
+                ]
+              },
+              {
+                "name": "r",
+                "value": "15.91549431",
+                "start": 370,
+                "end": 385,
+                "valueStart": 373,
+                "parts": [
+                  "15.91549431"
+                ]
+              }
             ]
           }
         ]

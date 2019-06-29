@@ -1,5 +1,3 @@
-export const SVG_NS = 'http://www.w3.org/2000/svg'
-
 export const JAVASCRIPT_OUTPUT_NAME = 'javascript'
 export const CSS_OUTPUT_NAME = 'css'
 export const TEMPLATE_OUTPUT_NAME = 'template'
