@@ -1,0 +1,231 @@
+{
+  "template": {
+    "type": 1,
+    "name": "svg-loader",
+    "start": 0,
+    "end": 396,
+    "isCustom": true,
+    "nodes": [
+      {
+        "type": 1,
+        "name": "svg",
+        "start": 15,
+        "end": 247,
+        "attributes": [
+          {
+            "name": "xmlns",
+            "value": "http://www.w3.org/2000/svg",
+            "start": 20,
+            "end": 54,
+            "valueStart": 27,
+            "parts": [
+              "http://www.w3.org/2000/svg"
+            ]
+          },
+          {
+            "name": "class",
+            "value": "donut",
+            "start": 55,
+            "end": 68,
+            "valueStart": 62,
+            "parts": [
+              "donut"
+            ]
+          },
+          {
+            "name": "viewbox",
+            "value": "0 0 36 36",
+            "start": 69,
+            "end": 88,
+            "valueStart": 78,
+            "parts": [
+              "0 0 36 36"
+            ]
+          },
+          {
+            "name": "transform",
+            "value": "rotate(-90 18 18)",
+            "start": 89,
+            "end": 118,
+            "valueStart": 100,
+            "parts": [
+              "rotate(-90 18 18)"
+            ]
+          }
+        ],
+        "nodes": [
+          {
+            "type": 1,
+            "name": "circle",
+            "start": 124,
+            "end": 238,
+            "isVoid": true,
+            "attributes": [
+              {
+                "name": "class",
+                "value": "donut__background",
+                "start": 132,
+                "end": 157,
+                "valueStart": 139,
+                "parts": [
+                  "donut__background"
+                ]
+              },
+              {
+                "name": "stroke",
+                "value": "#efefef",
+                "start": 158,
+                "end": 174,
+                "valueStart": 166,
+                "parts": [
+                  "#efefef"
+                ]
+              },
+              {
+                "name": "stroke-width",
+                "value": "4",
+                "start": 175,
+                "end": 191,
+                "valueStart": 189,
+                "parts": [
+                  "4"
+                ]
+              },
+              {
+                "name": "fill",
+                "value": "none",
+                "start": 192,
+                "end": 203,
+                "valueStart": 198,
+                "parts": [
+                  "none"
+                ]
+              },
+              {
+                "name": "cx",
+                "value": "50%",
+                "start": 204,
+                "end": 212,
+                "valueStart": 208,
+                "parts": [
+                  "50%"
+                ]
+              },
+              {
+                "name": "cy",
+                "value": "50%",
+                "start": 213,
+                "end": 221,
+                "valueStart": 217,
+                "parts": [
+                  "50%"
+                ]
+              },
+              {
+                "name": "r",
+                "value": "15.91549431",
+                "start": 222,
+                "end": 237,
+                "valueStart": 225,
+                "parts": [
+                  "15.91549431"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "type": 1,
+        "name": "circle",
+        "start": 252,
+        "end": 387,
+        "isVoid": true,
+        "attributes": [
+          {
+            "name": "class",
+            "value": "donut__fill",
+            "start": 260,
+            "end": 279,
+            "valueStart": 267,
+            "parts": [
+              "donut__fill"
+            ]
+          },
+          {
+            "name": "stroke",
+            "value": "#00acc1",
+            "start": 280,
+            "end": 296,
+            "valueStart": 288,
+            "parts": [
+              "#00acc1"
+            ]
+          },
+          {
+            "name": "stroke-width",
+            "value": "4",
+            "start": 297,
+            "end": 313,
+            "valueStart": 311,
+            "parts": [
+              "4"
+            ]
+          },
+          {
+            "name": "stroke-dasharray",
+            "value": "50,100",
+            "start": 314,
+            "end": 339,
+            "valueStart": 332,
+            "parts": [
+              "50,100"
+            ]
+          },
+          {
+            "name": "fill",
+            "value": "none",
+            "start": 340,
+            "end": 351,
+            "valueStart": 346,
+            "parts": [
+              "none"
+            ]
+          },
+          {
+            "name": "cx",
+            "value": "50%",
+            "start": 352,
+            "end": 360,
+            "valueStart": 356,
+            "parts": [
+              "50%"
+            ]
+          },
+          {
+            "name": "cy",
+            "value": "50%",
+            "start": 361,
+            "end": 369,
+            "valueStart": 365,
+            "parts": [
+              "50%"
+            ]
+          },
+          {
+            "name": "r",
+            "value": "15.91549431",
+            "start": 370,
+            "end": 385,
+            "valueStart": 373,
+            "parts": [
+              "15.91549431"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "css": null,
+  "javascript": null
+}

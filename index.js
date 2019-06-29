@@ -1470,7 +1470,7 @@ const TREE_BUILDER_STRUCT = Object.seal({
     if (store.scryle) {
       store.scryle = null;
     } else {
-      store.last = store.stack.pop();
+      store.last = store.stack.length ? store.stack.pop() : store.last;
     }
   },
 
@@ -1525,6 +1525,7 @@ const TREE_BUILDER_STRUCT = Object.seal({
     if (!scryle) {
       // store.last always have a nodes property
       const parent = store.last;
+
       const pack = this.compact && !parent[IS_RAW];
       if (pack && empty) {
         return
