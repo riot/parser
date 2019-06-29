@@ -1455,6 +1455,7 @@ const TREE_BUILDER_STRUCT = Object.seal({
       const name = node.name;
       const closingTagChar = '/';
       const [firstChar] = name;
+
       if (firstChar === closingTagChar && !node.isVoid) {
         this.closeTag(store, node, name);
       } else if (firstChar !== closingTagChar) {
