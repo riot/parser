@@ -1,5 +1,8 @@
 # Changes for riot-parser
 
+### v4.0.3
+- Fix https://github.com/riot/riot/issues/2723 for real this time
+
 ### v4.0.2
 - Fix parsing of nested svg nodes https://github.com/riot/riot/issues/2723
 
