@@ -601,6 +601,9 @@ function b0re(state, str) {
   return state.regexCache[str]
 }
 
+// similar to _.uniq
+const uniq = l => l.filter((x, i, a) => a.indexOf(x) === i);
+
 /**
  * SVG void elements that cannot be auto-closed and shouldn't contain child nodes.
  * @const {Array}
@@ -618,11 +621,29 @@ const VOID_SVG_TAGS_LIST = [
 ];
 
 /**
+ * List of html elements where the value attribute is allowed
+ * @type {Array}
+ */
+const HTML_ELEMENTS_HAVING_VALUE_ATTRIBUTE_LIST = [
+  'button',
+  'data',
+  'input',
+  'select',
+  'li',
+  'meter',
+  'option',
+  'output',
+  'progress',
+  'textarea',
+  'param'
+];
+
+/**
  * List of all the available svg tags
  * @const {Array}
  * @see {@link https://github.com/wooorm/svg-tag-names}
  */
-const SVG_TAGS_LIST = [
+const SVG_TAGS_LIST = uniq([
   'a',
   'altGlyph',
   'altGlyphDef',
@@ -715,7 +736,7 @@ const SVG_TAGS_LIST = [
   'video',
   'view',
   'vkern'
-].concat(VOID_SVG_TAGS_LIST).sort();
+].concat(VOID_SVG_TAGS_LIST)).sort();
 
 /**
  * HTML void elements that cannot be auto-closed and shouldn't contain child nodes.
@@ -747,7 +768,7 @@ const VOID_HTML_TAGS_LIST = [
  * @const {Array}
  * @see {@link https://github.com/sindresorhus/html-tags}
  */
-const HTML_TAGS_LIST = [
+const HTML_TAGS_LIST = uniq([
   'a',
   'abbr',
   'address',
@@ -759,13 +780,11 @@ const HTML_TAGS_LIST = [
   'bdo',
   'blockquote',
   'body',
-  'button',
   'canvas',
   'caption',
   'cite',
   'code',
   'colgroup',
-  'data',
   'datalist',
   'dd',
   'del',
@@ -797,24 +816,19 @@ const HTML_TAGS_LIST = [
   'kbd',
   'label',
   'legend',
-  'li',
   'main',
   'map',
   'mark',
   'math',
   'menu',
-  'meter',
   'nav',
   'noscript',
   'object',
   'ol',
   'optgroup',
-  'option',
-  'output',
   'p',
   'picture',
   'pre',
-  'progress',
   'q',
   'rb',
   'rp',
@@ -839,7 +853,6 @@ const HTML_TAGS_LIST = [
   'tbody',
   'td',
   'template',
-  'textarea',
   'tfoot',
   'th',
   'thead',
@@ -850,13 +863,15 @@ const HTML_TAGS_LIST = [
   'ul',
   'var',
   'video'
-].concat(VOID_HTML_TAGS_LIST).sort();
+]
+  .concat(VOID_HTML_TAGS_LIST)
+  .concat(HTML_ELEMENTS_HAVING_VALUE_ATTRIBUTE_LIST)
+).sort();
 
 /**
- * Matches boolean HTML attributes in the riot tag definition.
- * With a long list like this, a regex is faster than `[].indexOf` in most browsers.
+ * List of all boolean HTML attributes
  * @const {RegExp}
- * @see [attributes.md](https://github.com/riot/compiler/blob/dev/doc/attributes.md)
+ * @see {@link https://www.w3.org/TR/html5/infrastructure.html#sec-boolean-attributes}
  */
 const BOOLEAN_ATTRIBUTES_LIST = [
   'disabled',
@@ -894,7 +909,7 @@ const BOOLEAN_ATTRIBUTES_LIST = [
  * Join a list of items with the pipe symbol (usefull for regex list concatenation)
  * @private
  * @param   {Array} list - list of strings
- * @returns {String} the list received joined with pipes
+ * @returns {string} the list received joined with pipes
  */
 function joinWithPipe(list) {
   return list.join('|')
@@ -935,6 +950,12 @@ const VOID_HTML_TAGS_RE =  listsToRegex(VOID_HTML_TAGS_LIST);
 const VOID_SVG_TAGS_RE =  listsToRegex(VOID_SVG_TAGS_LIST);
 
 /**
+ * Regex matching all the html tags where the value tag is allowed
+ * @const {RegExp}
+ */
+const HTML_ELEMENTS_HAVING_VALUE_ATTRIBUTE_RE = listsToRegex(HTML_ELEMENTS_HAVING_VALUE_ATTRIBUTE_LIST);
+
+/**
  * Regex matching all the boolean attributes
  * @const {RegExp}
  */
@@ -942,8 +963,8 @@ const BOOLEAN_ATTRIBUTES_RE =  listsToRegex(BOOLEAN_ATTRIBUTES_LIST);
 
 /**
  * True if it's a self closing tag
- * @param   {String}  tag - test tag
- * @returns {Boolean}
+ * @param   {string}  tag - test tag
+ * @returns {boolean} true if void
  * @example
  * isVoid('meta') // true
  * isVoid('circle') // true
@@ -960,8 +981,8 @@ function isVoid(tag) {
 
 /**
  * True if it's not SVG nor a HTML known tag
- * @param   {String}  tag - test tag
- * @returns {Boolean}
+ * @param   {string}  tag - test tag
+ * @returns {boolean} true if custom element
  * @example
  * isCustom('my-component') // true
  * isCustom('div') // false
@@ -975,8 +996,8 @@ function isCustom(tag) {
 
 /**
  * True if it's a boolean attribute
- * @param   {String} attribute - test attribute
- * @returns {Boolean}
+ * @param   {string} attribute - test attribute
+ * @returns {boolean} true if the attribute is a boolean type
  * @example
  * isBoolAttribute('selected') // true
  * isBoolAttribute('class') // false
@@ -1711,5 +1732,17 @@ function eat(state, type) {
  */
 const nodeTypes = types;
 
+exports.CSS_OUTPUT_NAME = CSS_OUTPUT_NAME;
+exports.IS_BOOLEAN = IS_BOOLEAN;
+exports.IS_CUSTOM = IS_CUSTOM;
+exports.IS_RAW = IS_RAW;
+exports.IS_SELF_CLOSING = IS_SELF_CLOSING;
+exports.IS_SPREAD = IS_SPREAD;
+exports.IS_VOID = IS_VOID;
+exports.JAVASCRIPT_OUTPUT_NAME = JAVASCRIPT_OUTPUT_NAME;
+exports.JAVASCRIPT_TAG = JAVASCRIPT_TAG;
+exports.STYLE_TAG = STYLE_TAG;
+exports.TEMPLATE_OUTPUT_NAME = TEMPLATE_OUTPUT_NAME;
+exports.TEXTAREA_TAG = TEXTAREA_TAG;
 exports.default = parser;
 exports.nodeTypes = nodeTypes;
