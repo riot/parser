@@ -1,5 +1,8 @@
 # Changes for riot-parser
 
+### v4.1.0
+- Add expose the internal constants to the public API
+
 ### v4.0.3
 - Fix https://github.com/riot/riot/issues/2723 for real this time
 
