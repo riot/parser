@@ -1,5 +1,8 @@
 # Changes for riot-parser
 
+### v4.1.1
+- Fix end value of the root node
+
 ### v4.1.0
 - Add expose the internal constants to the public API
 
