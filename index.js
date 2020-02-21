@@ -1508,7 +1508,7 @@ const TREE_BUILDER_STRUCT = Object.seal({
 
     last.end = node.end;
 
-    // update the root node
+    // update always the root node end position
     if (store.root.nodes[0]) store.root.nodes[0].end = node.end;
 
     if (store.scryle) {
