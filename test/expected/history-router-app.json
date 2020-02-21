@@ -1,0 +1,155 @@
+{
+  "template": {
+    "type": 1,
+    "name": "history-router-app",
+    "start": 0,
+    "end": 565,
+    "isCustom": true,
+    "nodes": [
+      {
+        "type": 1,
+        "name": "router",
+        "start": 23,
+        "end": 220,
+        "isCustom": true,
+        "attributes": [
+          {
+            "name": "base",
+            "value": "{props.base}",
+            "start": 31,
+            "end": 48,
+            "expressions": [
+              {
+                "text": "props.base",
+                "start": 36,
+                "end": 48
+              }
+            ],
+            "valueStart": 36,
+            "parts": [
+              "props.base"
+            ]
+          },
+          {
+            "name": "onStarted",
+            "value": "{onStarted}",
+            "start": 49,
+            "end": 70,
+            "expressions": [
+              {
+                "text": "onStarted",
+                "start": 59,
+                "end": 70
+              }
+            ],
+            "valueStart": 59,
+            "parts": [
+              "onStarted"
+            ]
+          }
+        ],
+        "nodes": [
+          {
+            "type": 1,
+            "name": "route",
+            "start": 76,
+            "end": 124,
+            "isCustom": true,
+            "attributes": [
+              {
+                "name": "path",
+                "value": "/",
+                "start": 83,
+                "end": 91,
+                "valueStart": 89,
+                "parts": [
+                  "/"
+                ]
+              }
+            ],
+            "nodes": [
+              {
+                "type": 1,
+                "name": "p",
+                "start": 99,
+                "end": 111,
+                "nodes": [
+                  {
+                    "type": 3,
+                    "text": "Hello",
+                    "start": 102,
+                    "end": 107,
+                    "parts": [
+                      "Hello"
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "type": 1,
+            "name": "route",
+            "start": 129,
+            "end": 208,
+            "isCustom": true,
+            "attributes": [
+              {
+                "name": "path",
+                "value": "/goodbye/:user",
+                "start": 136,
+                "end": 157,
+                "valueStart": 142,
+                "parts": [
+                  "/goodbye/:user"
+                ]
+              }
+            ],
+            "nodes": [
+              {
+                "type": 1,
+                "name": "user",
+                "start": 165,
+                "end": 195,
+                "isCustom": true,
+                "attributes": [
+                  {
+                    "name": "name",
+                    "value": "{route.params[0]}",
+                    "start": 171,
+                    "end": 193,
+                    "expressions": [
+                      {
+                        "text": "route.params[0]",
+                        "start": 176,
+                        "end": 193
+                      }
+                    ],
+                    "valueStart": 176,
+                    "parts": [
+                      "route.params[0]"
+                    ]
+                  }
+                ],
+                "isSelfClosing": true
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "css": null,
+  "javascript": {
+    "type": 1,
+    "name": "script",
+    "start": 224,
+    "end": 543,
+    "text": {
+      "type": 3,
+      "text": "\n    import { Router, Route } from '../../src'\n    import User from './user.riot'\n\n    export default {\n      components: {\n        Router,\n        Route,\n        User\n      },\n      onStarted(currentRoute) {\n        this.isRouterStarted = true\n        this.currentRoute = currentRoute\n      }\n    }\n  ",
+      "start": 232,
+      "end": 534
+    }
+  }
+}

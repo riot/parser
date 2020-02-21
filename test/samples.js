@@ -44,3 +44,16 @@ process.chdir(__dirname)
   console.dir(result, { depth: 12, colors: true })
   console.log()
 })()
+
+;(function() {
+  console.log('------------------')
+  console.log('History Router APP')
+  console.log('------------------')
+
+  const parser  = tagParser(opts)
+  const source  = fs.readFileSync('fixtures/history-router-app.riot', 'utf8').trim()
+  const result  = parser.parse(source).output
+
+  console.dir(result, { depth: 12, colors: true })
+  console.log()
+})()
