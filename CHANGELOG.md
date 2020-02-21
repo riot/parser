@@ -1,5 +1,8 @@
 # Changes for riot-parser
 
+### v4.1.2
+- Update generated bundle fixing discrepancy between source files and bundled output
+
 ### v4.1.1
 - Fix end value of the root node
 
