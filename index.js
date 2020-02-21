@@ -2,6 +2,39 @@
 
 Object.defineProperty(exports, '__esModule', { value: true });
 
+const JAVASCRIPT_OUTPUT_NAME = 'javascript';
+const CSS_OUTPUT_NAME = 'css';
+const TEMPLATE_OUTPUT_NAME = 'template';
+
+// Tag names
+const JAVASCRIPT_TAG = 'script';
+const STYLE_TAG = 'style';
+const TEXTAREA_TAG = 'textarea';
+
+// Boolean attributes
+const IS_RAW = 'isRaw';
+const IS_SELF_CLOSING = 'isSelfClosing';
+const IS_VOID = 'isVoid';
+const IS_BOOLEAN = 'isBoolean';
+const IS_CUSTOM = 'isCustom';
+const IS_SPREAD = 'isSpread';
+
+var c = /*#__PURE__*/Object.freeze({
+  __proto__: null,
+  JAVASCRIPT_OUTPUT_NAME: JAVASCRIPT_OUTPUT_NAME,
+  CSS_OUTPUT_NAME: CSS_OUTPUT_NAME,
+  TEMPLATE_OUTPUT_NAME: TEMPLATE_OUTPUT_NAME,
+  JAVASCRIPT_TAG: JAVASCRIPT_TAG,
+  STYLE_TAG: STYLE_TAG,
+  TEXTAREA_TAG: TEXTAREA_TAG,
+  IS_RAW: IS_RAW,
+  IS_SELF_CLOSING: IS_SELF_CLOSING,
+  IS_VOID: IS_VOID,
+  IS_BOOLEAN: IS_BOOLEAN,
+  IS_CUSTOM: IS_CUSTOM,
+  IS_SPREAD: IS_SPREAD
+});
+
 /**
  * Not all the types are handled in this module.
  *
@@ -18,6 +51,7 @@ const DOCTYPE = 10; /* DOCTYPE */
 const DOCUMENT_FRAGMENT = 11; /* DOCUMENT_FRAGMENT */
 
 var types = /*#__PURE__*/Object.freeze({
+  __proto__: null,
   TAG: TAG,
   ATTR: ATTR,
   TEXT: TEXT,
@@ -78,23 +112,6 @@ const RE_SCRYLE = {
 
 // Do not touch text content inside this tags
 const RAW_TAGS = /^\/?(?:pre|textarea)$/;
-
-const JAVASCRIPT_OUTPUT_NAME = 'javascript';
-const CSS_OUTPUT_NAME = 'css';
-const TEMPLATE_OUTPUT_NAME = 'template';
-
-// Tag names
-const JAVASCRIPT_TAG = 'script';
-const STYLE_TAG = 'style';
-const TEXTAREA_TAG = 'textarea';
-
-// Boolean attributes
-const IS_RAW = 'isRaw';
-const IS_SELF_CLOSING = 'isSelfClosing';
-const IS_VOID = 'isVoid';
-const IS_BOOLEAN = 'isBoolean';
-const IS_CUSTOM = 'isCustom';
-const IS_SPREAD = 'isSpread';
 
 /**
  * Add an item into a collection, if the collection is not an array
@@ -1728,21 +1745,15 @@ function eat(state, type) {
 }
 
 /**
+ * Expose the internal constants
+ */
+const constants = c;
+
+/**
  * The nodeTypes definition
  */
 const nodeTypes = types;
 
-exports.CSS_OUTPUT_NAME = CSS_OUTPUT_NAME;
-exports.IS_BOOLEAN = IS_BOOLEAN;
-exports.IS_CUSTOM = IS_CUSTOM;
-exports.IS_RAW = IS_RAW;
-exports.IS_SELF_CLOSING = IS_SELF_CLOSING;
-exports.IS_SPREAD = IS_SPREAD;
-exports.IS_VOID = IS_VOID;
-exports.JAVASCRIPT_OUTPUT_NAME = JAVASCRIPT_OUTPUT_NAME;
-exports.JAVASCRIPT_TAG = JAVASCRIPT_TAG;
-exports.STYLE_TAG = STYLE_TAG;
-exports.TEMPLATE_OUTPUT_NAME = TEMPLATE_OUTPUT_NAME;
-exports.TEXTAREA_TAG = TEXTAREA_TAG;
+exports.constants = constants;
 exports.default = parser;
 exports.nodeTypes = nodeTypes;
