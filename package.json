@@ -1,6 +1,6 @@
 {
   "name": "@riotjs/parser",
-  "version": "4.1.1",
+  "version": "4.1.2",
   "description": "The parser for Riot tags",
   "main": "./index.js",
   "module": "./src/index.js",
