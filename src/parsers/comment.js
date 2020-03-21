@@ -15,12 +15,20 @@ import {unclosedComment} from '../messages'
  */
 export default function comment(state, data, start) {
   const pos = start + 2 // skip '<!'
-  const str = data.substr(pos, 2) === '--' ? '-->' : '>'
+  const isLongComment = data.substr(pos, 2) === '--'
+  const str = isLongComment ? '-->' : '>'
   const end = data.indexOf(str, pos)
+
   if (end < 0) {
     panic(data, unclosedComment, start)
   }
-  pushComment(state, start, end + str.length)
+
+  pushComment(
+    state,
+    start,
+    end + str.length,
+    data.substring(start, end + str.length)
+  )
 
   return TEXT
 }
@@ -31,13 +39,19 @@ export default function comment(state, data, start) {
  * @param   {ParserState}  state - Current parser state
  * @param   {number}  start - Start position of the tag
  * @param   {number}  end   - Ending position (last char of the tag)
+ * @param   {string}  text  - Comment content
  * @returns {undefined} void function
  * @private
  */
-export function pushComment(state, start, end) {
-  flush(state)
+export function pushComment(state, start, end, text) {
   state.pos = end
   if (state.options.comments === true) {
-    state.last = { type: COMMENT, start, end }
+    flush(state)
+    state.last = {
+      type: COMMENT,
+      start,
+      end,
+      text
+    }
   }
 }

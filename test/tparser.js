@@ -312,7 +312,7 @@ module.exports = {
     data: '<div><!-- comment text --></div>',
     expected: [
       { type: _T.TAG, name: 'div', start: 0, end: 5 },
-      { type: _T.COMMENT, start: 5, end: 26 },
+      { type: _T.COMMENT, start: 5, end: 26, text: '<!-- comment text -->' },
       { type: _T.TAG, name: '/div', start: 26, end: 32 }
     ]
   },
@@ -322,7 +322,7 @@ module.exports = {
     data: '<div><![CDATA[ CData content ]]></div>',
     expected: [
       { type: _T.TAG, name: 'div', start: 0, end: 5 },
-      { type: _T.COMMENT, start: 5, end: 32 },
+      { type: _T.COMMENT, start: 5, end: 32, text: '<![CDATA[ CData content ]]>' },
       { type: _T.TAG, name: '/div', start: 32, end: 38 }
     ]
   },
@@ -338,7 +338,7 @@ module.exports = {
     data: '<a><!-- <![CDATA[ content ]]> --></a>',
     expected: [
       { type: _T.TAG, name: 'a', start: 0, end: 3 },
-      { type: _T.COMMENT, start: 3, end: 33 },
+      { type: _T.COMMENT, start: 3, end: 33, text: '<!-- <![CDATA[ content ]]> -->' },
       { type: _T.TAG, name: '/a', start: 33, end: 37 }
     ]
   },
@@ -348,7 +348,7 @@ module.exports = {
     data: '<a><!-- <div>foo</div> --></a>',
     expected: [
       { type: _T.TAG, name: 'a', start: 0, end: 3 },
-      { type: _T.COMMENT, start: 3, end: 26 },
+      { type: _T.COMMENT, start: 3, end: 26, text: '<!-- <div>foo</div> -->' },
       { type: _T.TAG, name: '/a', start: 26, end: 30 }
     ]
   },
@@ -792,7 +792,7 @@ module.exports = {
     data: '<a><!--\ncomment text\n--></a>',
     expected: [
       { type: _T.TAG, name: 'a', start: 0, end: 3 },
-      { type: _T.COMMENT, start: 3, end: 24 },
+      { type: _T.COMMENT, start: 3, end: 24, text: '<!--\ncomment text\n-->' },
       { type: _T.TAG, name: '/a', start: 24, end: 28 }
     ]
   },
@@ -802,7 +802,7 @@ module.exports = {
     data: '<a><!--\ncomment text\n<!-- --></a>',
     expected: [
       { type: _T.TAG, name: 'a', start: 0, end: 3 },
-      { type: _T.COMMENT, start: 3, end: 29 },
+      { type: _T.COMMENT, start: 3, end: 29, text: '<!--\ncomment text\n<!-- -->' },
       { type: _T.TAG, name: '/a', start: 29, end: 33 }
     ]
   },
@@ -812,7 +812,7 @@ module.exports = {
     data: '<a><!-- comment text <!--> --></a>',
     expected: [
       { type: _T.TAG, name: 'a', start: 0, end: 3 },
-      { type: _T.COMMENT, start: 3, end: 26 },
+      { type: _T.COMMENT, start: 3, end: 26, text: '<!-- comment text <!-->' },
       { type: _T.TEXT, text: ' -->', start: 26, end: 30 },
       { type: _T.TAG, name: '/a', start: 30, end: 34 }
     ]
@@ -823,7 +823,7 @@ module.exports = {
     data: '<a><!-------></a>',
     expected: [
       { type: _T.TAG, name: 'a', start: 0, end: 3 },
-      { type: _T.COMMENT, start: 3, end: 13 },
+      { type: _T.COMMENT, start: 3, end: 13, text: '<!------->' },
       { type: _T.TAG, name: '/a', start: 13, end: 17 }
     ]
   },
@@ -833,7 +833,7 @@ module.exports = {
     data: '<a><!-- ----></a>',
     expected: [
       { type: _T.TAG, name: 'a', start: 0, end: 3 },
-      { type: _T.COMMENT, start: 3, end: 13 },
+      { type: _T.COMMENT, start: 3, end: 13, text: '<!-- ---->' },
       { type: _T.TAG, name: '/a', start: 13, end: 17 }
     ]
   },
@@ -843,7 +843,7 @@ module.exports = {
     data: '<a><! foo ></a>',
     expected: [
       { type: _T.TAG, name: 'a', start: 0, end: 3 },
-      { type: _T.COMMENT, start: 3, end: 11 },
+      { type: _T.COMMENT, start: 3, end: 11, text: '<! foo >' },
       { type: _T.TAG, name: '/a', start: 11, end: 15 }
     ]
   },
@@ -853,7 +853,7 @@ module.exports = {
     data: '<a><!--></a>',
     expected: [
       { type: _T.TAG, name: 'a', start: 0, end: 3 },
-      { type: _T.COMMENT, start: 3, end: 8 },
+      { type: _T.COMMENT, start: 3, end: 8, text: '<!-->' },
       { type: _T.TAG, name: '/a', start: 8, end: 12 }
     ]
   },
@@ -863,7 +863,7 @@ module.exports = {
     data: '<a><!\n  foo\n></a>',
     expected: [
       { type: _T.TAG, name: 'a', start: 0, end: 3 },
-      { type: _T.COMMENT, start: 3, end: 13 },
+      { type: _T.COMMENT, start: 3, end: 13, text: '<!\n  foo\n>' },
       { type: _T.TAG, name: '/a', start: 13, end: 17 }
     ]
   },
@@ -873,7 +873,7 @@ module.exports = {
     data: '<a><!-foo ></a>',
     expected: [
       { type: _T.TAG, name: 'a', start: 0, end: 3 },
-      { type: _T.COMMENT, start: 3, end: 11 },
+      { type: _T.COMMENT, start: 3, end: 11, text: '<!-foo >' },
       { type: _T.TAG, name: '/a', start: 11, end: 15 }
     ]
   },
@@ -883,7 +883,7 @@ module.exports = {
     data: '<a><!foo --></a>',
     expected: [
       { type: _T.TAG, name: 'a', start: 0, end: 3 },
-      { type: _T.COMMENT, start: 3, end: 12 },
+      { type: _T.COMMENT, start: 3, end: 12, text: '<!foo -->' },
       { type: _T.TAG, name: '/a', start: 12, end: 16 }
     ]
   },
@@ -893,7 +893,7 @@ module.exports = {
     data: '<a><! -- --></a>',
     expected: [
       { type: _T.TAG, name: 'a', start: 0, end: 3 },
-      { type: _T.COMMENT, start: 3, end: 12 },
+      { type: _T.COMMENT, start: 3, end: 12, text: '<! -- -->' },
       { type: _T.TAG, name: '/a', start: 12, end: 16 }
     ]
   },

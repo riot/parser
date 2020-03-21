@@ -1,0 +1,45 @@
+{
+  "template": {
+    "type": 1,
+    "name": "comments-and-expressions",
+    "start": 0,
+    "end": 198,
+    "isCustom": true,
+    "nodes": [
+      {
+        "type": 1,
+        "name": "h1",
+        "start": 29,
+        "end": 170,
+        "nodes": [
+          {
+            "type": 3,
+            "text": "\n    { 'above the comment' }\n    \n    { 'below the comment' }\n  ",
+            "start": 33,
+            "end": 165,
+            "expressions": [
+              {
+                "text": " 'above the comment' ",
+                "start": 38,
+                "end": 61
+              },
+              {
+                "text": " 'below the comment' ",
+                "start": 139,
+                "end": 162
+              }
+            ],
+            "parts": [
+              " ",
+              "'above the comment'",
+              " { 'below the comment' } ",
+              "'below the comment'"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "css": null,
+  "javascript": null
+}
