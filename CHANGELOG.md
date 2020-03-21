@@ -1,5 +1,9 @@
 # Changes for riot-parser
 
+### v4.2.0
+- Add the extraction of comment nodes text
+- Fix https://github.com/riot/riot/issues/2836
+
 ### v4.1.2
 - Update generated bundle fixing discrepancy between source files and bundled output
 
