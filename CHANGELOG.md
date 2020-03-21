@@ -1,5 +1,8 @@
 # Changes for riot-parser
 
+### v4.2.1
+- Fix make sure comments nodes will be generated via tree builder
+
 ### v4.2.0
 - Add the extraction of comment nodes text
 - Fix https://github.com/riot/riot/issues/2836
