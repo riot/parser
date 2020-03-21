@@ -1500,6 +1500,9 @@ const TREE_BUILDER_STRUCT = Object.seal({
     const store = this.store;
 
     switch (node.type) {
+    case COMMENT:
+      this.pushComment(store, node);
+      break
     case TEXT:
       this.pushText(store, node);
       break
@@ -1516,6 +1519,11 @@ const TREE_BUILDER_STRUCT = Object.seal({
       break
     }
     }
+  },
+  pushComment(store, node) {
+    const parent = store.last;
+
+    parent.nodes.push(node);
   },
   closeTag(store, node) {
     const last = store.scryle || store.last;

@@ -74,7 +74,11 @@ describe('Expressions', function() {
 
 describe('Tree Builder', function() {
   const titles = fs.readdirSync('./fixtures')
-  const _p = parser(getOpts())
+  const _p = parser(getOpts({
+    options: {
+      comments: true
+    }
+  }))
 
   const _TDEBUG = 0
   const _TOSAVE = ['*']

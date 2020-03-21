@@ -18,6 +18,7 @@
  * Throws on unclosed tags or closing tags without start tag.
  * Selfclosing and void tags has no nodes[] property.
  */
+import {COMMENT, TAG, TEXT} from './node-types'
 import {
   CSS_OUTPUT_NAME,
   IS_RAW,
@@ -28,7 +29,6 @@ import {
   STYLE_TAG,
   TEMPLATE_OUTPUT_NAME
 } from './constants'
-import {TAG, TEXT} from './node-types'
 import {RAW_TAGS} from './regex'
 import {duplicatedNamedTag} from './messages'
 import panic from './utils/panic'
@@ -82,6 +82,9 @@ const TREE_BUILDER_STRUCT = Object.seal({
     const store = this.store
 
     switch (node.type) {
+    case COMMENT:
+      this.pushComment(store, node)
+      break
     case TEXT:
       this.pushText(store, node)
       break
@@ -98,6 +101,11 @@ const TREE_BUILDER_STRUCT = Object.seal({
       break
     }
     }
+  },
+  pushComment(store, node) {
+    const parent = store.last
+
+    parent.nodes.push(node)
   },
   closeTag(store, node) {
     const last = store.scryle || store.last
