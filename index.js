@@ -1546,10 +1546,11 @@ const TREE_BUILDER_STRUCT = Object.seal({
   openTag(store, node) {
     const name = node.name;
     const attrs = node.attributes;
+    const isCoreTag = (JAVASCRIPT_TAG === name && !hasSrcAttribute(node) || name === STYLE_TAG);
 
-    if ([JAVASCRIPT_TAG, STYLE_TAG].includes(name)) {
+    if (isCoreTag) {
       // Only accept one of each
-      if (store[name] && (JAVASCRIPT_TAG === name && !hasSrcAttribute(node) || name === STYLE_TAG)) {
+      if (store[name]) {
         panic(this.store.data, duplicatedNamedTag.replace('%1', name), node.start);
       }
 
