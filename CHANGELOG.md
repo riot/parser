@@ -1,5 +1,8 @@
 # Changes for riot-parser
 
+### v4.3.1
+- Improve the inline `<script>` tags check
+
 ### v4.3.0
 - Add support for inline script tags (`<script src='path/to/the/script'>`)
 
