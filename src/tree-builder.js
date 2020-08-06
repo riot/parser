@@ -44,6 +44,9 @@ function escapeReturn(string) {
     .replace(/\n/g, '\\n')
 }
 
+// check whether a tag has the 'src' attribute set like for example `<script src="">`
+const hasSrcAttribute = node => (node.attributes || []).some(attr => attr.name === 'src')
+
 /**
  * Escape double slashes in a string
  * @param   {string} string - input string
@@ -128,7 +131,7 @@ const TREE_BUILDER_STRUCT = Object.seal({
 
     if ([JAVASCRIPT_TAG, STYLE_TAG].includes(name)) {
       // Only accept one of each
-      if (store[name]) {
+      if (store[name] && (JAVASCRIPT_TAG === name && !hasSrcAttribute(node) || name === STYLE_TAG)) {
         panic(this.store.data, duplicatedNamedTag.replace('%1', name), node.start)
       }
 

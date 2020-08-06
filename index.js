@@ -67,7 +67,7 @@ const unclosedTemplateLiteral = 'Unclosed ES6 template literal.';
 const unexpectedEndOfFile = 'Unexpected end of file.';
 const unclosedComment = 'Unclosed comment.';
 const unclosedNamedBlock = 'Unclosed "%1" block.';
-const duplicatedNamedTag = 'Duplicate tag "<%1>".';
+const duplicatedNamedTag = 'Multiple inline "<%1>" tags are not supported.';
 const unexpectedCharInExpression = 'Unexpected character %1.';
 const unclosedExpression = 'Unclosed expression.';
 
@@ -1462,6 +1462,9 @@ function escapeReturn(string) {
     .replace(/\n/g, '\\n')
 }
 
+// check whether a tag has the 'src' attribute set like for example `<script src="">`
+const hasSrcAttribute = node => (node.attributes || []).some(attr => attr.name === 'src');
+
 /**
  * Escape double slashes in a string
  * @param   {string} string - input string
@@ -1546,7 +1549,7 @@ const TREE_BUILDER_STRUCT = Object.seal({
 
     if ([JAVASCRIPT_TAG, STYLE_TAG].includes(name)) {
       // Only accept one of each
-      if (store[name]) {
+      if (store[name] && (JAVASCRIPT_TAG === name && !hasSrcAttribute(node) || name === STYLE_TAG)) {
         panic(this.store.data, duplicatedNamedTag.replace('%1', name), node.start);
       }
 
