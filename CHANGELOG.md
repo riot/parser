@@ -1,5 +1,8 @@
 # Changes for riot-parser
 
+### v4.3.0
+- Add support for inline script tags (`<script src='path/to/the/script'>`)
+
 ### v4.2.1
 - Fix make sure comments nodes will be generated via tree builder
 
