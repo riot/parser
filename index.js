@@ -1556,7 +1556,6 @@ const TREE_BUILDER_STRUCT = Object.seal({
 
       store[name] = node;
       store.scryle = store[name];
-
     } else {
       // store.last holds the last tag pushed in the stack and this are
       // non-void, non-empty tags, so we are sure the `lastTag` here
