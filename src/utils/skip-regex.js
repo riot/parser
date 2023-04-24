@@ -60,7 +60,7 @@ function _prev(code, pos) {
  * @returns {number} Position of the char following the regex.
  *
  */
-/* istanbul ignore next */
+/* c8 ignore next */
 export default function skipRegex(code, start) {
   let pos = (RE_DOT_CHAR.lastIndex = start++)
 
