@@ -28,8 +28,8 @@
     "prepublishOnly": "npm run build"
   },
   "files": [
-    "*.js",
-    "dist",
+    "index.js",
+    "index.cjs",
     "src"
   ],
   "keywords": [
