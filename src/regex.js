@@ -34,7 +34,7 @@ export const SPREAD_OPERATOR = /\.\.\./
 export const RE_SCRYLE = {
   script: /<\/script\s*>/gi,
   style: /<\/style\s*>/gi,
-  textarea: /<\/textarea\s*>/gi
+  textarea: /<\/textarea\s*>/gi,
 }
 
 // Do not touch text content inside this tags

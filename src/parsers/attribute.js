@@ -1,17 +1,20 @@
-import {ATTR, TEXT} from '../node-types'
-import {ATTR_START, SPREAD_OPERATOR} from '../regex'
-import {IS_BOOLEAN, IS_SELF_CLOSING, IS_SPREAD} from '../constants'
+import { ATTR, TEXT } from '../node-types'
+import { ATTR_START, SPREAD_OPERATOR } from '../regex'
+import { IS_BOOLEAN, IS_SELF_CLOSING, IS_SPREAD } from '../constants'
 import addToCollection from '../utils/add-to-collection'
 import execFromPos from '../utils/exec-from-pos'
 import expr from './expression'
 import getChunk from '../utils/get-chunk'
-import {isBoolAttribute} from 'dom-nodes'
+import { isBoolAttribute } from 'dom-nodes'
 import memoize from '../utils/memoize'
 
-const expressionsContentRe = memoize(brackets => RegExp(`(${brackets[0]}[^${brackets[1]}]*?${brackets[1]})`, 'g'))
-const isSpreadAttribute = name => SPREAD_OPERATOR.test(name)
+const expressionsContentRe = memoize((brackets) =>
+  RegExp(`(${brackets[0]}[^${brackets[1]}]*?${brackets[1]})`, 'g'),
+)
+const isSpreadAttribute = (name) => SPREAD_OPERATOR.test(name)
 const isAttributeExpression = (name, brackets) => name[0] === brackets[0]
-const getAttributeEnd = (state, attr) => expr(state, attr, '[>/\\s]', attr.start)
+const getAttributeEnd = (state, attr) =>
+  expr(state, attr, '[>/\\s]', attr.start)
 
 /**
  * The more complex parsing is for attributes as it can contain quoted or
@@ -28,28 +31,28 @@ export default function attr(state) {
   const ch = execFromPos(_CH, pos, data)
 
   switch (true) {
-  case !ch:
-    state.pos = data.length // reaching the end of the buffer with
-    // NodeTypes.ATTR will generate error
-    break
-  case ch[0] === '>':
-    // closing char found. If this is a self-closing tag with the name of the
-    // Root tag, we need decrement the counter as we are changing mode.
-    state.pos = tag.end = _CH.lastIndex
-    if (tag[IS_SELF_CLOSING]) {
-      state.scryle = null // allow selfClosing script/style tags
-      if (root && root.name === tag.name) {
-        state.count-- // "pop" root tag
+    case !ch:
+      state.pos = data.length // reaching the end of the buffer with
+      // NodeTypes.ATTR will generate error
+      break
+    case ch[0] === '>':
+      // closing char found. If this is a self-closing tag with the name of the
+      // Root tag, we need decrement the counter as we are changing mode.
+      state.pos = tag.end = _CH.lastIndex
+      if (tag[IS_SELF_CLOSING]) {
+        state.scryle = null // allow selfClosing script/style tags
+        if (root && root.name === tag.name) {
+          state.count-- // "pop" root tag
+        }
       }
-    }
-    return TEXT
-  case ch[0] === '/':
-    state.pos = _CH.lastIndex // maybe. delegate the validation
-    tag[IS_SELF_CLOSING] = true // the next loop
-    break
-  default:
-    delete tag[IS_SELF_CLOSING] // ensure unmark as selfclosing tag
-    setAttribute(state, ch.index, tag)
+      return TEXT
+    case ch[0] === '/':
+      state.pos = _CH.lastIndex // maybe. delegate the validation
+      tag[IS_SELF_CLOSING] = true // the next loop
+      break
+    default:
+      delete tag[IS_SELF_CLOSING] // ensure unmark as selfclosing tag
+      setAttribute(state, ch.index, tag)
   }
 
   return ATTR
@@ -68,10 +71,15 @@ function setAttribute(state, pos, tag) {
   const { data } = state
   const expressionContent = expressionsContentRe(state.options.brackets)
   const re = ATTR_START // (\S[^>/=\s]*)(?:\s*=\s*([^>/])?)? g
-  const start = re.lastIndex = expressionContent.lastIndex = pos // first non-whitespace
+  const start = (re.lastIndex = expressionContent.lastIndex = pos) // first non-whitespace
   const attrMatches = re.exec(data)
-  const isExpressionName = isAttributeExpression(attrMatches[1], state.options.brackets)
-  const match = isExpressionName ? [null, expressionContent.exec(data)[1], null] : attrMatches
+  const isExpressionName = isAttributeExpression(
+    attrMatches[1],
+    state.options.brackets,
+  )
+  const match = isExpressionName
+    ? [null, expressionContent.exec(data)[1], null]
+    : attrMatches
 
   if (match) {
     const end = re.lastIndex
@@ -98,7 +106,7 @@ function parseNomalAttribute(state, attr, quote) {
     // (`end`) is the start of the value.
     let valueStart = end
     // If it not, this is an unquoted value and we need adjust the start.
-    if (quote !== '"' && quote !== '\'') {
+    if (quote !== '"' && quote !== "'") {
       quote = '' // first char of value is not a quote
       valueStart-- // adjust the starting position
     }
@@ -109,13 +117,12 @@ function parseNomalAttribute(state, attr, quote) {
     return Object.assign(attr, {
       value: getChunk(data, valueStart, end),
       valueStart,
-      end: quote ? ++end : end
+      end: quote ? ++end : end,
     })
   }
 
   return attr
 }
-
 
 /**
  * Parse expression names <a {href}>
@@ -129,10 +136,12 @@ function parseSpreadAttribute(state, attr) {
   return {
     [IS_SPREAD]: true,
     start: attr.start,
-    expressions: attr.expressions.map(expr => Object.assign(expr, {
-      text: expr.text.replace(SPREAD_OPERATOR, '').trim()
-    })),
-    end: end
+    expressions: attr.expressions.map((expr) =>
+      Object.assign(expr, {
+        text: expr.text.replace(SPREAD_OPERATOR, '').trim(),
+      }),
+    ),
+    end: end,
   }
 }
 
@@ -149,7 +158,7 @@ function parseExpressionNameAttribute(state, attr) {
     start: attr.start,
     name: attr.expressions[0].text.trim(),
     expressions: attr.expressions,
-    end: end
+    end: end,
   }
 }
 
@@ -167,17 +176,17 @@ function parseAttribute(state, match, start, end, isExpressionName) {
     name: match[1],
     value: '',
     start,
-    end
+    end,
   }
 
   const quote = match[2] // first letter of value or nothing
 
   switch (true) {
-  case isSpreadAttribute(attr.name):
-    return parseSpreadAttribute(state, attr)
-  case isExpressionName === true:
-    return parseExpressionNameAttribute(state, attr)
-  default:
-    return parseNomalAttribute(state, attr, quote)
+    case isSpreadAttribute(attr.name):
+      return parseSpreadAttribute(state, attr)
+    case isExpressionName === true:
+      return parseExpressionNameAttribute(state, attr)
+    default:
+      return parseNomalAttribute(state, attr, quote)
   }
 }

@@ -1,7 +1,7 @@
-import {COMMENT, TEXT} from '../node-types'
+import { COMMENT, TEXT } from '../node-types'
 import flush from '../utils/flush-parser-state'
 import panic from '../utils/panic'
-import {unclosedComment} from '../messages'
+import { unclosedComment } from '../messages'
 
 /**
  * Parses comments in long or short form
@@ -27,7 +27,7 @@ export default function comment(state, data, start) {
     state,
     start,
     end + str.length,
-    data.substring(start, end + str.length)
+    data.substring(start, end + str.length),
   )
 
   return TEXT
@@ -51,7 +51,7 @@ export function pushComment(state, start, end, text) {
       type: COMMENT,
       start,
       end,
-      text
+      text,
     }
   }
 }

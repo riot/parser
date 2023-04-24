@@ -3,9 +3,9 @@ engines:
     enabled: true
 
 exclude_patterns:
-  - "test"
-  - "index.js"
+  - 'test'
+  - 'index.js'
 
 ratings:
   paths:
-    - "src/*.js"
+    - 'src/*.js'

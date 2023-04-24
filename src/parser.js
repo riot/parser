@@ -1,5 +1,5 @@
-import {ATTR, TAG} from './node-types'
-import {rootTagNotFound, unexpectedEndOfFile} from './messages'
+import { ATTR, TAG } from './node-types'
+import { rootTagNotFound, unexpectedEndOfFile } from './messages'
 import attr from './parsers/attribute'
 import curry from 'curri'
 import flush from './utils/flush-parser-state'
@@ -19,7 +19,7 @@ import treeBuilder from './tree-builder'
 export default function parser(options, customBuilder) {
   const state = curry(createParserState)(options, customBuilder || treeBuilder)
   return {
-    parse: (data) => parse(state(data))
+    parse: (data) => parse(state(data)),
   }
 }
 
@@ -31,9 +31,12 @@ export default function parser(options, customBuilder) {
  * @returns {ParserState} it represents the current parser state
  */
 function createParserState(userOptions, builder, data) {
-  const options = Object.assign({
-    brackets: ['{', '}']
-  }, userOptions)
+  const options = Object.assign(
+    {
+      brackets: ['{', '}'],
+    },
+    userOptions,
+  )
 
   return {
     options,
@@ -44,7 +47,7 @@ function createParserState(userOptions, builder, data) {
     last: null,
     scryle: null,
     builder: builder(data, options),
-    data
+    data,
   }
 }
 
@@ -66,12 +69,16 @@ function parse(state) {
   flush(state)
 
   if (state.count) {
-    panic(data, state.count > 0 ? unexpectedEndOfFile : rootTagNotFound, state.pos)
+    panic(
+      data,
+      state.count > 0 ? unexpectedEndOfFile : rootTagNotFound,
+      state.pos,
+    )
   }
 
   return {
     data,
-    output: state.builder.get()
+    output: state.builder.get(),
   }
 }
 
@@ -102,11 +109,11 @@ function walk(state, type) {
  */
 function eat(state, type) {
   switch (type) {
-  case TAG:
-    return tag(state)
-  case ATTR:
-    return attr(state)
-  default:
-    return text(state)
+    case TAG:
+      return tag(state)
+    case ATTR:
+      return attr(state)
+    default:
+      return text(state)
   }
 }

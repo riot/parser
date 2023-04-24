@@ -2,7 +2,7 @@ import escapeStr from '../utils/escape-str'
 import exprExtr from '../utils/expr-extr'
 import panic from '../utils/panic'
 import pushText from '../utils/push-text'
-import {unexpectedEndOfFile} from '../messages'
+import { unexpectedEndOfFile } from '../messages'
 /**
  * Find the end of the attribute value or text node
  * Extract expressions.
@@ -30,7 +30,7 @@ export default function expr(state, node, endingChars, start) {
       node.expressions = expressions
     }
   } else {
-    pushText(state, start, end, {expressions, unescape})
+    pushText(state, start, end, { expressions, unescape })
   }
 
   return end
@@ -71,11 +71,9 @@ function parseExpressions(state, re) {
   return {
     unescape,
     expressions,
-    end: match.index
+    end: match.index,
   }
 }
-
-
 
 /**
  * Creates a regex for the given string and the left bracket.

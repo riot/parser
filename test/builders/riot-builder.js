@@ -18,32 +18,27 @@
  *
  * @class RiotBuilder
  */
-const parser = require('../../')
-const domNodes = require('dom-nodes')
-const T = parser.nodeTypes
+import { nodeTypes as T } from '../../index.js'
+import domNodes from 'dom-nodes'
 
 // Do not touch text content inside this tags
 const RE_PRE = /^\/?(?:pre|script|style|textarea)$/
 
-const $_BP_LEFT  = '{%'
+const $_BP_LEFT = '{%'
 const $_BP_RIGHT = '%}'
 
-const toCamelCase = (string) => String(string).replace(/-+([\w])/g, (_, c) => c.toUpperCase())
-
+const toCamelCase = (string) =>
+  String(string).replace(/-+([\w])/g, (_, c) => c.toUpperCase())
 
 // Class htmlBuilder ======================================
 
 function RiotBuilder(options) {
-
   this.options = options || {}
   this.build = this._build.bind(this)
   this.reset()
-
 }
 
-
 Object.assign(RiotBuilder.prototype, {
-
   reset() {
     this.options.compact = this.options.compact !== false
     this.riotTag = ''
@@ -64,7 +59,6 @@ Object.assign(RiotBuilder.prototype, {
    * @returns {string} HTML output
    */
   _build(input) {
-
     const nodes = input.output
     const data = input.data
     this.reset()
@@ -78,7 +72,6 @@ Object.assign(RiotBuilder.prototype, {
         if (node.type === T.TEXT) {
           this.pushText(node, data)
         }
-
       } else {
         const name = node.name
 
@@ -88,7 +81,6 @@ Object.assign(RiotBuilder.prototype, {
             this._output = this[`${name}s`]
           }
           this.openTag(node)
-
         } else {
           // closing another tag, pop the stack
           this.closeTag(name)
@@ -130,11 +122,11 @@ Object.assign(RiotBuilder.prototype, {
   },
 
   openTag(node) {
-    const name   = node.name
+    const name = node.name
     const allTag = [name]
 
     if (node.attributes) {
-      node.attributes.forEach(a => {
+      node.attributes.forEach((a) => {
         const aname = toCamelCase(a.name)
         const value = this.parseNode(a, a.value, a.valueStart)
         allTag.push(value ? `${aname}="${value}"` : aname)
@@ -180,7 +172,8 @@ Object.assign(RiotBuilder.prototype, {
   unescape(s, c) {
     const rep = `\\${c}`
     let ix = 0
-    while (~(ix = s.indexOf(rep, ix))) { // eslint-disable-line
+    while (~(ix = s.indexOf(rep, ix))) {
+      // eslint-disable-line
       s = s.substr(0, ix) + s.substr(ix + 1)
       ix++
     }
@@ -209,8 +202,13 @@ Object.assign(RiotBuilder.prototype, {
         const text = code.slice(end)
         parts.push(unch ? this.unescape(text) : text)
       }
-      code = `${$_BP_LEFT}${this.pushExpr({ type: node.type, parts, start, end, expr: exprList })}${$_BP_RIGHT}`
-
+      code = `${$_BP_LEFT}${this.pushExpr({
+        type: node.type,
+        parts,
+        start,
+        end,
+        expr: exprList,
+      })}${$_BP_RIGHT}`
     } else if (unch) {
       code = this.unescape(code, unch)
     }
@@ -220,16 +218,17 @@ Object.assign(RiotBuilder.prototype, {
 
   getRiotTag(node) {
     if (node.attributes) {
-      const attr = node.attributes.find(a => a.name === 'data-is' || a.name === 'data-riot-tag')
+      const attr = node.attributes.find(
+        (a) => a.name === 'data-is' || a.name === 'data-riot-tag',
+      )
       if (attr) {
         return attr.value
       }
     }
     return node.name
-  }
-
+  },
 })
 
-module.exports = function riotBuilder(options) {
+export default function riotBuilder(options) {
   return new RiotBuilder(options)
 }

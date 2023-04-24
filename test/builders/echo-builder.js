@@ -2,7 +2,6 @@
  * The default builder is a simple Echo.
  */
 const Echo = {
-
   init(errorFn) {
     this.output = []
     this.error = errorFn
@@ -15,10 +14,9 @@ const Echo = {
 
   push(node) {
     this.output.push(node)
-  }
-
+  },
 }
 
-module.exports = function(_, errorFn) {
+export default function (_, errorFn) {
   return Object.create(Echo).init(errorFn)
 }

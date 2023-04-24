@@ -4,8 +4,8 @@
  * and return its text without the enclosing brackets.
  * Does not works with comments, but supports ES6 template strings.
  */
-import skipES6TL, {$_ES6_BQ} from './skip-es6-tl'
-import {unclosedExpression, unexpectedCharInExpression} from '../messages'
+import skipES6TL, { $_ES6_BQ } from './skip-es6-tl'
+import { unclosedExpression, unexpectedCharInExpression } from '../messages'
 import escapeStr from './escape-str'
 import panic from './panic'
 import skipRegex from './skip-regex'
@@ -65,42 +65,42 @@ function updateStack(stack, char, idx, code) {
   let index = 0
 
   switch (char) {
-  case '[':
-  case '(':
-  case '{':
-    stack.push(char === '[' ? ']' : char === '(' ? ')' : '}')
-    break
-  case ')':
-  case ']':
-  case '}':
-    if (char !== stack.pop()) {
-      panic(code, unexpectedCharInExpression.replace('%1', char), index)
-    }
+    case '[':
+    case '(':
+    case '{':
+      stack.push(char === '[' ? ']' : char === '(' ? ')' : '}')
+      break
+    case ')':
+    case ']':
+    case '}':
+      if (char !== stack.pop()) {
+        panic(code, unexpectedCharInExpression.replace('%1', char), index)
+      }
 
-    if (char === '}' && stack[stack.length - 1] === $_ES6_BQ) {
-      char = stack.pop()
-    }
+      if (char === '}' && stack[stack.length - 1] === $_ES6_BQ) {
+        char = stack.pop()
+      }
 
-    index = idx + 1
-    break
-  case '/':
-    index = skipRegex(code, idx)
+      index = idx + 1
+      break
+    case '/':
+      index = skipRegex(code, idx)
   }
 
   return { char, index }
 }
 
 /**
-   * Parses the code string searching the end of the expression.
-   * It skips braces, quoted strings, regexes, and ES6 template literals.
-   *
-   * @function exprExtr
-   * @param   {string}  code  - Buffer to parse
-   * @param   {number}  start - Position of the opening brace
-   * @param   {[string,string]} bp - Brackets pair
-   * @returns {Object} Expression's end (after the closing brace) or -1
-   *                            if it is not an expr.
-   */
+ * Parses the code string searching the end of the expression.
+ * It skips braces, quoted strings, regexes, and ES6 template literals.
+ *
+ * @function exprExtr
+ * @param   {string}  code  - Buffer to parse
+ * @param   {number}  start - Position of the opening brace
+ * @param   {[string,string]} bp - Brackets pair
+ * @returns {Object} Expression's end (after the closing brace) or -1
+ *                            if it is not an expr.
+ */
 export default function exprExtr(code, start, bp) {
   const [openingBraces, closingBraces] = bp
   const offset = start + openingBraces.length // skips the opening brace
@@ -112,7 +112,8 @@ export default function exprExtr(code, start, bp) {
   let end
   let match
 
-  while (match = re.exec(code)) { // eslint-disable-line
+  while ((match = re.exec(code))) {
+    // eslint-disable-line
     const idx = match.index
     const str = match[0]
     end = re.lastIndex
@@ -122,7 +123,7 @@ export default function exprExtr(code, start, bp) {
       return {
         text: code.slice(offset, idx),
         start,
-        end
+        end,
       }
     }
 

@@ -1,9 +1,6 @@
-import {
-  IS_CUSTOM,
-  IS_VOID
-} from '../constants'
-import {isCustom, isVoid} from 'dom-nodes'
-import {TAG} from '../node-types'
+import { IS_CUSTOM, IS_VOID } from '../constants'
+import { isCustom, isVoid } from 'dom-nodes'
+import { TAG } from '../node-types'
 import flush from './flush-parser-state'
 
 /**

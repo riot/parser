@@ -16,4 +16,3 @@ export const nodeTypes = types
  * Factory function to create instances of the parser
  */
 export default parser
-

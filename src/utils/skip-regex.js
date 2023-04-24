@@ -16,7 +16,7 @@ const beforeReWords = [
   'return',
   'typeof',
   'void',
-  'yield'
+  'yield',
 ]
 
 // Last chars of all the beforeReWords elements to speed up the process.
@@ -24,7 +24,8 @@ const wordsEndChar = beforeReWords.reduce((s, w) => s + w.slice(-1), '')
 
 // Matches literal regex from the start of the buffer.
 // The buffer to search must not include line-endings.
-const RE_LIT_REGEX = /^\/(?=[^*>/])[^[/\\]*(?:(?:\\.|\[(?:\\.|[^\]\\]*)*\])[^[\\/]*)*?\/[gimuy]*/
+const RE_LIT_REGEX =
+  /^\/(?=[^*>/])[^[/\\]*(?:(?:\\.|\[(?:\\.|[^\]\\]*)*\])[^[\\/]*)*?\/[gimuy]*/
 
 // Valid characters for JavaScript variable names and literal numbers.
 const RE_JS_VCHAR = /[$\w]/
@@ -46,8 +47,6 @@ function _prev(code, pos) {
   return pos
 }
 
-
-
 /**
  * Check if the character in the `start` position within `code` can be a regex
  * and returns the position following this regex or `start+1` if this is not
@@ -63,14 +62,14 @@ function _prev(code, pos) {
  */
 /* istanbul ignore next */
 export default function skipRegex(code, start) {
-  let pos = RE_DOT_CHAR.lastIndex = start++
+  let pos = (RE_DOT_CHAR.lastIndex = start++)
 
   // `exec()` will extract from the slash to the end of the line
   //   and the chained `match()` will match the possible regex.
   const match = (RE_DOT_CHAR.exec(code) || ' ')[0].match(RE_LIT_REGEX)
 
   if (match) {
-    const next = pos + match[0].length      // result comes from `re.match`
+    const next = pos + match[0].length // result comes from `re.match`
 
     pos = _prev(code, pos)
     let c = code[pos]
@@ -86,19 +85,20 @@ export default function skipRegex(code, start) {
       if (code[pos - 1] === '.') {
         start = next
       }
-
     } else {
-
       if (c === '+' || c === '-') {
         // tricky case
-        if (code[--pos] !== c ||            // if have a single operator or
-             (pos = _prev(code, pos)) < 0 ||  // ...have `++` and no previous token
-             beforeReSign.includes(c = code[pos])) {
-          return next                       // ...this is a regex
+        if (
+          code[--pos] !== c || // if have a single operator or
+          (pos = _prev(code, pos)) < 0 || // ...have `++` and no previous token
+          beforeReSign.includes((c = code[pos]))
+        ) {
+          return next // ...this is a regex
         }
       }
 
-      if (wordsEndChar.includes(c)) {  // looks like a keyword?
+      if (wordsEndChar.includes(c)) {
+        // looks like a keyword?
         const end = pos + 1
 
         // get the complete (previous) keyword

@@ -1,4 +1,4 @@
-import {TEXT} from '../node-types'
+import { TEXT } from '../node-types'
 import flush from './flush-parser-state'
 import getChunk from './get-chunk'
 

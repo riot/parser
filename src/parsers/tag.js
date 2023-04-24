@@ -1,5 +1,5 @@
-import {ATTR, TEXT} from '../node-types'
-import {RE_SCRYLE, TAG_2C, TAG_NAME} from '../regex'
+import { ATTR, TEXT } from '../node-types'
+import { RE_SCRYLE, TAG_2C, TAG_NAME } from '../regex'
 import comment from './comment'
 import execFromPos from '../utils/exec-from-pos'
 import pushTag from '../utils/push-tag'
@@ -19,12 +19,12 @@ export default function tag(state) {
   const str = data.substr(pos, 2) // first two chars following '<'
 
   switch (true) {
-  case str[0] === '!':
-    return comment(state, data, start)
-  case TAG_2C.test(str):
-    return parseTag(state, start)
-  default:
-    return pushText(state, start, pos) // pushes the '<' as text
+    case str[0] === '!':
+      return comment(state, data, start)
+    case TAG_2C.test(str):
+      return parseTag(state, start)
+    default:
+      return pushText(state, start, pos) // pushes the '<' as text
   }
 }
 

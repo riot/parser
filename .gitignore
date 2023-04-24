@@ -60,4 +60,7 @@ npm-debug.log
 .nyc_output
 coverage
 
+# generated files
+/index.cjs
+/index.js
 *_out.json

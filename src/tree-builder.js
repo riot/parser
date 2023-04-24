@@ -18,7 +18,7 @@
  * Throws on unclosed tags or closing tags without start tag.
  * Selfclosing and void tags has no nodes[] property.
  */
-import {COMMENT, TAG, TEXT} from './node-types'
+import { COMMENT, TAG, TEXT } from './node-types'
 import {
   CSS_OUTPUT_NAME,
   IS_RAW,
@@ -27,10 +27,10 @@ import {
   JAVASCRIPT_OUTPUT_NAME,
   JAVASCRIPT_TAG,
   STYLE_TAG,
-  TEMPLATE_OUTPUT_NAME
+  TEMPLATE_OUTPUT_NAME,
 } from './constants'
-import {RAW_TAGS} from './regex'
-import {duplicatedNamedTag} from './messages'
+import { RAW_TAGS } from './regex'
+import { duplicatedNamedTag } from './messages'
 import panic from './utils/panic'
 
 /**
@@ -39,13 +39,12 @@ import panic from './utils/panic'
  * @returns {string} output string escaped
  */
 function escapeReturn(string) {
-  return string
-    .replace(/\r/g, '\\r')
-    .replace(/\n/g, '\\n')
+  return string.replace(/\r/g, '\\r').replace(/\n/g, '\\n')
 }
 
 // check whether a tag has the 'src' attribute set like for example `<script src="">`
-const hasSrcAttribute = node => (node.attributes || []).some(attr => attr.name === 'src')
+const hasSrcAttribute = (node) =>
+  (node.attributes || []).some((attr) => attr.name === 'src')
 
 /**
  * Escape double slashes in a string
@@ -72,37 +71,37 @@ const TREE_BUILDER_STRUCT = Object.seal({
     return {
       [TEMPLATE_OUTPUT_NAME]: store.root.nodes[0],
       [CSS_OUTPUT_NAME]: store[STYLE_TAG],
-      [JAVASCRIPT_OUTPUT_NAME]: store[JAVASCRIPT_TAG]
+      [JAVASCRIPT_OUTPUT_NAME]: store[JAVASCRIPT_TAG],
     }
   },
 
   /**
-  * Process the current tag or text.
-  * @param {Object} node - Raw pseudo-node from the parser
-  * @returns {undefined} void function
-  */
+   * Process the current tag or text.
+   * @param {Object} node - Raw pseudo-node from the parser
+   * @returns {undefined} void function
+   */
   push(node) {
     const store = this.store
 
     switch (node.type) {
-    case COMMENT:
-      this.pushComment(store, node)
-      break
-    case TEXT:
-      this.pushText(store, node)
-      break
-    case TAG: {
-      const name = node.name
-      const closingTagChar = '/'
-      const [firstChar] = name
+      case COMMENT:
+        this.pushComment(store, node)
+        break
+      case TEXT:
+        this.pushText(store, node)
+        break
+      case TAG: {
+        const name = node.name
+        const closingTagChar = '/'
+        const [firstChar] = name
 
-      if (firstChar === closingTagChar && !node.isVoid) {
-        this.closeTag(store, node, name)
-      } else if (firstChar !== closingTagChar) {
-        this.openTag(store, node)
+        if (firstChar === closingTagChar && !node.isVoid) {
+          this.closeTag(store, node, name)
+        } else if (firstChar !== closingTagChar) {
+          this.openTag(store, node)
+        }
+        break
       }
-      break
-    }
     }
   },
   pushComment(store, node) {
@@ -128,12 +127,17 @@ const TREE_BUILDER_STRUCT = Object.seal({
   openTag(store, node) {
     const name = node.name
     const attrs = node.attributes
-    const isCoreTag = (JAVASCRIPT_TAG === name && !hasSrcAttribute(node) || name === STYLE_TAG)
+    const isCoreTag =
+      (JAVASCRIPT_TAG === name && !hasSrcAttribute(node)) || name === STYLE_TAG
 
     if (isCoreTag) {
       // Only accept one of each
       if (store[name]) {
-        panic(this.store.data, duplicatedNamedTag.replace('%1', name), node.start)
+        panic(
+          this.store.data,
+          duplicatedNamedTag.replace('%1', name),
+          node.start,
+        )
       }
 
       store[name] = node
@@ -163,7 +167,7 @@ const TREE_BUILDER_STRUCT = Object.seal({
     }
   },
   attrs(attributes) {
-    attributes.forEach(attr => {
+    attributes.forEach((attr) => {
       if (attr.value) {
         this.split(attr, attr.value, attr.valueStart, true)
       }
@@ -194,10 +198,13 @@ const TREE_BUILDER_STRUCT = Object.seal({
     if (expressions) {
       let pos = 0
 
-      expressions.forEach(expr => {
+      expressions.forEach((expr) => {
         const text = source.slice(pos, expr.start - start)
         const code = expr.text
-        parts.push(this.sanitise(node, text, pack), escapeReturn(escapeSlashes(code).trim()))
+        parts.push(
+          this.sanitise(node, text, pack),
+          escapeReturn(escapeSlashes(code).trim()),
+        )
         pos = expr.end - start
       })
 
@@ -208,7 +215,7 @@ const TREE_BUILDER_STRUCT = Object.seal({
       parts[0] = this.sanitise(node, source, pack)
     }
 
-    node.parts = parts.filter(p => p) // remove the empty strings
+    node.parts = parts.filter((p) => p) // remove the empty strings
   },
   // unescape escaped brackets and split prefixes of expressions
   sanitise(node, text, pack) {
@@ -225,7 +232,7 @@ const TREE_BUILDER_STRUCT = Object.seal({
     text = escapeSlashes(text)
 
     return pack ? cleanSpaces(text) : escapeReturn(text)
-  }
+  },
 })
 
 export default function createTreeBuilder(data, options) {
@@ -234,7 +241,7 @@ export default function createTreeBuilder(data, options) {
     name: '',
     start: 0,
     end: 0,
-    nodes: []
+    nodes: [],
   }
 
   return Object.assign(Object.create(TREE_BUILDER_STRUCT), {
@@ -246,7 +253,7 @@ export default function createTreeBuilder(data, options) {
       root,
       style: null,
       script: null,
-      data
-    }
+      data,
+    },
   })
 }

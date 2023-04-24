@@ -1,6 +1,6 @@
 # parser
 
-[![Build Status][travis-image]][travis-url]
+[![Build Status][ci-image]][ci-url]
 [![Code Quality][codeclimate-image]][codeclimate-url]
 [![NPM version][npm-version-image]][npm-url]
 [![NPM downloads][npm-downloads-image]][npm-url]
@@ -36,9 +36,9 @@ This parser is a low-level tool that builds a simple array of objects with infor
 
 There are 3 main node types:
 
-* Tags - HTMLElements, including SCRIPT and STYLE elements.
-* Comments - Ignored by default.
-* Text - Text nodes.
+- Tags - HTMLElements, including SCRIPT and STYLE elements.
+- Comments - Ignored by default.
+- Text - Text nodes.
 
 Opening tags can contain attributes. Text and attribute values can contain expressions.
 
@@ -48,8 +48,8 @@ The value returned by the parser is an object like this:
 
 ```js
 {
-  data,         // String of the given html fragment with no changes.
-  output        // Array of objects with information about the parsed tags.
+  data, // String of the given html fragment with no changes.
+    output // Array of objects with information about the parsed tags.
 }
 ```
 
@@ -57,12 +57,11 @@ The first element of `output` is the opening tag of the root element.
 
 The parsing stops when the closing tag of the root is found, so the last node have the ending position.
 
-
 ### Commands
 
-* Build: `npm run build`
-* Test: `npm t`
-* Samples: `npm run samples`
+- Build: `npm run build`
+- Test: `npm t`
+- Samples: `npm run samples`
 
 ## Tag names
 
@@ -119,22 +118,17 @@ This character is preserved in the output, but the parser will add a `replace` p
 
 ## Options
 
-* `comments` - Pass `true` to preserve the comments.
-* `brackets` - Array of two string with the left/right brackets used to extract expressions.
+- `comments` - Pass `true` to preserve the comments.
+- `brackets` - Array of two string with the left/right brackets used to extract expressions.
 
-[travis-image]:https://img.shields.io/travis/riot/parser.svg?style=flat-square
-[travis-url]:https://travis-ci.org/riot/parser
-
-[license-image]:http://img.shields.io/badge/license-MIT-000000.svg?style=flat-square
-[license-url]:LICENSE.txt
-
-[npm-version-image]:http://img.shields.io/npm/v/@riotjs/parser.svg?style=flat-square
-[npm-downloads-image]:http://img.shields.io/npm/dm/@riotjs/parser.svg?style=flat-square
-[npm-url]:https://npmjs.org/package/@riotjs/parser
-
-[coverage-image]:https://img.shields.io/coveralls/riot/parser/master.svg?style=flat-square
-[coverage-url]:https://coveralls.io/r/riot/parser/?branch=master
-
-[codeclimate-image]:https://api.codeclimate.com/v1/badges/5db4f1c96a43e3736cf0/maintainability
-[codeclimate-url]:https://codeclimate.com/github/riot/parser
-
+[ci-image]: https://img.shields.io/github/actions/workflow/status/riot/parser/test.yml?style=flat-square
+[ci-url]: https://github.com/riot/parser/actions
+[license-image]: http://img.shields.io/badge/license-MIT-000000.svg?style=flat-square
+[license-url]: LICENSE.txt
+[npm-version-image]: http://img.shields.io/npm/v/@riotjs/parser.svg?style=flat-square
+[npm-downloads-image]: http://img.shields.io/npm/dm/@riotjs/parser.svg?style=flat-square
+[npm-url]: https://npmjs.org/package/@riotjs/parser
+[coverage-image]: https://img.shields.io/coveralls/riot/parser/master.svg?style=flat-square
+[coverage-url]: https://coveralls.io/r/riot/parser/?branch=master
+[codeclimate-image]: https://api.codeclimate.com/v1/badges/5db4f1c96a43e3736cf0/maintainability
+[codeclimate-url]: https://codeclimate.com/github/riot/parser

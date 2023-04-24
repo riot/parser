@@ -1,7 +1,3 @@
-'use strict';
-
-Object.defineProperty(exports, '__esModule', { value: true });
-
 const JAVASCRIPT_OUTPUT_NAME = 'javascript';
 const CSS_OUTPUT_NAME = 'css';
 const TEMPLATE_OUTPUT_NAME = 'template';
@@ -21,18 +17,18 @@ const IS_SPREAD = 'isSpread';
 
 var c = /*#__PURE__*/Object.freeze({
   __proto__: null,
-  JAVASCRIPT_OUTPUT_NAME: JAVASCRIPT_OUTPUT_NAME,
   CSS_OUTPUT_NAME: CSS_OUTPUT_NAME,
-  TEMPLATE_OUTPUT_NAME: TEMPLATE_OUTPUT_NAME,
-  JAVASCRIPT_TAG: JAVASCRIPT_TAG,
-  STYLE_TAG: STYLE_TAG,
-  TEXTAREA_TAG: TEXTAREA_TAG,
-  IS_RAW: IS_RAW,
-  IS_SELF_CLOSING: IS_SELF_CLOSING,
-  IS_VOID: IS_VOID,
   IS_BOOLEAN: IS_BOOLEAN,
   IS_CUSTOM: IS_CUSTOM,
-  IS_SPREAD: IS_SPREAD
+  IS_RAW: IS_RAW,
+  IS_SELF_CLOSING: IS_SELF_CLOSING,
+  IS_SPREAD: IS_SPREAD,
+  IS_VOID: IS_VOID,
+  JAVASCRIPT_OUTPUT_NAME: JAVASCRIPT_OUTPUT_NAME,
+  JAVASCRIPT_TAG: JAVASCRIPT_TAG,
+  STYLE_TAG: STYLE_TAG,
+  TEMPLATE_OUTPUT_NAME: TEMPLATE_OUTPUT_NAME,
+  TEXTAREA_TAG: TEXTAREA_TAG
 });
 
 /**
@@ -52,14 +48,14 @@ const DOCUMENT_FRAGMENT = 11; /* DOCUMENT_FRAGMENT */
 
 var types = /*#__PURE__*/Object.freeze({
   __proto__: null,
-  TAG: TAG,
   ATTR: ATTR,
-  TEXT: TEXT,
   CDATA: CDATA,
   COMMENT: COMMENT,
-  DOCUMENT: DOCUMENT,
   DOCTYPE: DOCTYPE,
-  DOCUMENT_FRAGMENT: DOCUMENT_FRAGMENT
+  DOCUMENT: DOCUMENT,
+  DOCUMENT_FRAGMENT: DOCUMENT_FRAGMENT,
+  TAG: TAG,
+  TEXT: TEXT
 });
 
 const rootTagNotFound = 'Root tag not found.';
@@ -67,7 +63,8 @@ const unclosedTemplateLiteral = 'Unclosed ES6 template literal.';
 const unexpectedEndOfFile = 'Unexpected end of file.';
 const unclosedComment = 'Unclosed comment.';
 const unclosedNamedBlock = 'Unclosed "%1" block.';
-const duplicatedNamedTag = 'Multiple inline "<%1>" tags are not supported.';
+const duplicatedNamedTag =
+  'Multiple inline "<%1>" tags are not supported.';
 const unexpectedCharInExpression = 'Unexpected character %1.';
 const unclosedExpression = 'Unclosed expression.';
 
@@ -107,7 +104,7 @@ const SPREAD_OPERATOR = /\.\.\./;
 const RE_SCRYLE = {
   script: /<\/script\s*>/gi,
   style: /<\/style\s*>/gi,
-  textarea: /<\/textarea\s*>/gi
+  textarea: /<\/textarea\s*>/gi,
 };
 
 // Do not touch text content inside this tags
@@ -175,7 +172,7 @@ function skipES6TL(code, pos, stack) {
   // find the next unescaped backquote or the sequence "${"
   const re = /[`$\\]/g;
   let c;
-  while (re.lastIndex = pos, re.exec(code)) {
+  while (((re.lastIndex = pos), re.exec(code))) {
     pos = re.lastIndex;
     c = code[pos - 1];
     if (c === '`') {
@@ -222,7 +219,7 @@ const beforeReWords = [
   'return',
   'typeof',
   'void',
-  'yield'
+  'yield',
 ];
 
 // Last chars of all the beforeReWords elements to speed up the process.
@@ -230,7 +227,8 @@ const wordsEndChar = beforeReWords.reduce((s, w) => s + w.slice(-1), '');
 
 // Matches literal regex from the start of the buffer.
 // The buffer to search must not include line-endings.
-const RE_LIT_REGEX = /^\/(?=[^*>/])[^[/\\]*(?:(?:\\.|\[(?:\\.|[^\]\\]*)*\])[^[\\/]*)*?\/[gimuy]*/;
+const RE_LIT_REGEX =
+  /^\/(?=[^*>/])[^[/\\]*(?:(?:\\.|\[(?:\\.|[^\]\\]*)*\])[^[\\/]*)*?\/[gimuy]*/;
 
 // Valid characters for JavaScript variable names and literal numbers.
 const RE_JS_VCHAR = /[$\w]/;
@@ -252,8 +250,6 @@ function _prev(code, pos) {
   return pos
 }
 
-
-
 /**
  * Check if the character in the `start` position within `code` can be a regex
  * and returns the position following this regex or `start+1` if this is not
@@ -269,14 +265,14 @@ function _prev(code, pos) {
  */
 /* istanbul ignore next */
 function skipRegex(code, start) {
-  let pos = RE_DOT_CHAR.lastIndex = start++;
+  let pos = (RE_DOT_CHAR.lastIndex = start++);
 
   // `exec()` will extract from the slash to the end of the line
   //   and the chained `match()` will match the possible regex.
   const match = (RE_DOT_CHAR.exec(code) || ' ')[0].match(RE_LIT_REGEX);
 
   if (match) {
-    const next = pos + match[0].length;      // result comes from `re.match`
+    const next = pos + match[0].length; // result comes from `re.match`
 
     pos = _prev(code, pos);
     let c = code[pos];
@@ -292,19 +288,20 @@ function skipRegex(code, start) {
       if (code[pos - 1] === '.') {
         start = next;
       }
-
     } else {
-
       if (c === '+' || c === '-') {
         // tricky case
-        if (code[--pos] !== c ||            // if have a single operator or
-             (pos = _prev(code, pos)) < 0 ||  // ...have `++` and no previous token
-             beforeReSign.includes(c = code[pos])) {
-          return next                       // ...this is a regex
+        if (
+          code[--pos] !== c || // if have a single operator or
+          (pos = _prev(code, pos)) < 0 || // ...have `++` and no previous token
+          beforeReSign.includes((c = code[pos]))
+        ) {
+          return next // ...this is a regex
         }
       }
 
-      if (wordsEndChar.includes(c)) {  // looks like a keyword?
+      if (wordsEndChar.includes(c)) {
+        // looks like a keyword?
         const end = pos + 1;
 
         // get the complete (previous) keyword
@@ -383,42 +380,42 @@ function updateStack(stack, char, idx, code) {
   let index = 0;
 
   switch (char) {
-  case '[':
-  case '(':
-  case '{':
-    stack.push(char === '[' ? ']' : char === '(' ? ')' : '}');
-    break
-  case ')':
-  case ']':
-  case '}':
-    if (char !== stack.pop()) {
-      panic(code, unexpectedCharInExpression.replace('%1', char), index);
-    }
+    case '[':
+    case '(':
+    case '{':
+      stack.push(char === '[' ? ']' : char === '(' ? ')' : '}');
+      break
+    case ')':
+    case ']':
+    case '}':
+      if (char !== stack.pop()) {
+        panic(code, unexpectedCharInExpression.replace('%1', char), index);
+      }
 
-    if (char === '}' && stack[stack.length - 1] === $_ES6_BQ) {
-      char = stack.pop();
-    }
+      if (char === '}' && stack[stack.length - 1] === $_ES6_BQ) {
+        char = stack.pop();
+      }
 
-    index = idx + 1;
-    break
-  case '/':
-    index = skipRegex(code, idx);
+      index = idx + 1;
+      break
+    case '/':
+      index = skipRegex(code, idx);
   }
 
   return { char, index }
 }
 
 /**
-   * Parses the code string searching the end of the expression.
-   * It skips braces, quoted strings, regexes, and ES6 template literals.
-   *
-   * @function exprExtr
-   * @param   {string}  code  - Buffer to parse
-   * @param   {number}  start - Position of the opening brace
-   * @param   {[string,string]} bp - Brackets pair
-   * @returns {Object} Expression's end (after the closing brace) or -1
-   *                            if it is not an expr.
-   */
+ * Parses the code string searching the end of the expression.
+ * It skips braces, quoted strings, regexes, and ES6 template literals.
+ *
+ * @function exprExtr
+ * @param   {string}  code  - Buffer to parse
+ * @param   {number}  start - Position of the opening brace
+ * @param   {[string,string]} bp - Brackets pair
+ * @returns {Object} Expression's end (after the closing brace) or -1
+ *                            if it is not an expr.
+ */
 function exprExtr(code, start, bp) {
   const [openingBraces, closingBraces] = bp;
   const offset = start + openingBraces.length; // skips the opening brace
@@ -430,7 +427,8 @@ function exprExtr(code, start, bp) {
   let end;
   let match;
 
-  while (match = re.exec(code)) { // eslint-disable-line
+  while ((match = re.exec(code))) {
+    // eslint-disable-line
     const idx = match.index;
     const str = match[0];
     end = re.lastIndex;
@@ -440,7 +438,7 @@ function exprExtr(code, start, bp) {
       return {
         text: code.slice(offset, idx),
         start,
-        end
+        end,
       }
     }
 
@@ -549,7 +547,7 @@ function expr(state, node, endingChars, start) {
       node.expressions = expressions;
     }
   } else {
-    pushText(state, start, end, {expressions, unescape});
+    pushText(state, start, end, { expressions, unescape });
   }
 
   return end
@@ -590,11 +588,9 @@ function parseExpressions(state, re) {
   return {
     unescape,
     expressions,
-    end: match.index
+    end: match.index,
   }
 }
-
-
 
 /**
  * Creates a regex for the given string and the left bracket.
@@ -970,7 +966,7 @@ const VOID_SVG_TAGS_RE =  listsToRegex(VOID_SVG_TAGS_LIST);
  * Regex matching all the html tags where the value tag is allowed
  * @const {RegExp}
  */
-const HTML_ELEMENTS_HAVING_VALUE_ATTRIBUTE_RE = listsToRegex(HTML_ELEMENTS_HAVING_VALUE_ATTRIBUTE_LIST);
+listsToRegex(HTML_ELEMENTS_HAVING_VALUE_ATTRIBUTE_LIST);
 
 /**
  * Regex matching all the boolean attributes
@@ -1042,10 +1038,13 @@ function memoize(fn) {
   }
 }
 
-const expressionsContentRe = memoize(brackets => RegExp(`(${brackets[0]}[^${brackets[1]}]*?${brackets[1]})`, 'g'));
-const isSpreadAttribute = name => SPREAD_OPERATOR.test(name);
+const expressionsContentRe = memoize((brackets) =>
+  RegExp(`(${brackets[0]}[^${brackets[1]}]*?${brackets[1]})`, 'g'),
+);
+const isSpreadAttribute = (name) => SPREAD_OPERATOR.test(name);
 const isAttributeExpression = (name, brackets) => name[0] === brackets[0];
-const getAttributeEnd = (state, attr) => expr(state, attr, '[>/\\s]', attr.start);
+const getAttributeEnd = (state, attr) =>
+  expr(state, attr, '[>/\\s]', attr.start);
 
 /**
  * The more complex parsing is for attributes as it can contain quoted or
@@ -1062,28 +1061,28 @@ function attr(state) {
   const ch = execFromPos(_CH, pos, data);
 
   switch (true) {
-  case !ch:
-    state.pos = data.length; // reaching the end of the buffer with
-    // NodeTypes.ATTR will generate error
-    break
-  case ch[0] === '>':
-    // closing char found. If this is a self-closing tag with the name of the
-    // Root tag, we need decrement the counter as we are changing mode.
-    state.pos = tag.end = _CH.lastIndex;
-    if (tag[IS_SELF_CLOSING]) {
-      state.scryle = null; // allow selfClosing script/style tags
-      if (root && root.name === tag.name) {
-        state.count--; // "pop" root tag
+    case !ch:
+      state.pos = data.length; // reaching the end of the buffer with
+      // NodeTypes.ATTR will generate error
+      break
+    case ch[0] === '>':
+      // closing char found. If this is a self-closing tag with the name of the
+      // Root tag, we need decrement the counter as we are changing mode.
+      state.pos = tag.end = _CH.lastIndex;
+      if (tag[IS_SELF_CLOSING]) {
+        state.scryle = null; // allow selfClosing script/style tags
+        if (root && root.name === tag.name) {
+          state.count--; // "pop" root tag
+        }
       }
-    }
-    return TEXT
-  case ch[0] === '/':
-    state.pos = _CH.lastIndex; // maybe. delegate the validation
-    tag[IS_SELF_CLOSING] = true; // the next loop
-    break
-  default:
-    delete tag[IS_SELF_CLOSING]; // ensure unmark as selfclosing tag
-    setAttribute(state, ch.index, tag);
+      return TEXT
+    case ch[0] === '/':
+      state.pos = _CH.lastIndex; // maybe. delegate the validation
+      tag[IS_SELF_CLOSING] = true; // the next loop
+      break
+    default:
+      delete tag[IS_SELF_CLOSING]; // ensure unmark as selfclosing tag
+      setAttribute(state, ch.index, tag);
   }
 
   return ATTR
@@ -1102,10 +1101,15 @@ function setAttribute(state, pos, tag) {
   const { data } = state;
   const expressionContent = expressionsContentRe(state.options.brackets);
   const re = ATTR_START; // (\S[^>/=\s]*)(?:\s*=\s*([^>/])?)? g
-  const start = re.lastIndex = expressionContent.lastIndex = pos; // first non-whitespace
+  const start = (re.lastIndex = expressionContent.lastIndex = pos); // first non-whitespace
   const attrMatches = re.exec(data);
-  const isExpressionName = isAttributeExpression(attrMatches[1], state.options.brackets);
-  const match = isExpressionName ? [null, expressionContent.exec(data)[1], null] : attrMatches;
+  const isExpressionName = isAttributeExpression(
+    attrMatches[1],
+    state.options.brackets,
+  );
+  const match = isExpressionName
+    ? [null, expressionContent.exec(data)[1], null]
+    : attrMatches;
 
   if (match) {
     const end = re.lastIndex;
@@ -1132,7 +1136,7 @@ function parseNomalAttribute(state, attr, quote) {
     // (`end`) is the start of the value.
     let valueStart = end;
     // If it not, this is an unquoted value and we need adjust the start.
-    if (quote !== '"' && quote !== '\'') {
+    if (quote !== '"' && quote !== "'") {
       quote = ''; // first char of value is not a quote
       valueStart--; // adjust the starting position
     }
@@ -1143,13 +1147,12 @@ function parseNomalAttribute(state, attr, quote) {
     return Object.assign(attr, {
       value: getChunk(data, valueStart, end),
       valueStart,
-      end: quote ? ++end : end
+      end: quote ? ++end : end,
     })
   }
 
   return attr
 }
-
 
 /**
  * Parse expression names <a {href}>
@@ -1163,10 +1166,12 @@ function parseSpreadAttribute(state, attr) {
   return {
     [IS_SPREAD]: true,
     start: attr.start,
-    expressions: attr.expressions.map(expr => Object.assign(expr, {
-      text: expr.text.replace(SPREAD_OPERATOR, '').trim()
-    })),
-    end: end
+    expressions: attr.expressions.map((expr) =>
+      Object.assign(expr, {
+        text: expr.text.replace(SPREAD_OPERATOR, '').trim(),
+      }),
+    ),
+    end: end,
   }
 }
 
@@ -1183,7 +1188,7 @@ function parseExpressionNameAttribute(state, attr) {
     start: attr.start,
     name: attr.expressions[0].text.trim(),
     expressions: attr.expressions,
-    end: end
+    end: end,
   }
 }
 
@@ -1201,18 +1206,18 @@ function parseAttribute(state, match, start, end, isExpressionName) {
     name: match[1],
     value: '',
     start,
-    end
+    end,
   };
 
   const quote = match[2]; // first letter of value or nothing
 
   switch (true) {
-  case isSpreadAttribute(attr.name):
-    return parseSpreadAttribute(state, attr)
-  case isExpressionName === true:
-    return parseExpressionNameAttribute(state, attr)
-  default:
-    return parseNomalAttribute(state, attr, quote)
+    case isSpreadAttribute(attr.name):
+      return parseSpreadAttribute(state, attr)
+    case isExpressionName === true:
+      return parseExpressionNameAttribute(state, attr)
+    default:
+      return parseNomalAttribute(state, attr, quote)
   }
 }
 
@@ -1257,7 +1262,7 @@ function comment(state, data, start) {
     state,
     start,
     end + str.length,
-    data.substring(start, end + str.length)
+    data.substring(start, end + str.length),
   );
 
   return TEXT
@@ -1281,7 +1286,7 @@ function pushComment(state, start, end, text) {
       type: COMMENT,
       start,
       end,
-      text
+      text,
     };
   }
 }
@@ -1341,12 +1346,12 @@ function tag(state) {
   const str = data.substr(pos, 2); // first two chars following '<'
 
   switch (true) {
-  case str[0] === '!':
-    return comment(state, data, start)
-  case TAG_2C.test(str):
-    return parseTag(state, start)
-  default:
-    return pushText(state, start, pos) // pushes the '<' as text
+    case str[0] === '!':
+      return comment(state, data, start)
+    case TAG_2C.test(str):
+      return parseTag(state, start)
+    default:
+      return pushText(state, start, pos) // pushes the '<' as text
   }
 }
 
@@ -1382,31 +1387,31 @@ function text(state) {
   const { pos, data, scryle } = state;
 
   switch (true) {
-  case typeof scryle === 'string': {
-    const name = scryle;
-    const re = RE_SCRYLE[name];
-    const match = execFromPos(re, pos, data);
+    case typeof scryle === 'string': {
+      const name = scryle;
+      const re = RE_SCRYLE[name];
+      const match = execFromPos(re, pos, data);
 
-    if (!match) {
-      panic(data, unclosedNamedBlock.replace('%1', name), pos - 1);
-    }
+      if (!match) {
+        panic(data, unclosedNamedBlock.replace('%1', name), pos - 1);
+      }
 
-    const start = match.index;
-    const end = re.lastIndex;
-    state.scryle = null; // reset the script/style flag now
-    // write the tag content, if any
-    if (start > pos) {
-      parseSpecialTagsContent(state, name, match);
+      const start = match.index;
+      const end = re.lastIndex;
+      state.scryle = null; // reset the script/style flag now
+      // write the tag content, if any
+      if (start > pos) {
+        parseSpecialTagsContent(state, name, match);
+      }
+      // now the closing tag, either </script> or </style>
+      pushTag(state, `/${name}`, start, end);
+      break
     }
-    // now the closing tag, either </script> or </style>
-    pushTag(state, `/${name}`, start, end);
-    break
-  }
-  case data[pos] === '<':
-    state.pos++;
-    return TAG
-  default:
-    expr(state, null, '<', pos);
+    case data[pos] === '<':
+      state.pos++;
+      return TAG
+    default:
+      expr(state, null, '<', pos);
   }
 
   return TEXT
@@ -1457,13 +1462,12 @@ function parseSpecialTagsContent(state, name, match) {
  * @returns {string} output string escaped
  */
 function escapeReturn(string) {
-  return string
-    .replace(/\r/g, '\\r')
-    .replace(/\n/g, '\\n')
+  return string.replace(/\r/g, '\\r').replace(/\n/g, '\\n')
 }
 
 // check whether a tag has the 'src' attribute set like for example `<script src="">`
-const hasSrcAttribute = node => (node.attributes || []).some(attr => attr.name === 'src');
+const hasSrcAttribute = (node) =>
+  (node.attributes || []).some((attr) => attr.name === 'src');
 
 /**
  * Escape double slashes in a string
@@ -1490,37 +1494,37 @@ const TREE_BUILDER_STRUCT = Object.seal({
     return {
       [TEMPLATE_OUTPUT_NAME]: store.root.nodes[0],
       [CSS_OUTPUT_NAME]: store[STYLE_TAG],
-      [JAVASCRIPT_OUTPUT_NAME]: store[JAVASCRIPT_TAG]
+      [JAVASCRIPT_OUTPUT_NAME]: store[JAVASCRIPT_TAG],
     }
   },
 
   /**
-  * Process the current tag or text.
-  * @param {Object} node - Raw pseudo-node from the parser
-  * @returns {undefined} void function
-  */
+   * Process the current tag or text.
+   * @param {Object} node - Raw pseudo-node from the parser
+   * @returns {undefined} void function
+   */
   push(node) {
     const store = this.store;
 
     switch (node.type) {
-    case COMMENT:
-      this.pushComment(store, node);
-      break
-    case TEXT:
-      this.pushText(store, node);
-      break
-    case TAG: {
-      const name = node.name;
-      const closingTagChar = '/';
-      const [firstChar] = name;
+      case COMMENT:
+        this.pushComment(store, node);
+        break
+      case TEXT:
+        this.pushText(store, node);
+        break
+      case TAG: {
+        const name = node.name;
+        const closingTagChar = '/';
+        const [firstChar] = name;
 
-      if (firstChar === closingTagChar && !node.isVoid) {
-        this.closeTag(store, node, name);
-      } else if (firstChar !== closingTagChar) {
-        this.openTag(store, node);
+        if (firstChar === closingTagChar && !node.isVoid) {
+          this.closeTag(store, node, name);
+        } else if (firstChar !== closingTagChar) {
+          this.openTag(store, node);
+        }
+        break
       }
-      break
-    }
     }
   },
   pushComment(store, node) {
@@ -1546,12 +1550,17 @@ const TREE_BUILDER_STRUCT = Object.seal({
   openTag(store, node) {
     const name = node.name;
     const attrs = node.attributes;
-    const isCoreTag = (JAVASCRIPT_TAG === name && !hasSrcAttribute(node) || name === STYLE_TAG);
+    const isCoreTag =
+      (JAVASCRIPT_TAG === name && !hasSrcAttribute(node)) || name === STYLE_TAG;
 
     if (isCoreTag) {
       // Only accept one of each
       if (store[name]) {
-        panic(this.store.data, duplicatedNamedTag.replace('%1', name), node.start);
+        panic(
+          this.store.data,
+          duplicatedNamedTag.replace('%1', name),
+          node.start,
+        );
       }
 
       store[name] = node;
@@ -1581,7 +1590,7 @@ const TREE_BUILDER_STRUCT = Object.seal({
     }
   },
   attrs(attributes) {
-    attributes.forEach(attr => {
+    attributes.forEach((attr) => {
       if (attr.value) {
         this.split(attr, attr.value, attr.valueStart, true);
       }
@@ -1612,10 +1621,13 @@ const TREE_BUILDER_STRUCT = Object.seal({
     if (expressions) {
       let pos = 0;
 
-      expressions.forEach(expr => {
+      expressions.forEach((expr) => {
         const text = source.slice(pos, expr.start - start);
         const code = expr.text;
-        parts.push(this.sanitise(node, text, pack), escapeReturn(escapeSlashes(code).trim()));
+        parts.push(
+          this.sanitise(node, text, pack),
+          escapeReturn(escapeSlashes(code).trim()),
+        );
         pos = expr.end - start;
       });
 
@@ -1626,7 +1638,7 @@ const TREE_BUILDER_STRUCT = Object.seal({
       parts[0] = this.sanitise(node, source, pack);
     }
 
-    node.parts = parts.filter(p => p); // remove the empty strings
+    node.parts = parts.filter((p) => p); // remove the empty strings
   },
   // unescape escaped brackets and split prefixes of expressions
   sanitise(node, text, pack) {
@@ -1643,7 +1655,7 @@ const TREE_BUILDER_STRUCT = Object.seal({
     text = escapeSlashes(text);
 
     return pack ? cleanSpaces(text) : escapeReturn(text)
-  }
+  },
 });
 
 function createTreeBuilder(data, options) {
@@ -1652,7 +1664,7 @@ function createTreeBuilder(data, options) {
     name: '',
     start: 0,
     end: 0,
-    nodes: []
+    nodes: [],
   };
 
   return Object.assign(Object.create(TREE_BUILDER_STRUCT), {
@@ -1664,8 +1676,8 @@ function createTreeBuilder(data, options) {
       root,
       style: null,
       script: null,
-      data
-    }
+      data,
+    },
   })
 }
 
@@ -1680,7 +1692,7 @@ function createTreeBuilder(data, options) {
 function parser(options, customBuilder) {
   const state = curry(createParserState)(options, customBuilder || createTreeBuilder);
   return {
-    parse: (data) => parse(state(data))
+    parse: (data) => parse(state(data)),
   }
 }
 
@@ -1692,9 +1704,12 @@ function parser(options, customBuilder) {
  * @returns {ParserState} it represents the current parser state
  */
 function createParserState(userOptions, builder, data) {
-  const options = Object.assign({
-    brackets: ['{', '}']
-  }, userOptions);
+  const options = Object.assign(
+    {
+      brackets: ['{', '}'],
+    },
+    userOptions,
+  );
 
   return {
     options,
@@ -1705,7 +1720,7 @@ function createParserState(userOptions, builder, data) {
     last: null,
     scryle: null,
     builder: builder(data, options),
-    data
+    data,
   }
 }
 
@@ -1727,12 +1742,16 @@ function parse(state) {
   flush(state);
 
   if (state.count) {
-    panic(data, state.count > 0 ? unexpectedEndOfFile : rootTagNotFound, state.pos);
+    panic(
+      data,
+      state.count > 0 ? unexpectedEndOfFile : rootTagNotFound,
+      state.pos,
+    );
   }
 
   return {
     data,
-    output: state.builder.get()
+    output: state.builder.get(),
   }
 }
 
@@ -1763,12 +1782,12 @@ function walk(state, type) {
  */
 function eat(state, type) {
   switch (type) {
-  case TAG:
-    return tag(state)
-  case ATTR:
-    return attr(state)
-  default:
-    return text(state)
+    case TAG:
+      return tag(state)
+    case ATTR:
+      return attr(state)
+    default:
+      return text(state)
   }
 }
 
@@ -1782,6 +1801,4 @@ const constants = c;
  */
 const nodeTypes = types;
 
-exports.constants = constants;
-exports.default = parser;
-exports.nodeTypes = nodeTypes;
+export { constants, parser as default, nodeTypes };

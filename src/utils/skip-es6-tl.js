@@ -1,5 +1,5 @@
 import formatError from './format-error'
-import {unclosedTemplateLiteral} from '../messages'
+import { unclosedTemplateLiteral } from '../messages'
 export const $_ES6_BQ = '`'
 
 /**
@@ -17,7 +17,7 @@ export default function skipES6TL(code, pos, stack) {
   // find the next unescaped backquote or the sequence "${"
   const re = /[`$\\]/g
   let c
-  while (re.lastIndex = pos, re.exec(code)) {
+  while (((re.lastIndex = pos), re.exec(code))) {
     pos = re.lastIndex
     c = code[pos - 1]
     if (c === '`') {
