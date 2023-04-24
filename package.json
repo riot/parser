@@ -17,10 +17,10 @@
     "npm": ">=3.0"
   },
   "scripts": {
-    "test": "nyc mocha ./test/index",
+    "test": "c8 mocha ./test/index",
     "test-debug": "mocha --inspect-brk ./test",
-    "cov": "nyc report --reporter=lcov",
-    "cov-html": "nyc report --reporter=html",
+    "cov": "c8 report --reporter=lcov",
+    "cov-html": "c8 report --reporter=html",
     "pretest": "npm run build",
     "lint": "eslint src test && npx prettier --check ./",
     "build": "rollup -c",
@@ -53,12 +53,12 @@
   "readme": "https://github.com/riot/parser/blob/master/README.md",
   "devDependencies": {
     "@riotjs/prettier-config": "^1.0.1",
+    "c8": "^7.13.0",
     "chai": "^4.3.7",
     "coveralls": "^3.1.1",
     "eslint": "^8.39.0",
     "eslint-config-riot": "^4.0.0",
     "mocha": "^10.2.0",
-    "nyc": "^15.1.0",
     "prettier": "^2.8.8",
     "rollup": "^3.21.0",
     "rollup-plugin-node-resolve": "^5.2.0"
