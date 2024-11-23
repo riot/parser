@@ -1399,10 +1399,8 @@ function text(state) {
       const start = match.index;
       const end = re.lastIndex;
       state.scryle = null; // reset the script/style flag now
-      // write the tag content, if any
-      if (start > pos) {
-        parseSpecialTagsContent(state, name, match);
-      }
+      // write the tag content
+      parseSpecialTagsContent(state, name, match);
       // now the closing tag, either </script> or </style>
       pushTag(state, `/${name}`, start, end);
       break
@@ -1598,19 +1596,19 @@ const TREE_BUILDER_STRUCT = Object.seal({
   },
   pushText(store, node) {
     const text = node.text;
-    const empty = !/\S/.test(text);
     const scryle = store.scryle;
     if (!scryle) {
       // store.last always have a nodes property
       const parent = store.last;
-
+      
       const pack = this.compact && !parent[IS_RAW];
+      const empty = !/\S/.test(text);
       if (pack && empty) {
         return
       }
       this.split(node, text, node.start, pack);
       parent.nodes.push(node);
-    } else if (!empty) {
+    } else {
       scryle.text = node;
     }
   },

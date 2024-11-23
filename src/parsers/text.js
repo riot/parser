@@ -32,10 +32,8 @@ export default function text(state) {
       const start = match.index
       const end = re.lastIndex
       state.scryle = null // reset the script/style flag now
-      // write the tag content, if any
-      if (start > pos) {
-        parseSpecialTagsContent(state, name, match)
-      }
+      // write the tag content
+      parseSpecialTagsContent(state, name, match)
       // now the closing tag, either </script> or </style>
       pushTag(state, `/${name}`, start, end)
       break
