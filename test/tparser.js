@@ -769,6 +769,62 @@ export default {
     ]
   },
 
+  'style tag with zero-length content has empty text node': {
+    data: "<component><style></style></component>",
+    expected: [
+      {
+        type: 1,
+        name: 'component',
+        start: 0,
+        end: 11,
+        isCustom: true,
+      },
+      {
+        type: 1,
+        name: 'style',
+        start: 11,
+        end: 18,
+        text: { type: 3, text: '', start: 18, end: 18 },
+      },
+      { type: 1, name: '/style', start: 18, end: 26 },
+      {
+        type: 1,
+        name: '/component',
+        start: 26,
+        end: 38,
+        isCustom: true,
+      },
+    ]
+  },
+
+  'style tag with content containing only whiteline characters has text node': {
+    data: "<component><style>  </style></component>",
+    expected: [
+      {
+        type: 1,
+        name: 'component',
+        start: 0,
+        end: 11,
+        isCustom: true,
+      },
+      {
+        type: 1,
+        name: 'style',
+        start: 11,
+        end: 18,
+      },
+      { type: 3, text: '  ', start: 18, end: 20 },
+      { type: 1, name: '/style', start: 20, end: 28 },
+      {
+        type: 1,
+        name: '/component',
+        start: 28,
+        end: 40,
+        isCustom: true,
+      },
+    ]
+  },
+
   'whitespace after the tag name is ignored #1': {
     data: '<div\t\n\n  \n\t/>',
     expected: [{ type: _T.TAG, name: 'div', end: 13, isSelfClosing: true }],
