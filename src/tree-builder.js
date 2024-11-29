@@ -175,19 +175,19 @@ const TREE_BUILDER_STRUCT = Object.seal({
   },
   pushText(store, node) {
     const text = node.text
-    const empty = !/\S/.test(text)
     const scryle = store.scryle
     if (!scryle) {
       // store.last always have a nodes property
       const parent = store.last
-
+      
       const pack = this.compact && !parent[IS_RAW]
+      const empty = !/\S/.test(text)
       if (pack && empty) {
         return
       }
       this.split(node, text, node.start, pack)
       parent.nodes.push(node)
-    } else if (!empty) {
+    } else {
       scryle.text = node
     }
   },

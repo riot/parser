@@ -698,6 +698,7 @@ export default {
             valueStart: 18,
           },
         ],
+        text: { type: 3, text: '', start: 37, end: 37 },
       },
       { type: 1, name: '/script', start: 37, end: 46 },
       {
@@ -705,10 +706,123 @@ export default {
         name: 'script',
         start: 46,
         end: 54,
+        text: { type: 3, text: '', start: 54, end: 54 },
       },
       { type: 1, name: '/script', start: 54, end: 63 },
       { type: 1, name: '/div', start: 63, end: 69 },
     ],
+  },
+
+  'script tag with zero-length content has empty text node': {
+    data: "<component><script></script></component>",
+    expected: [
+      {
+        type: 1,
+        name: 'component',
+        start: 0,
+        end: 11,
+        isCustom: true,
+      },
+      {
+        type: 1,
+        name: 'script',
+        start: 11,
+        end: 19,
+        text: { type: 3, text: '', start: 19, end: 19 },
+      },
+      { type: 1, name: '/script', start: 19, end: 28 },
+      {
+        type: 1,
+        name: '/component',
+        start: 28,
+        end: 40,
+        isCustom: true,
+      },
+    ]
+  },
+
+  'script tag with content containing only whiteline characters has text node': {
+    data: "<component><script>  </script></component>",
+    expected: [
+      {
+        type: 1,
+        name: 'component',
+        start: 0,
+        end: 11,
+        isCustom: true,
+      },
+      {
+        type: 1,
+        name: 'script',
+        start: 11,
+        end: 19,
+      },
+      { type: 3, text: '  ', start: 19, end: 21 },
+      { type: 1, name: '/script', start: 21, end: 30 },
+      {
+        type: 1,
+        name: '/component',
+        start: 30,
+        end: 42,
+        isCustom: true,
+      },
+    ]
+  },
+
+  'style tag with zero-length content has empty text node': {
+    data: "<component><style></style></component>",
+    expected: [
+      {
+        type: 1,
+        name: 'component',
+        start: 0,
+        end: 11,
+        isCustom: true,
+      },
+      {
+        type: 1,
+        name: 'style',
+        start: 11,
+        end: 18,
+        text: { type: 3, text: '', start: 18, end: 18 },
+      },
+      { type: 1, name: '/style', start: 18, end: 26 },
+      {
+        type: 1,
+        name: '/component',
+        start: 26,
+        end: 38,
+        isCustom: true,
+      },
+    ]
+  },
+
+  'style tag with content containing only whiteline characters has text node': {
+    data: "<component><style>  </style></component>",
+    expected: [
+      {
+        type: 1,
+        name: 'component',
+        start: 0,
+        end: 11,
+        isCustom: true,
+      },
+      {
+        type: 1,
+        name: 'style',
+        start: 11,
+        end: 18,
+      },
+      { type: 3, text: '  ', start: 18, end: 20 },
+      { type: 1, name: '/style', start: 20, end: 28 },
+      {
+        type: 1,
+        name: '/component',
+        start: 28,
+        end: 40,
+        isCustom: true,
+      },
+    ]
   },
 
   'whitespace after the tag name is ignored #1': {
