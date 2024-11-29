@@ -12,10 +12,6 @@
     }
   },
   "license": "MIT",
-  "engines": {
-    "node": ">=4.2",
-    "npm": ">=3.0"
-  },
   "scripts": {
     "test": "c8 mocha ./test/index",
     "test-debug": "mocha --inspect-brk ./test",
@@ -52,15 +48,15 @@
   "bugs": "https://github.com/riot/parser/issues",
   "readme": "https://github.com/riot/parser/blob/master/README.md",
   "devDependencies": {
-    "@riotjs/prettier-config": "^1.0.1",
-    "c8": "^7.13.0",
-    "chai": "^4.3.7",
+    "@riotjs/prettier-config": "^1.1.0",
+    "@rollup/plugin-node-resolve": "^15.3.0",
+    "c8": "^10.1.2",
+    "chai": "^5.1.2",
     "eslint": "^8.39.0",
-    "eslint-config-riot": "^4.0.0",
-    "mocha": "^10.2.0",
-    "prettier": "^2.8.8",
-    "rollup": "^3.21.0",
-    "rollup-plugin-node-resolve": "^5.2.0"
+    "eslint-config-riot": "^4.1.2",
+    "mocha": "^10.8.2",
+    "prettier": "^3.4.1",
+    "rollup": "^4.27.4"
   },
   "dependencies": {
     "curri": "^2.0.3",
