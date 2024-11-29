@@ -21,7 +21,8 @@
     "lint": "eslint src test && npx prettier --check ./",
     "build": "rollup -c",
     "samples": "node ./test/samples.js",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "npm run build",
+    "postpublish": "git push && git push --tags"
   },
   "files": [
     "index.js",
