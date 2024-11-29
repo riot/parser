@@ -714,7 +714,7 @@ export default {
   },
 
   'script tag with zero-length content has empty text node': {
-    data: "<component><script></script></component>",
+    data: '<component><script></script></component>',
     expected: [
       {
         type: 1,
@@ -738,39 +738,40 @@ export default {
         end: 40,
         isCustom: true,
       },
-    ]
+    ],
   },
 
-  'script tag with content containing only whiteline characters has text node': {
-    data: "<component><script>  </script></component>",
-    expected: [
-      {
-        type: 1,
-        name: 'component',
-        start: 0,
-        end: 11,
-        isCustom: true,
-      },
-      {
-        type: 1,
-        name: 'script',
-        start: 11,
-        end: 19,
-      },
-      { type: 3, text: '  ', start: 19, end: 21 },
-      { type: 1, name: '/script', start: 21, end: 30 },
-      {
-        type: 1,
-        name: '/component',
-        start: 30,
-        end: 42,
-        isCustom: true,
-      },
-    ]
-  },
+  'script tag with content containing only whiteline characters has text node':
+    {
+      data: '<component><script>  </script></component>',
+      expected: [
+        {
+          type: 1,
+          name: 'component',
+          start: 0,
+          end: 11,
+          isCustom: true,
+        },
+        {
+          type: 1,
+          name: 'script',
+          start: 11,
+          end: 19,
+        },
+        { type: 3, text: '  ', start: 19, end: 21 },
+        { type: 1, name: '/script', start: 21, end: 30 },
+        {
+          type: 1,
+          name: '/component',
+          start: 30,
+          end: 42,
+          isCustom: true,
+        },
+      ],
+    },
 
   'style tag with zero-length content has empty text node': {
-    data: "<component><style></style></component>",
+    data: '<component><style></style></component>',
     expected: [
       {
         type: 1,
@@ -794,11 +795,11 @@ export default {
         end: 38,
         isCustom: true,
       },
-    ]
+    ],
   },
 
   'style tag with content containing only whiteline characters has text node': {
-    data: "<component><style>  </style></component>",
+    data: '<component><style>  </style></component>',
     expected: [
       {
         type: 1,
@@ -822,7 +823,7 @@ export default {
         end: 40,
         isCustom: true,
       },
-    ]
+    ],
   },
 
   'whitespace after the tag name is ignored #1': {

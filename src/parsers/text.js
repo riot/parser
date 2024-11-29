@@ -40,7 +40,7 @@ export default function text(state) {
           type: TEXT,
           text: '',
           start: pos,
-          end: pos
+          end: pos,
         }
       }
       // now the closing tag, either </script> or </style>
