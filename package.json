@@ -1,6 +1,6 @@
 {
   "name": "@riotjs/parser",
-  "version": "5.0.0",
+  "version": "9.0.0",
   "description": "The parser for Riot tags",
   "type": "module",
   "main": "./index.cjs",
