@@ -1,5 +1,7 @@
 # parser
 
+[![Parser logo](https://raw.githubusercontent.com/riot/branding/main/parser/parser-horizontal.svg)](https://github.com/riot/parser/)
+
 [![Build Status][ci-image]][ci-url]
 [![Code Quality][codeclimate-image]][codeclimate-url]
 [![NPM version][npm-version-image]][npm-url]
