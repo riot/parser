@@ -5,15 +5,18 @@
   "type": "module",
   "main": "./index.cjs",
   "module": "./index.js",
+  "types": "./index.d.ts",
   "exports": {
     ".": {
+      "types": "./index.d.ts",
       "import": "./index.js",
       "require": "./index.cjs"
     }
   },
   "license": "MIT",
   "scripts": {
-    "test": "c8 mocha ./test/index",
+    "test-types": "tsc -p test",
+    "test": "c8 mocha ./test/index && npm run test-types",
     "test-debug": "mocha --inspect-brk ./test",
     "cov": "c8 report --reporter=lcov",
     "cov-html": "c8 report --reporter=html",
@@ -25,6 +28,7 @@
     "postpublish": "git push && git push --tags"
   },
   "files": [
+    "index.d.ts",
     "index.js",
     "index.cjs",
     "src"
@@ -57,7 +61,8 @@
     "eslint-config-riot": "^4.1.2",
     "mocha": "^11.1.0",
     "prettier": "^3.5.3",
-    "rollup": "^4.35.0"
+    "rollup": "^4.35.0",
+    "typescript": "^5.8.2"
   },
   "dependencies": {
     "curri": "^2.0.3",

@@ -1714,6 +1714,8 @@ function createParserState(userOptions, builder, data) {
   const options = Object.assign(
     {
       brackets: ['{', '}'],
+      compact: true,
+      comments: false,
     },
     userOptions,
   );
