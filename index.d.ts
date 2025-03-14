@@ -69,7 +69,7 @@ type TreeBuilder = {
 }
 
 export type ParserOptions = {
-  brackets: [string, string]
+  brackets?: [string, string]
   comments?: boolean
   compact?: boolean
 }
