@@ -4,12 +4,11 @@ import getChunk from './get-chunk'
 
 /**
  * states text in the last text node, or creates a new one if needed.
- *
- * @param {ParserState}   state   - Current parser state
+ * @param {import('../..').ParserState}   state   - Current parser state
  * @param {number}  start   - Start position of the tag
  * @param {number}  end     - Ending position (last char of the tag)
- * @param {Object}  extra   - extra properties to add to the text node
- * @param {RawExpr[]} extra.expressions  - Found expressions
+ * @param {import('../..').ExpressionContainer}  extra   - extra properties to add to the text node
+ * @param {import('../..').Expression[]} extra.expressions  - Found expressions
  * @param {string}    extra.unescape     - Brackets to unescape
  * @returns {undefined} - void function
  * @private

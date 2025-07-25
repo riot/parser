@@ -6,8 +6,7 @@ import flush from './flush-parser-state'
 /**
  * Pushes a new *tag* and set `last` to this, so any attributes
  * will be included on this and shifts the `end`.
- *
- * @param   {ParserState} state  - Current parser state
+ * @param   {import('../..').ParserState} state  - Current parser state
  * @param   {string}  name      - Name of the node including any slash
  * @param   {number}  start     - Start position of the tag
  * @param   {number}  end       - Ending position (last char of the tag + 1)

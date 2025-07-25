@@ -19,8 +19,7 @@ const getAttributeEnd = (state, attr) =>
 /**
  * The more complex parsing is for attributes as it can contain quoted or
  * unquoted values or expressions.
- *
- * @param   {ParserStore} state  - Parser state
+ * @param   {import('../..').ParserState} state  - Parser state
  * @returns {number} New parser mode.
  * @private
  */
@@ -60,10 +59,9 @@ export default function attr(state) {
 
 /**
  * Parses an attribute and its expressions.
- *
- * @param   {ParserStore}  state  - Parser state
+ * @param   {import('../..').ParserState}  state  - Parser state
  * @param   {number} pos    - Starting position of the attribute
- * @param   {Object} tag    - Current parent tag
+ * @param   {object} tag    - Current parent tag
  * @returns {undefined} void function
  * @private
  */
@@ -126,9 +124,9 @@ function parseNomalAttribute(state, attr, quote) {
 
 /**
  * Parse expression names <a {href}>
- * @param   {ParserStore}  state  - Parser state
- * @param   {Object} attr - attribute object parsed
- * @returns {Object} normalized attribute object
+ * @param   {import('../..').ParserState}  state  - Parser state
+ * @param   {object} attr - attribute object parsed
+ * @returns {object} normalized attribute object
  */
 function parseSpreadAttribute(state, attr) {
   const end = getAttributeEnd(state, attr)
@@ -147,9 +145,9 @@ function parseSpreadAttribute(state, attr) {
 
 /**
  * Parse expression names <a {href}>
- * @param   {ParserStore}  state  - Parser state
- * @param   {Object} attr - attribute object parsed
- * @returns {Object} normalized attribute object
+ * @param   {import('../..').ParserState}  state  - Parser state
+ * @param   {object} attr - attribute object parsed
+ * @returns {object} normalized attribute object
  */
 function parseExpressionNameAttribute(state, attr) {
   const end = getAttributeEnd(state, attr)
@@ -164,12 +162,12 @@ function parseExpressionNameAttribute(state, attr) {
 
 /**
  * Parse the attribute values normalising the quotes
- * @param   {ParserStore}  state  - Parser state
+ * @param   {import('../..').ParserState}  state  - Parser state
  * @param   {Array} match - results of the attributes regex
  * @param   {number} start - attribute start position
  * @param   {number} end - attribute end position
  * @param   {boolean} isExpressionName - true if the attribute name is an expression
- * @returns {Object} attribute object
+ * @returns {object} attribute object
  */
 function parseAttribute(state, match, start, end, isExpressionName) {
   const attr = {

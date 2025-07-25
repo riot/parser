@@ -100,6 +100,7 @@ describe('Tree Builder', function () {
     it(title, function () {
       const src = cat('fixtures', title)
 
+      // eslint-disable-next-line no-debugger
       if (name === _TDEBUG) debugger
       const res = _p.parse(src)
 
@@ -139,6 +140,7 @@ describe('HTML Builder', function () {
       const _p = parser(getOpts(test), echoBuilder)
       const builder = htmlBuilder(test.builderOptions)
 
+      // eslint-disable-next-line no-debugger
       if (_TDEBUG && title === _TDEBUG) debugger
 
       if (test.throws) {

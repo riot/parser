@@ -50,8 +50,8 @@ The value returned by the parser is an object like this:
 
 ```js
 {
-  data, // String of the given html fragment with no changes.
-    output // Array of objects with information about the parsed tags.
+  ;(data, // String of the given html fragment with no changes.
+    output) // Array of objects with information about the parsed tags.
 }
 ```
 

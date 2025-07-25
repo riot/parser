@@ -9,6 +9,18 @@ export declare const enum NodeTypes {
   DOCUMENT_FRAGMENT = 11,
 }
 
+export type ParserState = {
+  options: ParserOptions
+  regexCache: Record<string, RegExp>
+  pos: number
+  count: number
+  root: TagNode | null
+  last: TagNode | null
+  scryle: ScriptNode | StyleNode | null
+  builder: TreeBuilder
+  data: string
+}
+
 export type Position = {
   start: number
   end: number

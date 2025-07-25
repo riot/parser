@@ -6,7 +6,6 @@ export const $_ES6_BQ = '`'
  * Searches the next backquote that signals the end of the ES6 Template Literal
  * or the "${" sequence that starts a JS expression, skipping any escaped
  * character.
- *
  * @param   {string}    code  - Whole code
  * @param   {number}    pos   - The start position of the template
  * @param   {string[]}  stack - To save nested ES6 TL count

@@ -1,5 +1,3 @@
-/* eslint-disable max-len */
-
 export default {
   'prints valid html5 markup': {
     data: '<html><title>The Title</title><body>Hello world</body></html>',

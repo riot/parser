@@ -8,15 +8,14 @@ import pushText from '../utils/push-text'
 /**
  * Parse the tag following a '<' character, or delegate to other parser
  * if an invalid tag name is found.
- *
- * @param   {ParserState} state  - Parser state
+ * @param   {import('../..').ParserState} state  - Parser state
  * @returns {number} New parser mode
  * @private
  */
 export default function tag(state) {
   const { pos, data } = state // pos of the char following '<'
   const start = pos - 1 // pos of '<'
-  const str = data.substr(pos, 2) // first two chars following '<'
+  const str = data.substring(pos, pos + 2) // first two chars following '<'
 
   switch (true) {
     case str[0] === '!':

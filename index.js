@@ -33,7 +33,6 @@ var c = /*#__PURE__*/Object.freeze({
 
 /**
  * Not all the types are handled in this module.
- *
  * @enum {number}
  * @readonly
  */
@@ -70,21 +69,21 @@ const unclosedExpression = 'Unclosed expression.';
 
 /**
  * Matches the start of valid tags names; used with the first 2 chars after the `'<'`.
- * @const
+ * @constant
  * @private
  */
 const TAG_2C = /^(?:\/[a-zA-Z]|[a-zA-Z][^\s>/]?)/;
 /**
  * Matches valid tags names AFTER the validation with `TAG_2C`.
  * $1: tag name including any `'/'`, $2: non self-closing brace (`>`) w/o attributes.
- * @const
+ * @constant
  * @private
  */
 const TAG_NAME = /(\/?[^\s>/]+)\s*(>)?/g;
 /**
  * Matches an attribute name-value pair (both can be empty).
  * $1: attribute name, $2: value including any quotes.
- * @const
+ * @constant
  * @private
  */
 const ATTR_START = /(\S[^>/=\s]*)(?:\s*=\s*([^>/])?)?/g;
@@ -98,7 +97,7 @@ const SPREAD_OPERATOR = /\.\.\./;
 /**
  * Matches the closing tag of a `script` and `style` block.
  * Used by parseText fo find the end of the block.
- * @const
+ * @constant
  * @private
  */
 const RE_SCRYLE = {
@@ -136,7 +135,6 @@ function execFromPos(re, pos, string) {
 
 /**
  * Escape special characters in a given string, in preparation to create a regex.
- *
  * @param   {string} str - Raw string
  * @returns {string} Escaped string.
  */
@@ -161,7 +159,6 @@ const $_ES6_BQ = '`';
  * Searches the next backquote that signals the end of the ES6 Template Literal
  * or the "${" sequence that starts a JS expression, skipping any escaped
  * character.
- *
  * @param   {string}    code  - Whole code
  * @param   {number}    pos   - The start position of the template
  * @param   {string[]}  stack - To save nested ES6 TL count
@@ -239,7 +236,6 @@ const RE_DOT_CHAR = /.*/g;
 /**
  * Searches the position of the previous non-blank character inside `code`,
  * starting with `pos - 1`.
- *
  * @param   {string} code - Buffer to search
  * @param   {number} pos  - Starting position
  * @returns {number} Position of the first non-blank character to the left.
@@ -256,12 +252,10 @@ function _prev(code, pos) {
  * one.
  *
  * NOTE: Ensure `start` points to a slash (this is not checked).
- *
  * @function skipRegex
  * @param   {string} code  - Buffer to test in
  * @param   {number} start - Position the first slash inside `code`
  * @returns {number} Position of the char following the regex.
- *
  */
 /* c8 ignore next */
 function skipRegex(code, start) {
@@ -331,23 +325,20 @@ const S_SQ_STR = /'[^'\n\r\\]*(?:\\(?:\r\n?|[\S\s])[^'\n\r\\]*)*'/.source;
 /**
  * Matches double quoted JS strings taking care about nested quotes
  * and EOLs (escaped EOLs are Ok).
- *
- * @const
+ * @constant
  * @private
  */
 const S_STRING = `${S_SQ_STR}|${S_SQ_STR.replace(/'/g, '"')}`;
 /**
  * Regex cache
- *
  * @type {Object.<string, RegExp>}
- * @const
+ * @constant
  * @private
  */
 const reBr = {};
 /**
  * Makes an optimal regex that matches quoted strings, brackets, backquotes
  * and the closing brackets of an expression.
- *
  * @param   {string} b - Closing brackets
  * @returns {RegExp} - optimized regex
  */
@@ -371,9 +362,9 @@ function _regex(b) {
  * @param   {string} char - current char to add or remove from the stack
  * @param   {string} idx  - matching index
  * @param   {string} code - expression code
- * @returns {Object} result
- * @returns {Object} result.char - either the char received or the closing braces
- * @returns {Object} result.index - either a new index to skip part of the source code,
+ * @returns {object} result
+ * @returns {object} result.char - either the char received or the closing braces
+ * @returns {object} result.index - either a new index to skip part of the source code,
  *                                  or 0 to keep from parsing from the old position
  */
 function updateStack(stack, char, idx, code) {
@@ -408,12 +399,11 @@ function updateStack(stack, char, idx, code) {
 /**
  * Parses the code string searching the end of the expression.
  * It skips braces, quoted strings, regexes, and ES6 template literals.
- *
  * @function exprExtr
  * @param   {string}  code  - Buffer to parse
  * @param   {number}  start - Position of the opening brace
  * @param   {[string,string]} bp - Brackets pair
- * @returns {Object} Expression's end (after the closing brace) or -1
+ * @returns {object} Expression's end (after the closing brace) or -1
  *                            if it is not an expr.
  */
 function exprExtr(code, start, bp) {
@@ -428,7 +418,7 @@ function exprExtr(code, start, bp) {
   let match;
 
   while ((match = re.exec(code))) {
-    // eslint-disable-line
+     
     const idx = match.index;
     const str = match[0];
     end = re.lastIndex;
@@ -456,7 +446,6 @@ function exprExtr(code, start, bp) {
 
 /**
  * Outputs the last parsed node. Can be used with a builder too.
- *
  * @param   {ParserStore} store - Parsing store
  * @returns {undefined} void function
  * @private
@@ -483,11 +472,10 @@ function getChunk(source, start, end) {
 
 /**
  * states text in the last text node, or creates a new one if needed.
- *
  * @param {ParserState}   state   - Current parser state
  * @param {number}  start   - Start position of the tag
  * @param {number}  end     - Ending position (last char of the tag)
- * @param {Object}  extra   - extra properties to add to the text node
+ * @param {object}  extra   - extra properties to add to the text node
  * @param {RawExpr[]} extra.expressions  - Found expressions
  * @param {string}    extra.unescape     - Brackets to unescape
  * @returns {undefined} - void function
@@ -524,7 +512,6 @@ function pushText(state, start, end, extra = {}) {
  * Find the end of the attribute value or text node
  * Extract expressions.
  * Detect if value have escaped brackets.
- *
  * @param   {ParserState} state  - Parser state
  * @param   {HasExpr} node       - Node if attr, info if text
  * @param   {string} endingChars - Ends the value or text
@@ -557,7 +544,7 @@ function expr(state, node, endingChars, start) {
  * Parse a text chunk finding all the expressions in it
  * @param   {ParserState} state  - Parser state
  * @param   {RegExp} re - regex to match the expressions contents
- * @returns {Object} result containing the expression found, the string to unescape and the end position
+ * @returns {object} result containing the expression found, the string to unescape and the end position
  */
 function parseExpressions(state, re) {
   const { data, options } = state;
@@ -595,7 +582,6 @@ function parseExpressions(state, re) {
 /**
  * Creates a regex for the given string and the left bracket.
  * The string is captured in $1.
- *
  * @param   {ParserState} state  - Parser state
  * @param   {string} str - String to search
  * @returns {RegExp} Resulting regex.
@@ -1049,8 +1035,7 @@ const getAttributeEnd = (state, attr) =>
 /**
  * The more complex parsing is for attributes as it can contain quoted or
  * unquoted values or expressions.
- *
- * @param   {ParserStore} state  - Parser state
+ * @param   {import('../..').ParserState} state  - Parser state
  * @returns {number} New parser mode.
  * @private
  */
@@ -1090,10 +1075,9 @@ function attr(state) {
 
 /**
  * Parses an attribute and its expressions.
- *
- * @param   {ParserStore}  state  - Parser state
+ * @param   {import('../..').ParserState}  state  - Parser state
  * @param   {number} pos    - Starting position of the attribute
- * @param   {Object} tag    - Current parent tag
+ * @param   {object} tag    - Current parent tag
  * @returns {undefined} void function
  * @private
  */
@@ -1156,9 +1140,9 @@ function parseNomalAttribute(state, attr, quote) {
 
 /**
  * Parse expression names <a {href}>
- * @param   {ParserStore}  state  - Parser state
- * @param   {Object} attr - attribute object parsed
- * @returns {Object} normalized attribute object
+ * @param   {import('../..').ParserState}  state  - Parser state
+ * @param   {object} attr - attribute object parsed
+ * @returns {object} normalized attribute object
  */
 function parseSpreadAttribute(state, attr) {
   const end = getAttributeEnd(state, attr);
@@ -1177,9 +1161,9 @@ function parseSpreadAttribute(state, attr) {
 
 /**
  * Parse expression names <a {href}>
- * @param   {ParserStore}  state  - Parser state
- * @param   {Object} attr - attribute object parsed
- * @returns {Object} normalized attribute object
+ * @param   {import('../..').ParserState}  state  - Parser state
+ * @param   {object} attr - attribute object parsed
+ * @returns {object} normalized attribute object
  */
 function parseExpressionNameAttribute(state, attr) {
   const end = getAttributeEnd(state, attr);
@@ -1199,7 +1183,7 @@ function parseExpressionNameAttribute(state, attr) {
  * @param   {number} start - attribute start position
  * @param   {number} end - attribute end position
  * @param   {boolean} isExpressionName - true if the attribute name is an expression
- * @returns {Object} attribute object
+ * @returns {object} attribute object
  */
 function parseAttribute(state, match, start, end, isExpressionName) {
   const attr = {
@@ -1241,8 +1225,7 @@ function curry(fn, ...acc) {
 /**
  * Parses comments in long or short form
  * (any DOCTYPE & CDATA blocks are parsed as comments).
- *
- * @param   {ParserState} state  - Parser state
+ * @param   {import('../..').ParserState} state  - Parser state
  * @param   {string} data       - Buffer to parse
  * @param   {number} start      - Position of the '<!' sequence
  * @returns {number} node type id
@@ -1250,7 +1233,7 @@ function curry(fn, ...acc) {
  */
 function comment(state, data, start) {
   const pos = start + 2; // skip '<!'
-  const isLongComment = data.substr(pos, 2) === '--';
+  const isLongComment = data.slice(pos, pos + 2) === '--';
   const str = isLongComment ? '-->' : '>';
   const end = data.indexOf(str, pos);
 
@@ -1270,8 +1253,7 @@ function comment(state, data, start) {
 
 /**
  * Parse a comment.
- *
- * @param   {ParserState}  state - Current parser state
+ * @param   {import('../..').ParserState}  state - Current parser state
  * @param   {number}  start - Start position of the tag
  * @param   {number}  end   - Ending position (last char of the tag)
  * @param   {string}  text  - Comment content
@@ -1294,7 +1276,6 @@ function pushComment(state, start, end, text) {
 /**
  * Pushes a new *tag* and set `last` to this, so any attributes
  * will be included on this and shifts the `end`.
- *
  * @param   {ParserState} state  - Current parser state
  * @param   {string}  name      - Name of the node including any slash
  * @param   {number}  start     - Start position of the tag
@@ -1335,15 +1316,14 @@ function pushTag(state, name, start, end) {
 /**
  * Parse the tag following a '<' character, or delegate to other parser
  * if an invalid tag name is found.
- *
- * @param   {ParserState} state  - Parser state
+ * @param   {import('../..').ParserState} state  - Parser state
  * @returns {number} New parser mode
  * @private
  */
 function tag(state) {
   const { pos, data } = state; // pos of the char following '<'
   const start = pos - 1; // pos of '<'
-  const str = data.substr(pos, 2); // first two chars following '<'
+  const str = data.substring(pos, pos + 2); // first two chars following '<'
 
   switch (true) {
     case str[0] === '!':
@@ -1378,8 +1358,7 @@ function parseTag(state, start) {
 /**
  * Parses regular text and script/style blocks ...scryle for short :-)
  * (the content of script and style is text as well)
- *
- * @param   {ParserState} state - Parser state
+ * @param   {import('../..').ParserState} state - Parser state
  * @returns {number} New parser mode.
  * @private
  */
@@ -1426,7 +1405,7 @@ function text(state) {
 
 /**
  * Parse the text content depending on the name
- * @param   {ParserState} state - Parser state
+ * @param   {import('../..').ParserState} state - Parser state
  * @param   {string} name  - one of the tags matched by the RE_SCRYLE regex
  * @param   {Array}  match - result of the regex matching the content of the parsed tag
  * @returns {undefined} void function
@@ -1507,7 +1486,7 @@ const TREE_BUILDER_STRUCT = Object.seal({
 
   /**
    * Process the current tag or text.
-   * @param {Object} node - Raw pseudo-node from the parser
+   * @param {object} node - Raw pseudo-node from the parser
    * @returns {undefined} void function
    */
   push(node) {
@@ -1654,7 +1633,7 @@ const TREE_BUILDER_STRUCT = Object.seal({
       let idx = 0;
       rep = `\\${rep}`;
       while ((idx = text.indexOf(rep, idx)) !== -1) {
-        text = text.substr(0, idx) + text.substr(idx + 1);
+        text = text.slice(0, idx) + text.slice(idx + 1);
         idx++;
       }
     }
@@ -1691,8 +1670,7 @@ function createTreeBuilder(data, options) {
 /**
  * Factory for the Parser class, exposing only the `parse` method.
  * The export adds the Parser class as property.
- *
- * @param   {Object}   options - User Options
+ * @param   {object}   options - User Options
  * @param   {Function} customBuilder - Tree builder factory
  * @returns {Function} Public Parser implementation.
  */
@@ -1705,10 +1683,10 @@ function parser(options, customBuilder) {
 
 /**
  * Create a new state object
- * @param   {Object} userOptions - parser options
+ * @param   {object} userOptions - parser options
  * @param   {Function} builder - Tree builder factory
  * @param   {string} data - data to parse
- * @returns {ParserState} it represents the current parser state
+ * @returns {import('..').ParserState} it represents the current parser state
  */
 function createParserState(userOptions, builder, data) {
   const options = Object.assign(
@@ -1740,9 +1718,8 @@ function createParserState(userOptions, builder, data) {
  * - TAG     -- Opening or closing tags
  * - TEXT    -- Raw text
  * - COMMENT -- Comments
- *
- * @param   {ParserState}  state - Current parser state
- * @returns {ParserResult} Result, contains data and output properties.
+ * @param   {import('..').ParserState}  state - Current parser state
+ * @returns {import('..').ParserResult} Result, contains data and output properties.
  */
 function parse(state) {
   const { data } = state;
@@ -1766,7 +1743,7 @@ function parse(state) {
 
 /**
  * Parser walking recursive function
- * @param {ParserState}  state - Current parser state
+ * @param {import('..').ParserState}  state - Current parser state
  * @param {string} type - current parsing context
  * @returns {undefined} void function
  */
@@ -1785,7 +1762,7 @@ function walk(state, type) {
 
 /**
  * Function to help iterating on the current parser state
- * @param {ParserState}  state - Current parser state
+ * @param {import('..').ParserState}  state - Current parser state
  * @param   {string} type - current parsing context
  * @returns {string} parsing context
  */

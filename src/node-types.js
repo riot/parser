@@ -1,6 +1,5 @@
 /**
  * Not all the types are handled in this module.
- *
  * @enum {number}
  * @readonly
  */

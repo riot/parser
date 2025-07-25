@@ -6,8 +6,7 @@ import { unclosedComment } from '../messages'
 /**
  * Parses comments in long or short form
  * (any DOCTYPE & CDATA blocks are parsed as comments).
- *
- * @param   {ParserState} state  - Parser state
+ * @param   {import('../..').ParserState} state  - Parser state
  * @param   {string} data       - Buffer to parse
  * @param   {number} start      - Position of the '<!' sequence
  * @returns {number} node type id
@@ -15,7 +14,7 @@ import { unclosedComment } from '../messages'
  */
 export default function comment(state, data, start) {
   const pos = start + 2 // skip '<!'
-  const isLongComment = data.substr(pos, 2) === '--'
+  const isLongComment = data.slice(pos, pos + 2) === '--'
   const str = isLongComment ? '-->' : '>'
   const end = data.indexOf(str, pos)
 
@@ -35,8 +34,7 @@ export default function comment(state, data, start) {
 
 /**
  * Parse a comment.
- *
- * @param   {ParserState}  state - Current parser state
+ * @param   {import('../..').ParserState}  state - Current parser state
  * @param   {number}  start - Start position of the tag
  * @param   {number}  end   - Ending position (last char of the tag)
  * @param   {string}  text  - Comment content

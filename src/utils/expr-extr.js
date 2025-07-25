@@ -16,23 +16,20 @@ const S_SQ_STR = /'[^'\n\r\\]*(?:\\(?:\r\n?|[\S\s])[^'\n\r\\]*)*'/.source
 /**
  * Matches double quoted JS strings taking care about nested quotes
  * and EOLs (escaped EOLs are Ok).
- *
- * @const
+ * @constant
  * @private
  */
 const S_STRING = `${S_SQ_STR}|${S_SQ_STR.replace(/'/g, '"')}`
 /**
  * Regex cache
- *
- * @type {Object.<string, RegExp>}
- * @const
+ * @type {{[key:string]: RegExp}}
+ * @constant
  * @private
  */
 const reBr = {}
 /**
  * Makes an optimal regex that matches quoted strings, brackets, backquotes
  * and the closing brackets of an expression.
- *
  * @param   {string} b - Closing brackets
  * @returns {RegExp} - optimized regex
  */
@@ -56,10 +53,9 @@ function _regex(b) {
  * @param   {string} char - current char to add or remove from the stack
  * @param   {string} idx  - matching index
  * @param   {string} code - expression code
- * @returns {Object} result
- * @returns {Object} result.char - either the char received or the closing braces
- * @returns {Object} result.index - either a new index to skip part of the source code,
- *                                  or 0 to keep from parsing from the old position
+ * @returns {{char: string, index: number}} An object with properties:
+ *   char: either the char received or the closing braces
+ *   index: either a new index to skip part of the source code, or 0 to keep from parsing from the old position
  */
 function updateStack(stack, char, idx, code) {
   let index = 0
@@ -93,12 +89,11 @@ function updateStack(stack, char, idx, code) {
 /**
  * Parses the code string searching the end of the expression.
  * It skips braces, quoted strings, regexes, and ES6 template literals.
- *
  * @function exprExtr
  * @param   {string}  code  - Buffer to parse
  * @param   {number}  start - Position of the opening brace
  * @param   {[string,string]} bp - Brackets pair
- * @returns {Object} Expression's end (after the closing brace) or -1
+ * @returns {object|undefined} Expression's end (after the closing brace) or -1
  *                            if it is not an expr.
  */
 export default function exprExtr(code, start, bp) {
@@ -113,7 +108,6 @@ export default function exprExtr(code, start, bp) {
   let match
 
   while ((match = re.exec(code))) {
-    // eslint-disable-line
     const idx = match.index
     const str = match[0]
     end = re.lastIndex

@@ -11,8 +11,7 @@ import { unclosedNamedBlock } from '../messages'
 /**
  * Parses regular text and script/style blocks ...scryle for short :-)
  * (the content of script and style is text as well)
- *
- * @param   {ParserState} state - Parser state
+ * @param   {import('../..').ParserState} state - Parser state
  * @returns {number} New parser mode.
  * @private
  */
@@ -59,7 +58,7 @@ export default function text(state) {
 
 /**
  * Parse the text content depending on the name
- * @param   {ParserState} state - Parser state
+ * @param   {import('../..').ParserState} state - Parser state
  * @param   {string} name  - one of the tags matched by the RE_SCRYLE regex
  * @param   {Array}  match - result of the regex matching the content of the parsed tag
  * @returns {undefined} void function

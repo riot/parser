@@ -36,7 +36,6 @@ const RE_DOT_CHAR = /.*/g
 /**
  * Searches the position of the previous non-blank character inside `code`,
  * starting with `pos - 1`.
- *
  * @param   {string} code - Buffer to search
  * @param   {number} pos  - Starting position
  * @returns {number} Position of the first non-blank character to the left.
@@ -53,12 +52,10 @@ function _prev(code, pos) {
  * one.
  *
  * NOTE: Ensure `start` points to a slash (this is not checked).
- *
  * @function skipRegex
  * @param   {string} code  - Buffer to test in
  * @param   {number} start - Position the first slash inside `code`
  * @returns {number} Position of the char following the regex.
- *
  */
 /* c8 ignore next */
 export default function skipRegex(code, start) {

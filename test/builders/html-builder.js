@@ -26,8 +26,7 @@ Object.assign(HtmlBuilder.prototype, {
 
   /**
    * Exposed as htmlBuilder.build
-   *
-   * @param   {Object} input - Original code and array of pseudo-nodes
+   * @param   {object} input - Original code and array of pseudo-nodes
    * @returns {string} HTML output
    */
   _build(input) {
@@ -108,7 +107,7 @@ Object.assign(HtmlBuilder.prototype, {
 
     switch (node.type) {
       case T.COMMENT:
-        if (text.substr(2, 2) !== '--') {
+        if (text.substring(2, 4) !== '--') {
           text = `<!--${text.slice(2, -1)}-->`
         }
         break

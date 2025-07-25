@@ -77,7 +77,7 @@ const TREE_BUILDER_STRUCT = Object.seal({
 
   /**
    * Process the current tag or text.
-   * @param {Object} node - Raw pseudo-node from the parser
+   * @param {object} node - Raw pseudo-node from the parser
    * @returns {undefined} void function
    */
   push(node) {
@@ -224,7 +224,7 @@ const TREE_BUILDER_STRUCT = Object.seal({
       let idx = 0
       rep = `\\${rep}`
       while ((idx = text.indexOf(rep, idx)) !== -1) {
-        text = text.substr(0, idx) + text.substr(idx + 1)
+        text = text.slice(0, idx) + text.slice(idx + 1)
         idx++
       }
     }

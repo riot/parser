@@ -1,7 +1,6 @@
 /**
  * Outputs the last parsed node. Can be used with a builder too.
- *
- * @param   {ParserStore} store - Parsing store
+ * @param   {import("../..").ParserState} store - Parsing store
  * @returns {undefined} void function
  * @private
  */

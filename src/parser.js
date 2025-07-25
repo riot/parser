@@ -11,8 +11,7 @@ import treeBuilder from './tree-builder'
 /**
  * Factory for the Parser class, exposing only the `parse` method.
  * The export adds the Parser class as property.
- *
- * @param   {Object}   options - User Options
+ * @param   {object}   options - User Options
  * @param   {Function} customBuilder - Tree builder factory
  * @returns {Function} Public Parser implementation.
  */
@@ -25,10 +24,10 @@ export default function parser(options, customBuilder) {
 
 /**
  * Create a new state object
- * @param   {Object} userOptions - parser options
+ * @param   {object} userOptions - parser options
  * @param   {Function} builder - Tree builder factory
  * @param   {string} data - data to parse
- * @returns {ParserState} it represents the current parser state
+ * @returns {import('..').ParserState} it represents the current parser state
  */
 function createParserState(userOptions, builder, data) {
   const options = Object.assign(
@@ -60,9 +59,8 @@ function createParserState(userOptions, builder, data) {
  * - TAG     -- Opening or closing tags
  * - TEXT    -- Raw text
  * - COMMENT -- Comments
- *
- * @param   {ParserState}  state - Current parser state
- * @returns {ParserResult} Result, contains data and output properties.
+ * @param   {import('..').ParserState}  state - Current parser state
+ * @returns {import('..').ParserResult} Result, contains data and output properties.
  */
 function parse(state) {
   const { data } = state
@@ -86,7 +84,7 @@ function parse(state) {
 
 /**
  * Parser walking recursive function
- * @param {ParserState}  state - Current parser state
+ * @param {import('..').ParserState}  state - Current parser state
  * @param {string} type - current parsing context
  * @returns {undefined} void function
  */
@@ -105,7 +103,7 @@ function walk(state, type) {
 
 /**
  * Function to help iterating on the current parser state
- * @param {ParserState}  state - Current parser state
+ * @param {import('..').ParserState}  state - Current parser state
  * @param   {string} type - current parsing context
  * @returns {string} parsing context
  */

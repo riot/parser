@@ -2,20 +2,19 @@
  * Simple html builder...
  *
  * - Regular text:
- *   Whitespace compression, incluing text in `style` sections (Optional removal of whitespace-only text).
+ * Whitespace compression, incluing text in `style` sections (Optional removal of whitespace-only text).
  * - Tags names:
- *   Removes extra whitespace and convert names to lowercase, except DOCTYPE that is uppercased.
+ * Removes extra whitespace and convert names to lowercase, except DOCTYPE that is uppercased.
  * - Self-closing tags:
- *   Removes the '/' and, if is not a void tag, adds the closing tag.
+ * Removes the '/' and, if is not a void tag, adds the closing tag.
  * - Closing void tags:
- *   Raises error.
+ * Raises error.
  * - Attributes:
- *   Removes extra whitespace, convert names to lowercase, removes empty values, and enclose values in double quotes.
+ * Removes extra whitespace, convert names to lowercase, removes empty values, and enclose values in double quotes.
  * - Comments:
- *   Convertion of short notation (`<! >`) to regular (`<!-- -->`).
+ * Convertion of short notation (`<! >`) to regular (`<!-- -->`).
  *
  * Throws on unclosed tags or closing tags without start tag.
- *
  * @class RiotBuilder
  */
 import { nodeTypes as T } from '../../index.js'
@@ -54,8 +53,7 @@ Object.assign(RiotBuilder.prototype, {
 
   /**
    * Exposed as htmlBuilder.build
-   *
-   * @param   {Object} input - Original code and array of pseudo-nodes
+   * @param   {object} input - Original code and array of pseudo-nodes
    * @returns {string} HTML output
    */
   _build(input) {
@@ -173,7 +171,6 @@ Object.assign(RiotBuilder.prototype, {
     const rep = `\\${c}`
     let ix = 0
     while (~(ix = s.indexOf(rep, ix))) {
-      // eslint-disable-line
       s = s.substr(0, ix) + s.substr(ix + 1)
       ix++
     }
