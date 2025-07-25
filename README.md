@@ -3,7 +3,7 @@
 [![Parser logo](https://raw.githubusercontent.com/riot/branding/main/parser/parser-horizontal.svg)](https://github.com/riot/parser/)
 
 [![Build Status][ci-image]][ci-url]
-[![Code Quality][codeclimate-image]][codeclimate-url]
+[![Code Quality][qlty-image]][qlty-url]
 [![NPM version][npm-version-image]][npm-url]
 [![NPM downloads][npm-downloads-image]][npm-url]
 [![MIT License][license-image]][license-url]
@@ -74,7 +74,7 @@ Any non-recognized character ends the tag name (`'/'` behaves like whitespace).
 
 All the tag names are converted to lower case.
 
-## Openning Tags
+# Openning Tags
 
 Start with a `'<'` followed by a [tag name](#tag-names) or the character `'!'` that signals the start of a [comment](#comments), `DOCTYPE` or `CDATA` declaration (last two are parsed as comments).
 
@@ -130,7 +130,7 @@ This character is preserved in the output, but the parser will add a `replace` p
 [npm-version-image]: http://img.shields.io/npm/v/@riotjs/parser.svg?style=flat-square
 [npm-downloads-image]: http://img.shields.io/npm/dm/@riotjs/parser.svg?style=flat-square
 [npm-url]: https://npmjs.org/package/@riotjs/parser
-[coverage-image]: https://img.shields.io/coveralls/riot/parser/master.svg?style=flat-square
-[coverage-url]: https://coveralls.io/r/riot/parser/?branch=master
-[codeclimate-image]: https://api.codeclimate.com/v1/badges/5db4f1c96a43e3736cf0/maintainability
-[codeclimate-url]: https://codeclimate.com/github/riot/parser
+[coverage-image]: https://qlty.sh/gh/riot/projects/parser/coverage.svg
+[coverage-url]: https://qlty.sh/gh/riot/projects/parser
+[qlty-image]: https://qlty.sh/gh/riot/projects/parser/maintainability.svg
+[qlty-url]: https://qlty.sh/gh/riot/projects/parser
