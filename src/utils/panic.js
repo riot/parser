@@ -1,4 +1,4 @@
-import formatError from './format-error'
+import formatError from './format-error.js'
 
 /**
  * Custom error handler can be implemented replacing this method.

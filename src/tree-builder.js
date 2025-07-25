@@ -18,7 +18,7 @@
  * Throws on unclosed tags or closing tags without start tag.
  * Selfclosing and void tags has no nodes[] property.
  */
-import { COMMENT, TAG, TEXT } from './node-types'
+import { COMMENT, TAG, TEXT } from './node-types.js'
 import {
   CSS_OUTPUT_NAME,
   IS_RAW,
@@ -28,10 +28,10 @@ import {
   JAVASCRIPT_TAG,
   STYLE_TAG,
   TEMPLATE_OUTPUT_NAME,
-} from './constants'
-import { RAW_TAGS } from './regex'
-import { duplicatedNamedTag } from './messages'
-import panic from './utils/panic'
+} from './constants.js'
+import { RAW_TAGS } from './regex.js'
+import { duplicatedNamedTag } from './messages.js'
+import panic from './utils/panic.js'
 
 /**
  * Escape the carriage return and the line feed from a string

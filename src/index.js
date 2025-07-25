@@ -1,6 +1,6 @@
-import * as c from './constants'
-import * as types from './node-types'
-import parser from './parser'
+import * as c from './constants.js'
+import * as types from './node-types.js'
+import parser from './parser.js'
 
 /**
  * Expose the internal constants

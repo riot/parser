@@ -1,6 +1,6 @@
 import compareObject from './utils/compare-objects.js'
 import echoBuilder from './builders/echo-builder.js'
-import parser from '../index.js'
+import parser from '../src/parser.js'
 import { expect } from 'chai'
 import path from 'node:path'
 import fs from 'node:fs'

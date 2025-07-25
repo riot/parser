@@ -1,7 +1,7 @@
-import { COMMENT, TEXT } from '../node-types'
-import flush from '../utils/flush-parser-state'
-import panic from '../utils/panic'
-import { unclosedComment } from '../messages'
+import { COMMENT, TEXT } from '../node-types.js'
+import flush from '../utils/flush-parser-state.js'
+import panic from '../utils/panic.js'
+import { unclosedComment } from '../messages.js'
 
 /**
  * Parses comments in long or short form

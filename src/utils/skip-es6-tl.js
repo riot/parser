@@ -1,5 +1,5 @@
-import formatError from './format-error'
-import { unclosedTemplateLiteral } from '../messages'
+import formatError from './format-error.js'
+import { unclosedTemplateLiteral } from '../messages.js'
 export const $_ES6_BQ = '`'
 
 /**

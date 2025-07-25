@@ -1,6 +1,6 @@
-import { TEXT } from '../node-types'
-import flush from './flush-parser-state'
-import getChunk from './get-chunk'
+import { TEXT } from '../node-types.js'
+import flush from './flush-parser-state.js'
+import getChunk from './get-chunk.js'
 
 /**
  * states text in the last text node, or creates a new one if needed.

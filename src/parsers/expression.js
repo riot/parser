@@ -1,8 +1,8 @@
-import escapeStr from '../utils/escape-str'
-import exprExtr from '../utils/expr-extr'
-import panic from '../utils/panic'
-import pushText from '../utils/push-text'
-import { unexpectedEndOfFile } from '../messages'
+import escapeStr from '../utils/escape-str.js'
+import exprExtr from '../utils/expr-extr.js'
+import panic from '../utils/panic.js'
+import pushText from '../utils/push-text.js'
+import { unexpectedEndOfFile } from '../messages.js'
 /**
  * Find the end of the attribute value or text node
  * Extract expressions.

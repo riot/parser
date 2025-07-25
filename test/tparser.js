@@ -1,4 +1,4 @@
-import { nodeTypes as _T } from '../index.js'
+import * as _T from '../src/node-types.js'
 
 export default {
   'needs a root tag': {

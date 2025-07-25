@@ -1,12 +1,12 @@
-import { TAG, TEXT } from '../node-types'
-import { RE_SCRYLE } from '../regex'
-import { TEXTAREA_TAG } from '../constants'
-import execFromPos from '../utils/exec-from-pos'
-import expr from './expression'
-import panic from '../utils/panic'
-import pushTag from '../utils/push-tag'
-import pushText from '../utils/push-text'
-import { unclosedNamedBlock } from '../messages'
+import { TAG, TEXT } from '../node-types.js'
+import { RE_SCRYLE } from '../regex.js'
+import { TEXTAREA_TAG } from '../constants.js'
+import execFromPos from '../utils/exec-from-pos.js'
+import expr from './expression.js'
+import panic from '../utils/panic.js'
+import pushTag from '../utils/push-tag.js'
+import pushText from '../utils/push-text.js'
+import { unclosedNamedBlock } from '../messages.js'
 
 /**
  * Parses regular text and script/style blocks ...scryle for short :-)

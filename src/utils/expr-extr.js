@@ -4,11 +4,11 @@
  * and return its text without the enclosing brackets.
  * Does not works with comments, but supports ES6 template strings.
  */
-import skipES6TL, { $_ES6_BQ } from './skip-es6-tl'
-import { unclosedExpression, unexpectedCharInExpression } from '../messages'
-import escapeStr from './escape-str'
-import panic from './panic'
-import skipRegex from './skip-regex'
+import skipES6TL, { $_ES6_BQ } from './skip-es6-tl.js'
+import { unclosedExpression, unexpectedCharInExpression } from '../messages.js'
+import escapeStr from './escape-str.js'
+import panic from './panic.js'
+import skipRegex from './skip-regex.js'
 /**
  * @exports exprExtr
  */

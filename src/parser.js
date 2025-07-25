@@ -1,12 +1,12 @@
-import { ATTR, TAG } from './node-types'
-import { rootTagNotFound, unexpectedEndOfFile } from './messages'
-import attr from './parsers/attribute'
+import { ATTR, TAG } from './node-types.js'
+import { rootTagNotFound, unexpectedEndOfFile } from './messages.js'
+import attr from './parsers/attribute.js'
 import curry from 'curri'
-import flush from './utils/flush-parser-state'
-import panic from './utils/panic'
-import tag from './parsers/tag'
-import text from './parsers/text'
-import treeBuilder from './tree-builder'
+import flush from './utils/flush-parser-state.js'
+import panic from './utils/panic.js'
+import tag from './parsers/tag.js'
+import text from './parsers/text.js'
+import treeBuilder from './tree-builder.js'
 
 /**
  * Factory for the Parser class, exposing only the `parse` method.

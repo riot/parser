@@ -1,12 +1,12 @@
-import { ATTR, TEXT } from '../node-types'
-import { ATTR_START, SPREAD_OPERATOR } from '../regex'
-import { IS_BOOLEAN, IS_SELF_CLOSING, IS_SPREAD } from '../constants'
-import addToCollection from '../utils/add-to-collection'
-import execFromPos from '../utils/exec-from-pos'
-import expr from './expression'
-import getChunk from '../utils/get-chunk'
+import { ATTR, TEXT } from '../node-types.js'
+import { ATTR_START, SPREAD_OPERATOR } from '../regex.js'
+import { IS_BOOLEAN, IS_SELF_CLOSING, IS_SPREAD } from '../constants.js'
+import addToCollection from '../utils/add-to-collection.js'
+import execFromPos from '../utils/exec-from-pos.js'
+import expr from './expression.js'
+import getChunk from '../utils/get-chunk.js'
 import { isBoolAttribute } from 'dom-nodes'
-import memoize from '../utils/memoize'
+import memoize from '../utils/memoize.js'
 
 const expressionsContentRe = memoize((brackets) =>
   RegExp(`(${brackets[0]}[^${brackets[1]}]*?${brackets[1]})`, 'g'),

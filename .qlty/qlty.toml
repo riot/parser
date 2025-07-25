@@ -1,1 +1,1 @@
-exclude_patterns = ["index.js", "test/**"]
+exclude_patterns = ["index.js", "src/index.js", "test/**"]

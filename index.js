@@ -331,7 +331,7 @@ const S_SQ_STR = /'[^'\n\r\\]*(?:\\(?:\r\n?|[\S\s])[^'\n\r\\]*)*'/.source;
 const S_STRING = `${S_SQ_STR}|${S_SQ_STR.replace(/'/g, '"')}`;
 /**
  * Regex cache
- * @type {Object.<string, RegExp>}
+ * @type {{[key:string]: RegExp}}
  * @constant
  * @private
  */
@@ -362,10 +362,9 @@ function _regex(b) {
  * @param   {string} char - current char to add or remove from the stack
  * @param   {string} idx  - matching index
  * @param   {string} code - expression code
- * @returns {object} result
- * @returns {object} result.char - either the char received or the closing braces
- * @returns {object} result.index - either a new index to skip part of the source code,
- *                                  or 0 to keep from parsing from the old position
+ * @returns {{char: string, index: number}} An object with properties:
+ *   char: either the char received or the closing braces
+ *   index: either a new index to skip part of the source code, or 0 to keep from parsing from the old position
  */
 function updateStack(stack, char, idx, code) {
   let index = 0;
@@ -403,7 +402,7 @@ function updateStack(stack, char, idx, code) {
  * @param   {string}  code  - Buffer to parse
  * @param   {number}  start - Position of the opening brace
  * @param   {[string,string]} bp - Brackets pair
- * @returns {object} Expression's end (after the closing brace) or -1
+ * @returns {object|undefined} Expression's end (after the closing brace) or -1
  *                            if it is not an expr.
  */
 function exprExtr(code, start, bp) {
@@ -418,7 +417,6 @@ function exprExtr(code, start, bp) {
   let match;
 
   while ((match = re.exec(code))) {
-     
     const idx = match.index;
     const str = match[0];
     end = re.lastIndex;
@@ -446,7 +444,7 @@ function exprExtr(code, start, bp) {
 
 /**
  * Outputs the last parsed node. Can be used with a builder too.
- * @param   {ParserStore} store - Parsing store
+ * @param   {import("../..").ParserState} store - Parsing store
  * @returns {undefined} void function
  * @private
  */
@@ -472,11 +470,11 @@ function getChunk(source, start, end) {
 
 /**
  * states text in the last text node, or creates a new one if needed.
- * @param {ParserState}   state   - Current parser state
+ * @param {import('../..').ParserState}   state   - Current parser state
  * @param {number}  start   - Start position of the tag
  * @param {number}  end     - Ending position (last char of the tag)
- * @param {object}  extra   - extra properties to add to the text node
- * @param {RawExpr[]} extra.expressions  - Found expressions
+ * @param {import('../..').ExpressionContainer}  extra   - extra properties to add to the text node
+ * @param {import('../..').Expression[]} extra.expressions  - Found expressions
  * @param {string}    extra.unescape     - Brackets to unescape
  * @returns {undefined} - void function
  * @private
@@ -512,8 +510,8 @@ function pushText(state, start, end, extra = {}) {
  * Find the end of the attribute value or text node
  * Extract expressions.
  * Detect if value have escaped brackets.
- * @param   {ParserState} state  - Parser state
- * @param   {HasExpr} node       - Node if attr, info if text
+ * @param   {import('../..').ParserState} state  - Parser state
+ * @param   {import('../..').ExpressionContainer} node       - Node if attr, info if text
  * @param   {string} endingChars - Ends the value or text
  * @param   {number} start       - Starting position
  * @returns {number} Ending position
@@ -542,7 +540,7 @@ function expr(state, node, endingChars, start) {
 
 /**
  * Parse a text chunk finding all the expressions in it
- * @param   {ParserState} state  - Parser state
+ * @param   {import('../..').ParserState} state  - Parser state
  * @param   {RegExp} re - regex to match the expressions contents
  * @returns {object} result containing the expression found, the string to unescape and the end position
  */
@@ -582,7 +580,7 @@ function parseExpressions(state, re) {
 /**
  * Creates a regex for the given string and the left bracket.
  * The string is captured in $1.
- * @param   {ParserState} state  - Parser state
+ * @param   {import('../..').ParserState} state  - Parser state
  * @param   {string} str - String to search
  * @returns {RegExp} Resulting regex.
  * @private
@@ -1178,7 +1176,7 @@ function parseExpressionNameAttribute(state, attr) {
 
 /**
  * Parse the attribute values normalising the quotes
- * @param   {ParserStore}  state  - Parser state
+ * @param   {import('../..').ParserState}  state  - Parser state
  * @param   {Array} match - results of the attributes regex
  * @param   {number} start - attribute start position
  * @param   {number} end - attribute end position
@@ -1276,7 +1274,7 @@ function pushComment(state, start, end, text) {
 /**
  * Pushes a new *tag* and set `last` to this, so any attributes
  * will be included on this and shifts the `end`.
- * @param   {ParserState} state  - Current parser state
+ * @param   {import('../..').ParserState} state  - Current parser state
  * @param   {string}  name      - Name of the node including any slash
  * @param   {number}  start     - Start position of the tag
  * @param   {number}  end       - Ending position (last char of the tag + 1)
